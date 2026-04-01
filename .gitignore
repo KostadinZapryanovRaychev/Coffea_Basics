@@ -1,0 +1,10 @@
+Documentation.rtf
+.venv/
+nano_dy.root
+outputs/
+__pycache__/
+*.pyc
+.DS_Store
+.ipynb_checkpoints/
+*.egg-info/
+.pytest_cache/
