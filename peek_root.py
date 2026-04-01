@@ -11,5 +11,4 @@ with uproot.open(fn) as f:
     arrays = tree.arrays(library='np', entry_stop=100)
     
     output = str(arrays)
-    print(output[:10000])
-    print(f"\n... (total output length: {len(output)} characters)")
+    print(output[:1000])
