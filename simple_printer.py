@@ -12,11 +12,11 @@ print("\n" + "="*80)
 print("ROOT FILE DATA (uproot)")
 print("="*80 + "\n")
 
-# with uproot.open(fn) as f:
-#     tree = f['Events']
-#     raw = tree.arrays(['Muon_pt', 'Muon_eta', 'Muon_phi', 'Muon_charge'], 
-#                       entry_start=0, entry_stop=10, library='np')
-#     print(raw)
+with uproot.open(fn) as f:
+    tree = f['Events']
+    raw = tree.arrays(['Muon_pt', 'Muon_eta', 'Muon_phi', 'Muon_charge'], 
+                      entry_start=0, entry_stop=10, library='np')
+    print(raw)
 
 print("\n" + "="*80)
 print("COFFEA DATA (NanoEvents)")
