@@ -10,12 +10,12 @@ try:
         tree = f["Events"]
 
         arrays = tree.arrays(
-            library="np",
             entry_stop=100,
             filter_name="(?!.*Provenance).*"
         )
 
-        print(str(arrays)[:2000])
+        print(arrays.fields)
+        print(arrays)         
 
 except Exception as e:
     print(f"ERROR: {e}")
