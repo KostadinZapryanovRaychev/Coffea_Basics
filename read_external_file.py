@@ -1,4 +1,4 @@
-import uproot
+from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 
 fn = "/eos/cms/store/user/mileva/bsm3g/NANO/ZprimeTo2Tau-2Jets_M-1000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250603_104516/0000/nanoaodsim_1.root"
 
@@ -6,16 +6,15 @@ print(f"File path: {fn}\n")
 print("="*80 + "\n")
 
 try:
-    with uproot.open(fn) as f:
-        tree = f["Events"]
+    events = NanoEventsFactory.from_root(
+        fn,
+        schemaclass=NanoAODSchema,
+        entry_stop=100
+    ).events()
 
-        arrays = tree.arrays(
-            entry_stop=100,
-            filter_name="(?!.*Provenance).*"
-        )
-
-        print(arrays.fields)
-        print(arrays)         
+    print(events.fields)      
 
 except Exception as e:
     print(f"ERROR: {e}")
+
+
