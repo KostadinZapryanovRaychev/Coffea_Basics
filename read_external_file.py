@@ -1,22 +1,19 @@
 from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
 
-fn = "root://eoscms.cern.ch//eos/cms/store/user/mileva/bsm3g/NANO/ZprimeTo2Tau-2Jets_M-1000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250603_104516/0000/nanoaodsim_1.root"
-
-print(f"File path: {fn}\n")
-print("="*80 + "\n")
-
-try:
-    events = NanoEventsFactory.from_root(
-        fn,
-        schemaclass=NanoAODSchema,
-        entry_stop=100
-    ).events()
-
-    print(events.fields)      
-
-except Exception as e:
-    print(f"ERROR: {e}")
+fn = "https://cms-xpog.docs.cern.ch/autoDoc/NanoAODv12/2022/2023/doc_DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8_Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2.html"
 
 
+def read_external_file(file_path):
+    try:
+        events = NanoEventsFactory.from_root(
+            file_path,
+            schemaclass=NanoAODSchema,
+            entry_stop=100
+        ).events()
+        return events.fields
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return None
 
+read_external_file(fn)
 
