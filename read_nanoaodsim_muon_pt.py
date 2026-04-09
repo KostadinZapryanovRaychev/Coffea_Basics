@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Count the reconstructed taus event by event in nanoaodsim_coffea_1.root using Coffea.
+"""Count initial taus from LHE particles event by event in nanoaodsim_coffea_1.root.
 
 The script uses NanoEventsFactory + NanoAODSchema, which is the Coffea-recommended
 way to read CMS-style NanoAOD ROOT files as awkward arrays.
@@ -33,67 +33,46 @@ def load_events(root_file: Path):
     ).events()
 
 
-def count_taus_per_event(events):
-    """Return the number of taus in each event."""
-    if "Tau" not in events.fields:
-        raise AttributeError("Tau collection not found in this ROOT file")
+def count_lhe_taus_per_event(events):
+    """Return per-event counts of LHE particles with |pdgId| == 15."""
+    if "LHEPart" not in events.fields:
+        raise AttributeError("LHEPart collection not found in this ROOT file")
 
-    return ak.to_numpy(ak.num(events.Tau))
-
-
-def get_tau_pt_values(events):
-    """Return all tau pT values flattened into a one-dimensional NumPy array."""
-    if "Tau" not in events.fields:
-        raise AttributeError("Tau collection not found in this ROOT file")
-
-    return ak.to_numpy(ak.flatten(events.Tau.pt))
+    tau_mask = abs(events.LHEPart.pdgId) == 15
+    return ak.to_numpy(ak.sum(tau_mask, axis=1))
 
 
 def main():
-    """Load the file and print the tau count for each event."""
+    """Load the file and make histogram of LHE tau multiplicity per event."""
     events = load_events(ROOT_FILE)
-    tau_counts = count_taus_per_event(events)
-    first_1000_events = events[:1000]
-    first_1000_tau_counts = tau_counts[:1000]
-    first_1000_tau_pts = get_tau_pt_values(first_1000_events)
+    lhe_tau_counts = count_lhe_taus_per_event(events)
     output_dir = HERE / "outputs"
     output_dir.mkdir(exist_ok=True)
-    counts_path = output_dir / "tau_counts_per_event.txt"
-    counts_plot_path = output_dir / "tau_counts_first_1000_events.png"
-    pt_plot_path = output_dir / "tau_pt_first_1000_events.png"
+    counts_path = output_dir / "lhe_tau_counts_per_event.txt"
+    counts_plot_path = output_dir / "lhe_tau_multiplicity_all_events.png"
 
     with counts_path.open("w", encoding="utf-8") as handle:
-        for count in tau_counts:
+        for count in lhe_tau_counts:
             handle.write(f"{int(count)}\n")
 
-    event_numbers = list(range(1, len(first_1000_tau_counts) + 1))
-
-    plt.figure(figsize=(10, 4))
-    plt.bar(event_numbers, first_1000_tau_counts, color="darkorange", edgecolor="black")
-    plt.xlabel("Event number")
-    plt.ylabel("Number of taus")
-    plt.title("Tau multiplicity in the first 1000 events")
-    plt.xlim(1, 1000)
+    plt.figure(figsize=(8, 5))
+    max_count = int(lhe_tau_counts.max())
+    bins = range(0, max_count + 2)
+    plt.hist(lhe_tau_counts, bins=bins, align="left", rwidth=0.85, color="steelblue", edgecolor="black")
+    plt.xlabel("Number of LHE taus per event (|pdgId| = 15)")
+    plt.ylabel("Number of events")
+    plt.title("LHE tau multiplicity per event (all events)")
+    plt.xticks(range(0, max_count + 1))
+    plt.grid(alpha=0.25)
     plt.tight_layout()
     plt.savefig(counts_plot_path, dpi=150)
     plt.close()
 
-    plt.figure(figsize=(8, 5))
-    plt.hist(first_1000_tau_pts, bins=40, color="steelblue", edgecolor="black")
-    plt.xlabel("Tau $p_T$ [GeV]")
-    plt.ylabel("Number of taus")
-    plt.title("Tau transverse momentum in the first 1000 events")
-    plt.grid(alpha=0.25)
-    plt.tight_layout()
-    plt.savefig(pt_plot_path, dpi=150)
-    plt.close()
-
-    print(f"Total events: {len(tau_counts)}")
-    print(f"Saved per-event tau counts to: {counts_path}")
-    print(f"Saved first-1000 tau count plot to: {counts_plot_path}")
-    print(f"Saved first-1000 tau pT plot to: {pt_plot_path}")
-    print("First 20 event tau counts:")
-    print(first_1000_tau_counts[:20])
+    print(f"Total events: {len(lhe_tau_counts)}")
+    print(f"Saved LHE tau counts per event to: {counts_path}")
+    print(f"Saved LHE tau multiplicity histogram to: {counts_plot_path}")
+    print(f"Min LHE taus per event: {int(lhe_tau_counts.min())}")
+    print(f"Max LHE taus per event: {int(lhe_tau_counts.max())}")
 
 
 if __name__ == "__main__":
