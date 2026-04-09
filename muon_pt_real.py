@@ -18,7 +18,7 @@ def read_muon_pt(filepath):
     events = NanoEventsFactory.from_root(
         filepath,
         schemaclass=NanoAODSchema,
-        entry_stop=1000  # change or remove for full file
+        entry_stop=1000
     ).events()
 
     # Access muons
