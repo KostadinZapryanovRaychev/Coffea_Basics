@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read all muon transverse momentum values from nanoaodsim_coffea_1.root using Coffea.
+"""Count the reconstructed taus event by event in nanoaodsim_coffea_1.root using Coffea.
 
 The script uses NanoEventsFactory + NanoAODSchema, which is the Coffea-recommended
 way to read CMS-style NanoAOD ROOT files as awkward arrays.
@@ -33,51 +33,67 @@ def load_events(root_file: Path):
     ).events()
 
 
-def get_all_muon_pt(events):
-    """Return all muon pt values flattened into a one-dimensional array."""
-    if "Muon" not in events.fields:
-        raise AttributeError("Muon collection not found in this ROOT file")
+def count_taus_per_event(events):
+    """Return the number of taus in each event."""
+    if "Tau" not in events.fields:
+        raise AttributeError("Tau collection not found in this ROOT file")
 
-    muons = events.Muon
-    muon_pt = muons.pt
-    all_muon_pt = ak.flatten(muon_pt)
-    return ak.to_numpy(all_muon_pt)
+    return ak.to_numpy(ak.num(events.Tau))
+
+
+def get_tau_pt_values(events):
+    """Return all tau pT values flattened into a one-dimensional NumPy array."""
+    if "Tau" not in events.fields:
+        raise AttributeError("Tau collection not found in this ROOT file")
+
+    return ak.to_numpy(ak.flatten(events.Tau.pt))
 
 
 def main():
-    """Load the file, extract muon pt values, and print a short summary."""
+    """Load the file and print the tau count for each event."""
     events = load_events(ROOT_FILE)
-    muon_pt = get_all_muon_pt(events)
+    tau_counts = count_taus_per_event(events)
+    first_1000_events = events[:1000]
+    first_1000_tau_counts = tau_counts[:1000]
+    first_1000_tau_pts = get_tau_pt_values(first_1000_events)
     output_dir = HERE / "outputs"
     output_dir.mkdir(exist_ok=True)
-    histogram_path = output_dir / "muon_pt_histogram.png"
+    counts_path = output_dir / "tau_counts_per_event.txt"
+    counts_plot_path = output_dir / "tau_counts_first_1000_events.png"
+    pt_plot_path = output_dir / "tau_pt_first_1000_events.png"
 
-    print(f"ROOT file: {ROOT_FILE}")
-    print(f"Tree name: {TREE_NAME}")
-    print(f"Number of events: {len(events)}")
-    print(f"Total number of muons: {len(muon_pt)}")
+    with counts_path.open("w", encoding="utf-8") as handle:
+        for count in tau_counts:
+            handle.write(f"{int(count)}\n")
 
-    if len(muon_pt) == 0:
-        print("No muons were found in the file.")
-        return
+    event_numbers = list(range(1, len(first_1000_tau_counts) + 1))
 
-    print(f"Minimum muon pt: {muon_pt.min():.3f} GeV")
-    print(f"Maximum muon pt: {muon_pt.max():.3f} GeV")
-    print(f"Mean muon pt: {muon_pt.mean():.3f} GeV")
-
-    plt.figure(figsize=(8, 5))
-    plt.hist(muon_pt, bins=80, range=(0, min(float(muon_pt.max()), 200.0)), color="steelblue", edgecolor="black")
-    plt.xlabel("Muon $p_T$ [GeV]")
-    plt.ylabel("Number of muons")
-    plt.title("Muon transverse momentum distribution")
-    plt.grid(alpha=0.25)
+    plt.figure(figsize=(10, 4))
+    plt.bar(event_numbers, first_1000_tau_counts, color="darkorange", edgecolor="black")
+    plt.xlabel("Event number")
+    plt.ylabel("Number of taus")
+    plt.title("Tau multiplicity in the first 1000 events")
+    plt.xlim(1, 1000)
     plt.tight_layout()
-    plt.savefig(histogram_path, dpi=150)
+    plt.savefig(counts_plot_path, dpi=150)
     plt.close()
 
-    print(f"Saved histogram: {histogram_path}")
-    print("\nAll muon pt values:")
-    print(muon_pt)
+    plt.figure(figsize=(8, 5))
+    plt.hist(first_1000_tau_pts, bins=40, color="steelblue", edgecolor="black")
+    plt.xlabel("Tau $p_T$ [GeV]")
+    plt.ylabel("Number of taus")
+    plt.title("Tau transverse momentum in the first 1000 events")
+    plt.grid(alpha=0.25)
+    plt.tight_layout()
+    plt.savefig(pt_plot_path, dpi=150)
+    plt.close()
+
+    print(f"Total events: {len(tau_counts)}")
+    print(f"Saved per-event tau counts to: {counts_path}")
+    print(f"Saved first-1000 tau count plot to: {counts_plot_path}")
+    print(f"Saved first-1000 tau pT plot to: {pt_plot_path}")
+    print("First 20 event tau counts:")
+    print(first_1000_tau_counts[:20])
 
 
 if __name__ == "__main__":
