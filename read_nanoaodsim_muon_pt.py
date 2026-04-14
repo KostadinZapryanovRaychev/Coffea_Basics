@@ -10,6 +10,7 @@ from pathlib import Path
 import awkward as ak
 import matplotlib.pyplot as plt
 from coffea.nanoevents import NanoAODSchema, NanoEventsFactory
+from coffea.nanoevents.methods import vector
 
 
 # Silence warnings about cross references that are not present in this sample.
@@ -133,6 +134,84 @@ def select_events_with_one_mumu_pair(events):
     return filtered_events, ak.to_numpy(event_mask)
 
 
+def lorentz_vector_demo_for_muon_events(events, max_events=5):
+    """Build Lorentz vectors for muon-pair events and compute key observables.
+
+    This example uses LHEPart (generator-level) muons to show how Coffea vector
+    methods work with awkward arrays.
+    """
+    muon_events, _ = select_events_with_one_mumu_pair(events)
+    if len(muon_events) > 0:
+        selected_events = muon_events
+        neg_pdg, pos_pdg = 13, -13
+        pair_label = "mu- and mu+"
+        object_label = "dimuon"
+    else:
+        # This sample has no muon-pair LHE events, so fall back to tau pairs.
+        tau_events, _ = select_events_with_one_tau_pair(events)
+        if len(tau_events) == 0:
+            raise ValueError("No events with exactly one opposite-sign lepton pair were found")
+        selected_events = tau_events
+        neg_pdg, pos_pdg = 15, -15
+        pair_label = "tau- and tau+"
+        object_label = "ditau"
+
+    pdg = selected_events.LHEPart.pdgId
+    lep_minus = selected_events.LHEPart[pdg == neg_pdg]
+    lep_plus = selected_events.LHEPart[pdg == pos_pdg]
+
+    lep_minus_lv = ak.zip(
+        {
+            "pt": lep_minus.pt,
+            "eta": lep_minus.eta,
+            "phi": lep_minus.phi,
+            "mass": lep_minus.mass,
+        },
+        with_name="PtEtaPhiMLorentzVector",
+        behavior=vector.behavior,
+    )
+    lep_plus_lv = ak.zip(
+        {
+            "pt": lep_plus.pt,
+            "eta": lep_plus.eta,
+            "phi": lep_plus.phi,
+            "mass": lep_plus.mass,
+        },
+        with_name="PtEtaPhiMLorentzVector",
+        behavior=vector.behavior,
+    )
+
+    # One negative and one positive lepton per selected event, so index 0 is safe.
+    lep_minus_lv = lep_minus_lv[:, 0]
+    lep_plus_lv = lep_plus_lv[:, 0]
+
+    dilepton_lv = lep_minus_lv + lep_plus_lv
+    dilepton_mass = dilepton_lv.mass
+    dilepton_pt = dilepton_lv.pt
+    delta_r = lep_minus_lv.delta_r(lep_plus_lv)
+    delta_phi = lep_minus_lv.delta_phi(lep_plus_lv)
+
+    n_show = min(max_events, len(selected_events))
+    print(f"\nLorentzVector demo (first events with exactly one {pair_label}):")
+    for i in range(n_show):
+        print(
+            f"Event {i}: m_{object_label}={dilepton_mass[i]:.3f} GeV, "
+            f"pt_{object_label}={dilepton_pt[i]:.3f} GeV, "
+            f"deltaR={delta_r[i]:.3f}, deltaPhi={delta_phi[i]:.3f}"
+        )
+
+    return {
+        "lep_minus": lep_minus_lv,
+        "lep_plus": lep_plus_lv,
+        "dilepton": dilepton_lv,
+        "dilepton_mass": dilepton_mass,
+        "dilepton_pt": dilepton_pt,
+        "delta_r": delta_r,
+        "delta_phi": delta_phi,
+        "object_label": object_label,
+    }
+
+
 def main():
     """Load the file and make histogram of LHE tau multiplicity per event."""
     events = load_events(ROOT_FILE)
@@ -145,6 +224,11 @@ def main():
     print(f"Number of events with exactly 1 electron and 1 positron in LHEPart: {len(electron_events)}")
     muon_events, muon_mask = select_events_with_one_mumu_pair(events)
     print(f"Number of events with exactly 1 mu- and 1 mu+ in LHEPart: {len(muon_events)}")
+    lorentz_results = lorentz_vector_demo_for_muon_events(events, max_events=5)
+    print(
+        f"Computed {lorentz_results['object_label']} masses for "
+        f"{len(lorentz_results['dilepton_mass'])} selected events"
+    )
     # output_dir = HERE / "outputs"
     # output_dir.mkdir(exist_ok=True)
     # counts_path = output_dir / "lhe_tau_counts_per_event.txt"
