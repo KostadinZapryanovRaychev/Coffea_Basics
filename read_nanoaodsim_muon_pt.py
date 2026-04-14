@@ -25,54 +25,153 @@ def load_events(root_file: Path):
     """Open the ROOT file and return a NanoEvents object."""
     if not root_file.exists():
         raise FileNotFoundError(f"ROOT file not found: {root_file}")
+    
 
-    return NanoEventsFactory.from_root(
+    events = NanoEventsFactory.from_root(
         {str(root_file): TREE_NAME},
         schemaclass=NanoAODSchema,
         metadata={"dataset": root_file.stem},
     ).events()
+    # Number of events loaded: 60806
+    # print(f"Number of events loaded: {len(events)}")
+    # print(events[0])
+    # {SoftActivityJetHT5: ??, GenVtx: {x: ??, y: ??, ...}, GenPart: ??, ...} - It does NOT read all data from the ROOT file immediately It only loads data when you actually use it
+    # print(ak.to_list(events.GenPart.pdgId[0]))
+    # [5, -5, 15, -15, 15, -15, 5114, 2, -5, 513, 3, 21, 21, 21, -1, -16, 111, 211, 16, 11, -12, 5122, 11, -11, 511, 22, 22, 4122, 411, -411, 11, -11, -11, 12, 13, -14]
+    # GenPart contains not just initial particles, but a full “particle genealogy” of the event (initial + intermediate + final). ids of them
+    return events
 
 
 def count_lhe_taus_per_event(events):
     """Return per-event counts of LHE particles with |pdgId| == 15."""
     if "LHEPart" not in events.fields:
         raise AttributeError("LHEPart collection not found in this ROOT file")
+    
+    # Proton collision
+    # ↓
+    # Hard scattering (matrix element)
+    # ↓  ← THIS IS LHEPart LEVEL
+    # LHE particles
+    # ↓
+    # Parton shower (gluon radiation)
+    # ↓
+    # Hadronization
+    # ↓
+    # Stable particles (what detectors see)
+    # counts = ak.num(events.LHEPart.pdgId, axis=1)
+    # print(f"First 10 events: {counts[:10]}")
+    # Every event has exactly 4 LHE particles (at least for the first 10 events)
+    # First 10 events: [4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
 
     tau_mask = abs(events.LHEPart.pdgId) == 15
     return ak.to_numpy(ak.sum(tau_mask, axis=1))
+
+def select_events_with_one_tau_pair(events):
+    """Return mask + filtered info for events with exactly 1 tau+ and 1 tau- in LHEPart."""
+
+    if "LHEPart" not in events.fields:
+        raise AttributeError("LHEPart collection not found in this ROOT file")
+
+    pdg = events.LHEPart.pdgId
+
+    # Count tau+ (15) and tau- (-15)
+    tau_plus_mask = pdg == 15
+    tau_minus_mask = pdg == -15
+
+    n_tau_plus = ak.sum(tau_plus_mask, axis=1)
+    n_tau_minus = ak.sum(tau_minus_mask, axis=1)
+
+    # Select events with exactly 1 +tau and 1 -tau
+    event_mask = (n_tau_plus == 1) & (n_tau_minus == 1)
+
+    # Apply mask to events
+    filtered_events = events[event_mask]
+
+    return filtered_events, ak.to_numpy(event_mask)
+
+def select_events_with_one_ee_pair(events):
+    """Select events with exactly 1 electron (11) and 1 positron (-11) in LHEPart."""
+
+    if "LHEPart" not in events.fields:
+        raise AttributeError("LHEPart collection not found in this ROOT file")
+
+    pdg = events.LHEPart.pdgId
+
+    # Electron and positron masks
+    e_minus_mask = pdg == 11
+    e_plus_mask = pdg == -11
+
+    n_e_minus = ak.sum(e_minus_mask, axis=1)
+    n_e_plus = ak.sum(e_plus_mask, axis=1)
+
+    # exactly 1 electron and 1 positron
+    event_mask = (n_e_minus == 1) & (n_e_plus == 1)
+
+    filtered_events = events[event_mask]
+
+    return filtered_events, ak.to_numpy(event_mask)
+
+
+def select_events_with_one_mumu_pair(events):
+    """Select events with exactly 1 mu- (13) and 1 mu+ (-13) in LHEPart."""
+
+    if "LHEPart" not in events.fields:
+        raise AttributeError("LHEPart collection not found in this ROOT file")
+
+    pdg = events.LHEPart.pdgId
+
+    mu_minus_mask = pdg == 13
+    mu_plus_mask = pdg == -13
+
+    n_mu_minus = ak.sum(mu_minus_mask, axis=1)
+    n_mu_plus = ak.sum(mu_plus_mask, axis=1)
+
+    event_mask = (n_mu_minus == 1) & (n_mu_plus == 1)
+
+    filtered_events = events[event_mask]
+
+    return filtered_events, ak.to_numpy(event_mask)
 
 
 def main():
     """Load the file and make histogram of LHE tau multiplicity per event."""
     events = load_events(ROOT_FILE)
     lhe_tau_counts = count_lhe_taus_per_event(events)
-    output_dir = HERE / "outputs"
-    output_dir.mkdir(exist_ok=True)
-    counts_path = output_dir / "lhe_tau_counts_per_event.txt"
-    counts_plot_path = output_dir / "lhe_tau_multiplicity_all_events.png"
-
-    with counts_path.open("w", encoding="utf-8") as handle:
-        for count in lhe_tau_counts:
-            handle.write(f"{int(count)}\n")
-
-    plt.figure(figsize=(8, 5))
-    max_count = int(lhe_tau_counts.max())
-    bins = range(0, max_count + 2)
-    plt.hist(lhe_tau_counts, bins=bins, align="left", rwidth=0.85, color="steelblue", edgecolor="black")
-    plt.xlabel("Number of LHE taus per event (|pdgId| = 15)")
-    plt.ylabel("Number of events")
-    plt.title("LHE tau multiplicity per event (all events)")
-    plt.xticks(range(0, max_count + 1))
-    plt.grid(alpha=0.25)
-    plt.tight_layout()
-    plt.savefig(counts_plot_path, dpi=150)
-    plt.close()
-
     print(f"Total events: {len(lhe_tau_counts)}")
-    print(f"Saved LHE tau counts per event to: {counts_path}")
-    print(f"Saved LHE tau multiplicity histogram to: {counts_plot_path}")
-    print(f"Min LHE taus per event: {int(lhe_tau_counts.min())}")
-    print(f"Max LHE taus per event: {int(lhe_tau_counts.max())}")
+    filtered_events, event_mask = select_events_with_one_tau_pair(events)
+    print(f"Number of events with exactly 1 tau+ and 1 tau- in LHEPart: {len(filtered_events)}")
+
+    electron_events, electron_mask = select_events_with_one_ee_pair(events)
+    print(f"Number of events with exactly 1 electron and 1 positron in LHEPart: {len(electron_events)}")
+    muon_events, muon_mask = select_events_with_one_mumu_pair(events)
+    print(f"Number of events with exactly 1 mu- and 1 mu+ in LHEPart: {len(muon_events)}")
+    # output_dir = HERE / "outputs"
+    # output_dir.mkdir(exist_ok=True)
+    # counts_path = output_dir / "lhe_tau_counts_per_event.txt"
+    # counts_plot_path = output_dir / "lhe_tau_multiplicity_all_events.png"
+
+    # with counts_path.open("w", encoding="utf-8") as handle:
+    #     for count in lhe_tau_counts:
+    #         handle.write(f"{int(count)}\n")
+
+    # plt.figure(figsize=(8, 5))
+    # max_count = int(lhe_tau_counts.max())
+    # bins = range(0, max_count + 2)
+    # plt.hist(lhe_tau_counts, bins=bins, align="left", rwidth=0.85, color="steelblue", edgecolor="black")
+    # plt.xlabel("Number of LHE taus per event (|pdgId| = 15)")
+    # plt.ylabel("Number of events")
+    # plt.title("LHE tau multiplicity per event (all events)")
+    # plt.xticks(range(0, max_count + 1))
+    # plt.grid(alpha=0.25)
+    # plt.tight_layout()
+    # plt.savefig(counts_plot_path, dpi=150)
+    # plt.close()
+
+    # print(f"Total events: {len(lhe_tau_counts)}")
+    # print(f"Saved LHE tau counts per event to: {counts_path}")
+    # print(f"Saved LHE tau multiplicity histogram to: {counts_plot_path}")
+    # print(f"Min LHE taus per event: {int(lhe_tau_counts.min())}")
+    # print(f"Max LHE taus per event: {int(lhe_tau_counts.max())}")
 
 
 if __name__ == "__main__":
