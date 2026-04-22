@@ -75,7 +75,12 @@ def select_events_with_one_tau_pair(events):
 
     pdg = events.LHEPart.pdgId
 
+    # TODO :LHEPart_status	Int_t	LHE particle status; -1:incoming, 1:outgoing this to be checked (I want to take the child particles)
+
     # Count tau+ (15) and tau- (-15)
+    # TODO GenPart_statusFlags	UShort_t	gen status flags stored bitwise, bits are: 0 : isPrompt, 1 : isDecayedLeptonHadron, 2 : isTauDecayProduct, 3 : isPromptTauDecayProduct, 4 : isDirectTauDecayProduct, 5 : isDirectPromptTauDecayProduct, 6 : isDirectHadronDecayProduct, 7 : isHardProcess, 8 : fromHardProcess, 9 : isHardProcessTauDecayProduct, 10 : isDirectHardProcessTauDecayProduct, 11 : fromHardProcessBeforeFSR, 12 : isFirstCopy, 13 : isLastCopy, 14 : isLastCopyBeforeFSR,
+    # should be searched if it is prompted (both should be prompted) and if it is the first copy (both should be the first copy)
+    # also is first isFirstCopy to be checked 
     tau_plus_mask = pdg == 15
     tau_minus_mask = pdg == -15
 
