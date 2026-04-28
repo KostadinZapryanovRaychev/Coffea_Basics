@@ -57,6 +57,8 @@ def load_tau_pairs(events):
     ## this do the real filtration of data containing one tau and one antitau
     lhe_mask = (n_minus == 1) & (n_plus == 1)
     lhe_selected = events[lhe_mask]
+
+    # It converts the Awkward boolean mask into a normal NumPy array. This is useful because some libraries or functions might expect a standard NumPy array instead of an Awkward Array. By converting it to a NumPy array, you can use it in contexts where Awkward Arrays are not supported.
     lhe_mask_np = ak.to_numpy(lhe_mask)
 
     # analogical to :
@@ -64,9 +66,10 @@ def load_tau_pairs(events):
     # mask = np.array([True, False, True, False])
     # filtered = data[mask]
 
-    # TODO to continue from here
     gen_selected = None
     if "GenPart" in events.fields:
+
+        # give me the particle type (as a number) for every Gen particle and their status ( Pythia status code, where 23 means "hard process" particle)
         pdg_gen = events.GenPart.pdgId
         status_gen = events.GenPart.status
         # GenPart usually contains several copies of the same tau in the decay chain.
@@ -75,8 +78,9 @@ def load_tau_pairs(events):
         n_plus_g = ak.sum((pdg_gen == -15) & (status_gen == 23), axis=1)
         gen_mask = (n_minus_g == 1) & (n_plus_g == 1)
         gen_selected = events[gen_mask]
-        # by this mask we select tau that are pairs in event and come from the process hard scattering
+        # by this mask we select tau that are pairs in event and come from the process hard scattering from the first generation
 
+    # we return the selected events for LHE and Gen, and the mask for LHE as a numpy array (for later use in histograms)
     return lhe_selected, gen_selected, lhe_mask_np
 
 
@@ -88,12 +92,20 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
 
     Saves files in `outputs/`.
     """
-    output_dir.mkdir(exist_ok=True)
 
+    # ensure output directory exists if no such it creates it
+    output_dir.mkdir(exist_ok=True)
+    
+
+    # with this function we build Lorentz vectors for the selected tau- and tau+ particles, both for LHE and Gen (if available). We use the `ak.zip` function to create a new Awkward Array that combines the pt, eta, phi, and mass of the selected particles into a single array of Lorentz vectors. The `with_name="PtEtaPhiMLorentzVector"` argument tells Awkward to treat these as Lorentz vectors, which allows us to easily calculate quantities like ΔR and Δφ later on.
     def build_lv(parts, mask_minus, mask_plus):
         lep_minus = parts[mask_minus]
         lep_plus = parts[mask_plus]
+        
 
+        # builds Lorentz vectors for the selected tau- and tau+ particles, both for LHE and Gen (if available). We use the `ak.zip` function to create a new Awkward Array that combines the pt, eta, phi, and mass of the selected particles into a single array of Lorentz vectors. The `with_name="PtEtaPhiMLorentzVector"` argument tells Awkward to treat these as Lorentz vectors, which allows us to easily calculate quantities like ΔR and Δφ later on.
+        # https://coffea-hep.readthedocs.io/en/latest/search.html?q=Lorentz 
+        # if we get inside vector code we see that we really initilize a Lorentz vector with pt, eta, phi and mass. So we can use all the methods of Lorentz vectors on these objects (like delta_r, delta_phi, etc.)
         lep_minus_lv = ak.zip(
             {"pt": lep_minus.pt, "eta": lep_minus.eta, "phi": lep_minus.phi, "mass": lep_minus.mass},
             with_name="PtEtaPhiMLorentzVector",
@@ -104,7 +116,8 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
             with_name="PtEtaPhiMLorentzVector",
             behavior=vector.behavior,
         )
-
+        
+        # “take the first τ⁻ in every event” 
         return lep_minus_lv[:, 0], lep_plus_lv[:, 0]
 
     # LHE deltas
