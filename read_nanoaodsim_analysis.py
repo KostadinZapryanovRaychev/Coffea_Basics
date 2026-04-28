@@ -67,13 +67,16 @@ def load_tau_pairs(events):
 
 
 def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
-    """Make a simple invariant-mass histogram for LHE taus and optional Gen taus.
+    """Make three simple histograms for LHE taus and optional Gen taus:
+    - Delta R (ΔR)
+    - Absolute Delta Phi (|Δφ|)
+    - Absolute Delta pseudorapidity (|Δη|)
 
-    Saves `outputs/hist_tau_mass.png` (overlaying Gen if available).
+    Saves files in `outputs/`.
     """
     output_dir.mkdir(exist_ok=True)
 
-    def mass_from_parts(parts, mask_minus, mask_plus):
+    def build_lv(parts, mask_minus, mask_plus):
         lep_minus = parts[mask_minus]
         lep_plus = parts[mask_plus]
 
@@ -88,36 +91,105 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
             behavior=vector.behavior,
         )
 
-        return ak.to_numpy((lep_minus_lv[:, 0] + lep_plus_lv[:, 0]).mass)
+        return lep_minus_lv[:, 0], lep_plus_lv[:, 0]
 
-    lhe_masses = mass_from_parts(
-        lhe_selected.LHEPart,
-        lhe_selected.LHEPart.pdgId == 15,
-        lhe_selected.LHEPart.pdgId == -15,
+    # LHE deltas
+    lhe_minus_lv, lhe_plus_lv = build_lv(
+        lhe_selected.LHEPart, lhe_selected.LHEPart.pdgId == 15, lhe_selected.LHEPart.pdgId == -15
     )
+    lhe_delta_r = ak.to_numpy(lhe_minus_lv.delta_r(lhe_plus_lv))
+    lhe_delta_phi = ak.to_numpy(abs(lhe_minus_lv.delta_phi(lhe_plus_lv)))
+    lhe_delta_eta = ak.to_numpy(abs(lhe_minus_lv.eta - lhe_plus_lv.eta))
+
+    bins_dr = 60
+    plt.figure(figsize=(8, 5))
+    plt.hist(lhe_delta_r, bins=bins_dr, color="tab:blue", alpha=0.7, label="LHE")
+    plt.xlabel(r"$\Delta R(\tau^{-},\tau^{+})$")
+    plt.ylabel("Events")
+    plt.title("LHE ditau DeltaR")
+    plt.legend()
+    plt.tight_layout()
+    out_dr = output_dir / "hist_tau_deltaR.png"
+    plt.savefig(out_dr, dpi=150)
+    plt.close()
+    print(f"Saved: {out_dr}")
 
     plt.figure(figsize=(8, 5))
-    bins = 60
-    plt.hist(lhe_masses, bins=bins, color="tab:blue", alpha=0.7, label="LHE")
+    plt.hist(lhe_delta_phi, bins=60, color="tab:blue", alpha=0.7, label="LHE")
+    plt.xlabel(r"$|\Delta \phi(\tau^{-},\tau^{+})|$")
+    plt.ylabel("Events")
+    plt.title("LHE ditau |DeltaPhi|")
+    plt.legend()
+    plt.tight_layout()
+    out_dphi = output_dir / "hist_tau_deltaPhi.png"
+    plt.savefig(out_dphi, dpi=150)
+    plt.close()
+    print(f"Saved: {out_dphi}")
 
+    plt.figure(figsize=(8, 5))
+    plt.hist(lhe_delta_eta, bins=60, color="tab:blue", alpha=0.7, label="LHE")
+    plt.xlabel(r"$|\Delta \eta(\tau^{-},\tau^{+})|$")
+    plt.ylabel("Events")
+    plt.title("LHE ditau |DeltaEta|")
+    plt.legend()
+    plt.tight_layout()
+    out_deta = output_dir / "hist_tau_deltaEta.png"
+    plt.savefig(out_deta, dpi=150)
+    plt.close()
+    print(f"Saved: {out_deta}")
+
+    # If Gen selected, overlay Gen histograms on same plots (appending)
     if gen_selected is not None:
-        gen_masses = mass_from_parts(
+        gen_minus_lv, gen_plus_lv = build_lv(
             gen_selected.GenPart,
             (gen_selected.GenPart.pdgId == 15) & (gen_selected.GenPart.status == 23),
             (gen_selected.GenPart.pdgId == -15) & (gen_selected.GenPart.status == 23),
         )
-        plt.hist(gen_masses, bins=bins, color="tab:orange", alpha=0.5, label="GenPart")
+        gen_delta_r = ak.to_numpy(gen_minus_lv.delta_r(gen_plus_lv))
+        gen_delta_phi = ak.to_numpy(abs(gen_minus_lv.delta_phi(gen_plus_lv)))
+        gen_delta_eta = ak.to_numpy(abs(gen_minus_lv.eta - gen_plus_lv.eta))
 
-    plt.xlabel("Ditau mass [GeV]")
-    plt.ylabel("Events")
-    plt.title("Ditau invariant-mass (LHE, overlay Gen if present)")
-    plt.legend()
-    plt.tight_layout()
+        # overlay on DeltaR
+        plt.figure(figsize=(8, 5))
+        plt.hist(lhe_delta_r, bins=bins_dr, color="tab:blue", alpha=0.5, label="LHE")
+        plt.hist(gen_delta_r, bins=bins_dr, color="tab:orange", alpha=0.5, label="GenPart")
+        plt.xlabel(r"$\Delta R(\tau^{-},\tau^{+})$")
+        plt.ylabel("Events")
+        plt.title("Ditau DeltaR (LHE vs GenPart)")
+        plt.legend()
+        plt.tight_layout()
+        out_dr2 = output_dir / "hist_tau_deltaR_LHE_vs_Gen.png"
+        plt.savefig(out_dr2, dpi=150)
+        plt.close()
+        print(f"Saved: {out_dr2}")
 
-    outp = output_dir / "hist_tau_mass.png"
-    plt.savefig(outp, dpi=150)
-    plt.close()
-    print(f"Saved: {outp}")
+        # overlay on |DeltaPhi|
+        plt.figure(figsize=(8, 5))
+        plt.hist(lhe_delta_phi, bins=60, color="tab:blue", alpha=0.5, label="LHE")
+        plt.hist(gen_delta_phi, bins=60, color="tab:orange", alpha=0.5, label="GenPart")
+        plt.xlabel(r"$|\Delta \phi(\tau^{-},\tau^{+})|$")
+        plt.ylabel("Events")
+        plt.title("Ditau |DeltaPhi| (LHE vs GenPart)")
+        plt.legend()
+        plt.tight_layout()
+        out_dphi2 = output_dir / "hist_tau_deltaPhi_LHE_vs_Gen.png"
+        plt.savefig(out_dphi2, dpi=150)
+        plt.close()
+        print(f"Saved: {out_dphi2}")
+
+        # overlay on |DeltaEta|
+        plt.figure(figsize=(8, 5))
+        plt.hist(lhe_delta_eta, bins=60, color="tab:blue", alpha=0.5, label="LHE")
+        plt.hist(gen_delta_eta, bins=60, color="tab:orange", alpha=0.5, label="GenPart")
+        plt.xlabel(r"$|\Delta \eta(\tau^{-},\tau^{+})|$")
+        plt.ylabel("Events")
+        plt.title("Ditau |DeltaEta| (LHE vs GenPart)")
+        plt.legend()
+        plt.tight_layout()
+        out_deta2 = output_dir / "hist_tau_deltaEta_LHE_vs_Gen.png"
+        plt.savefig(out_deta2, dpi=150)
+        plt.close()
+        print(f"Saved: {out_deta2}")
 
 
 def main():
@@ -138,3 +210,5 @@ if __name__ == "__main__":
 #TODO the histograms output to become root file and to be written as that
 #TODO to make histograms for green things in the pictures in from the table of Roumyana cabinet
 #TODO to find how make mutual chats in mattermost
+
+#LHE particles comes from the first initial collisions - Gen particles are the result of the hadronization and decay of the LHE particles. So Gen particles are more realistic and closer to what we can measure in the detector, while LHE particles are more theoretical and represent the initial conditions of the collision.
