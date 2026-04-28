@@ -65,47 +65,6 @@ def select_events_with_one_tau_pair(events):
 
     return filtered_events, ak.to_numpy(event_mask)
 
-def select_events_with_one_ee_pair(events):
-    """Select events with exactly 1 electron (11) and 1 positron (-11) in LHEPart."""
-
-    if "LHEPart" not in events.fields:
-        raise AttributeError("LHEPart collection not found in this ROOT file")
-
-    pdg = events.LHEPart.pdgId
-
-    e_minus_mask = pdg == 11
-    e_plus_mask = pdg == -11
-
-    n_e_minus = ak.sum(e_minus_mask, axis=1)
-    n_e_plus = ak.sum(e_plus_mask, axis=1)
-
-    event_mask = (n_e_minus == 1) & (n_e_plus == 1)
-
-    filtered_events = events[event_mask]
-
-    return filtered_events, ak.to_numpy(event_mask)
-
-
-def select_events_with_one_mumu_pair(events):
-    """Select events with exactly 1 mu- (13) and 1 mu+ (-13) in LHEPart."""
-
-    if "LHEPart" not in events.fields:
-        raise AttributeError("LHEPart collection not found in this ROOT file")
-
-    pdg = events.LHEPart.pdgId
-
-    mu_minus_mask = pdg == 13
-    mu_plus_mask = pdg == -13
-
-    n_mu_minus = ak.sum(mu_minus_mask, axis=1)
-    n_mu_plus = ak.sum(mu_plus_mask, axis=1)
-
-    event_mask = (n_mu_minus == 1) & (n_mu_plus == 1)
-
-    filtered_events = events[event_mask]
-
-    return filtered_events, ak.to_numpy(event_mask)
-
 
 def lorentz_vector_demo_for_muon_events(events, max_events=5):
     """Build Lorentz vectors for muon-pair events and compute key observables."""
@@ -276,11 +235,6 @@ def main():
     print(f"Total events: {len(lhe_tau_counts)}")
     filtered_events, _ = select_events_with_one_tau_pair(events)
     print(f"Number of events with exactly 1 tau+ and 1 tau- in LHEPart: {len(filtered_events)}")
-
-    electron_events, _ = select_events_with_one_ee_pair(events)
-    print(f"Number of events with exactly 1 electron and 1 positron in LHEPart: {len(electron_events)}")
-    muon_events, _ = select_events_with_one_mumu_pair(events)
-    print(f"Number of events with exactly 1 mu- and 1 mu+ in LHEPart: {len(muon_events)}")
     lorentz_results = lorentz_vector_demo_for_muon_events(events, max_events=5)
     print(
         f"Computed {lorentz_results['object_label']} masses for "
@@ -292,8 +246,6 @@ def main():
         output_dir=output_dir,
         lhe_tau_counts=lhe_tau_counts,
         tau_events=filtered_events,
-        electron_events=electron_events,
-        muon_events=muon_events,
         lorentz_results=lorentz_results,
     )
 
