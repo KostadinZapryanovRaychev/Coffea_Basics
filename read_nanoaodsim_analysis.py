@@ -13,6 +13,8 @@ import numpy as np
 from coffea.nanoevents import NanoAODSchema, NanoEventsFactory
 from coffea.nanoevents.methods import vector
 
+#TODO - Read multiple root files and provide the paths to them 
+
 
 # Silence warnings about cross references that are not present in this sample.
 NanoAODSchema.warn_missing_crossrefs = False
@@ -28,8 +30,7 @@ def load_events(root_file: Path):
         raise FileNotFoundError(f"ROOT file not found: {root_file}")
 
     events = NanoEventsFactory.from_root(
-        str(root_file),
-        treepath=TREE_NAME,
+        {str(root_file): TREE_NAME},
         schemaclass=NanoAODSchema,
         metadata={"dataset": root_file.stem},
     ).events()
