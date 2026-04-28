@@ -43,14 +43,28 @@ def load_tau_pairs(events):
     """
     if "LHEPart" not in events.fields:
         raise AttributeError("LHEPart collection not found in this ROOT file")
-
+    
+    # give me the particle type (as a number) for every LHE particle
     pdg_lhe = events.LHEPart.pdgId
+    # we are looking here how much events has 1 tau and how much events has an antitau
     n_minus = ak.sum(pdg_lhe == 15, axis=1)
     n_plus = ak.sum(pdg_lhe == -15, axis=1)
+
+    # print(f"Events with exactly one tau-: {ak.sum(n_minus == 1)}")
+    # print(f"Events with exactly one tau+: {ak.sum(n_plus == 1)}")
+    # basicly all 60806
+
+    ## this do the real filtration of data containing one tau and one antitau
     lhe_mask = (n_minus == 1) & (n_plus == 1)
     lhe_selected = events[lhe_mask]
     lhe_mask_np = ak.to_numpy(lhe_mask)
 
+    # analogical to :
+    # data = np.array([10, 20, 30, 40])
+    # mask = np.array([True, False, True, False])
+    # filtered = data[mask]
+
+    # TODO to continue from here
     gen_selected = None
     if "GenPart" in events.fields:
         pdg_gen = events.GenPart.pdgId
@@ -195,12 +209,12 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
 def main():
     events = load_events(ROOT_FILE)
     lhe_selected, gen_selected, lhe_mask = load_tau_pairs(events)
-    print(f"Events with exactly one LHE tau- and one LHE tau+: {len(lhe_selected)}")
-    if gen_selected is not None:
-        print(f"Events with exactly one GenPart tau- and tau+: {len(gen_selected)}")
+    # print(f"Events with exactly one LHE tau- and one LHE tau+: {len(lhe_selected)}")
+    # if gen_selected is not None:
+    #     print(f"Events with exactly one GenPart tau- and tau+: {len(gen_selected)}")
 
-    output_dir = HERE / "outputs"
-    make_tau_histogram(output_dir, lhe_selected, gen_selected=gen_selected)
+    # output_dir = HERE / "outputs"
+    # make_tau_histogram(output_dir, lhe_selected, gen_selected=gen_selected)
 
 
 if __name__ == "__main__":
@@ -212,3 +226,4 @@ if __name__ == "__main__":
 #TODO to find how make mutual chats in mattermost
 
 #LHE particles comes from the first initial collisions - Gen particles are the result of the hadronization and decay of the LHE particles. So Gen particles are more realistic and closer to what we can measure in the detector, while LHE particles are more theoretical and represent the initial conditions of the collision.
+#TODO to write all this in overleave 
