@@ -1,25 +1,23 @@
 #!/usr/bin/env python3
-"""Count initial taus from LHE particles event by event in nanoaodsim_coffea_1.root.
+"""Minimal tau-only analysis: select LHE/Gen tau pairs and plot a simple histogram.
 
-The script uses NanoEventsFactory + NanoAODSchema, which is the Coffea-recommended
-way to read CMS-style NanoAOD ROOT files as awkward arrays.
+This file is intentionally reduced: it provides two functions:
+- `load_tau_pairs(events)` returns LHE-selected events and Gen-selected events (if present).
+- `make_tau_histogram(output_dir, lhe_selected, gen_selected=None)` saves a single
+  invariant-mass histogram (LHE, overlay Gen if available).
 """
 
 from pathlib import Path
 
 import awkward as ak
 import matplotlib.pyplot as plt
-import numpy as np
 from coffea.nanoevents import NanoAODSchema, NanoEventsFactory
 from coffea.nanoevents.methods import vector
 
-#TODO - Read multiple root files and provide the paths to them 
 
-
-# Silence warnings about cross references that are not present in this sample.
+# Silence warnings about missing crossrefs in small samples
 NanoAODSchema.warn_missing_crossrefs = False
 
-# Locate the ROOT file next to this script.
 HERE = Path(__file__).resolve().parent
 ROOT_FILE = HERE / "nanoaodsim_coffea_1.root"
 TREE_NAME = "Events"
@@ -28,275 +26,109 @@ TREE_NAME = "Events"
 def load_events(root_file: Path):
     if not root_file.exists():
         raise FileNotFoundError(f"ROOT file not found: {root_file}")
-
-    events = NanoEventsFactory.from_root(
-        {str(root_file): TREE_NAME},
-        schemaclass=NanoAODSchema,
-        metadata={"dataset": root_file.stem},
-    ).events()
-
-    return events
-
-
-def count_lhe_taus_per_event(events):
-    """Return per-event counts of LHE particles with |pdgId| == 15."""
-    if "LHEPart" not in events.fields:
-        raise AttributeError("LHEPart collection not found in this ROOT file")
-
-    tau_mask = abs(events.LHEPart.pdgId) == 15
-    return ak.to_numpy(ak.sum(tau_mask, axis=1))
-
-def select_events_with_one_tau_pair(events):
-    """Return mask + filtered info for events with exactly 1 tau+ and 1 tau- in LHEPart."""
-
-    if "LHEPart" not in events.fields:
-        raise AttributeError("LHEPart collection not found in this ROOT file")
-
-    pdg = events.LHEPart.pdgId
-
-    tau_plus_mask = pdg == 15
-    tau_minus_mask = pdg == -15
-
-    n_tau_plus = ak.sum(tau_plus_mask, axis=1)
-    n_tau_minus = ak.sum(tau_minus_mask, axis=1)
-
-    event_mask = (n_tau_plus == 1) & (n_tau_minus == 1)
-
-    filtered_events = events[event_mask]
-
-    return filtered_events, ak.to_numpy(event_mask)
-
-def select_events_with_one_ee_pair(events):
-    """Select events with exactly 1 electron (11) and 1 positron (-11) in LHEPart."""
-
-    if "LHEPart" not in events.fields:
-        raise AttributeError("LHEPart collection not found in this ROOT file")
-
-    pdg = events.LHEPart.pdgId
-
-    e_minus_mask = pdg == 11
-    e_plus_mask = pdg == -11
-
-    n_e_minus = ak.sum(e_minus_mask, axis=1)
-    n_e_plus = ak.sum(e_plus_mask, axis=1)
-
-    event_mask = (n_e_minus == 1) & (n_e_plus == 1)
-
-    filtered_events = events[event_mask]
-
-    return filtered_events, ak.to_numpy(event_mask)
-
-
-def select_events_with_one_mumu_pair(events):
-    """Select events with exactly 1 mu- (13) and 1 mu+ (-13) in LHEPart."""
-
-    if "LHEPart" not in events.fields:
-        raise AttributeError("LHEPart collection not found in this ROOT file")
-
-    pdg = events.LHEPart.pdgId
-
-    mu_minus_mask = pdg == 13
-    mu_plus_mask = pdg == -13
-
-    n_mu_minus = ak.sum(mu_minus_mask, axis=1)
-    n_mu_plus = ak.sum(mu_plus_mask, axis=1)
-
-    event_mask = (n_mu_minus == 1) & (n_mu_plus == 1)
-
-    filtered_events = events[event_mask]
-
-    return filtered_events, ak.to_numpy(event_mask)
-
-
-def lorentz_vector_demo_for_muon_events(events, max_events=5):
-    """Build Lorentz vectors for muon-pair events and compute key observables."""
-    muon_events, _ = select_events_with_one_mumu_pair(events)
-    if len(muon_events) > 0:
-        selected_events = muon_events
-        neg_pdg, pos_pdg = 13, -13
-        pair_label = "mu- and mu+"
-        object_label = "dimuon"
-    else:
-        tau_events, _ = select_events_with_one_tau_pair(events)
-        if len(tau_events) == 0:
-            raise ValueError("No events with exactly one opposite-sign lepton pair were found")
-        selected_events = tau_events
-        neg_pdg, pos_pdg = 15, -15
-        pair_label = "tau- and tau+"
-        object_label = "ditau"
-
-    pdg = selected_events.LHEPart.pdgId
-    lep_minus = selected_events.LHEPart[pdg == neg_pdg]
-    lep_plus = selected_events.LHEPart[pdg == pos_pdg]
-
-    lep_minus_lv = ak.zip(
-        {
-            "pt": lep_minus.pt,
-            "eta": lep_minus.eta,
-            "phi": lep_minus.phi,
-            "mass": lep_minus.mass,
-        },
-        with_name="PtEtaPhiMLorentzVector",
-        behavior=vector.behavior,
-    )
-    lep_plus_lv = ak.zip(
-        {
-            "pt": lep_plus.pt,
-            "eta": lep_plus.eta,
-            "phi": lep_plus.phi,
-            "mass": lep_plus.mass,
-        },
-        with_name="PtEtaPhiMLorentzVector",
-        behavior=vector.behavior,
+    return (
+        NanoEventsFactory.from_root({str(root_file): TREE_NAME}, schemaclass=NanoAODSchema)
+        .events()
     )
 
-    lep_minus_lv = lep_minus_lv[:, 0]
-    lep_plus_lv = lep_plus_lv[:, 0]
 
-    dilepton_lv = lep_minus_lv + lep_plus_lv
-    dilepton_mass = dilepton_lv.mass
-    dilepton_pt = dilepton_lv.pt
-    delta_r = lep_minus_lv.delta_r(lep_plus_lv)
-    delta_phi = lep_minus_lv.delta_phi(lep_plus_lv)
+def load_tau_pairs(events):
+    """Return (lhe_selected, gen_selected_or_None, event_mask_numpy).
 
-    n_show = min(max_events, len(selected_events))
-    print(f"\nLorentzVector demo (first events with exactly one {pair_label}):")
-    for i in range(n_show):
-        print(
-            f"Event {i}: m_{object_label}={dilepton_mass[i]:.3f} GeV, "
-            f"pt_{object_label}={dilepton_pt[i]:.3f} GeV, "
-            f"deltaR={delta_r[i]:.3f}, deltaPhi={delta_phi[i]:.3f}"
-        )
+    - `lhe_selected` contains only events with exactly one tau- (pdgId==15)
+      and one tau+ (pdgId==-15) in the `LHEPart` collection.
+    - `gen_selected` is the analogous selection on `GenPart` if present,
+      otherwise None.
+    - `event_mask_numpy` is a boolean numpy array for the LHE selection.
+    """
+    if "LHEPart" not in events.fields:
+        raise AttributeError("LHEPart collection not found in this ROOT file")
 
-    return {
-        "lep_minus": lep_minus_lv,
-        "lep_plus": lep_plus_lv,
-        "dilepton": dilepton_lv,
-        "dilepton_mass": dilepton_mass,
-        "dilepton_pt": dilepton_pt,
-        "delta_r": delta_r,
-        "delta_phi": delta_phi,
-        "object_label": object_label,
-    }
+    pdg_lhe = events.LHEPart.pdgId
+    n_minus = ak.sum(pdg_lhe == 15, axis=1)
+    n_plus = ak.sum(pdg_lhe == -15, axis=1)
+    lhe_mask = (n_minus == 1) & (n_plus == 1)
+    lhe_selected = events[lhe_mask]
+    lhe_mask_np = ak.to_numpy(lhe_mask)
+
+    gen_selected = None
+    if "GenPart" in events.fields:
+        pdg_gen = events.GenPart.pdgId
+        status_gen = events.GenPart.status
+        # GenPart usually contains several copies of the same tau in the decay chain.
+        # Status 23 picks the hard-process tau pair in this sample.
+        n_minus_g = ak.sum((pdg_gen == 15) & (status_gen == 23), axis=1)
+        n_plus_g = ak.sum((pdg_gen == -15) & (status_gen == 23), axis=1)
+        gen_mask = (n_minus_g == 1) & (n_plus_g == 1)
+        gen_selected = events[gen_mask]
+        # by this mask we select tau that are pairs in event and come from the process hard scattering
+
+    return lhe_selected, gen_selected, lhe_mask_np
 
 
-def save_basic_histograms(
-    output_dir: Path,
-    lhe_tau_counts,
-    tau_events,
-    electron_events,
-    muon_events,
-    lorentz_results,
-):
-    """Create and save a few basic histograms to output_dir."""
+def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
+    """Make a simple invariant-mass histogram for LHE taus and optional Gen taus.
+
+    Saves `outputs/hist_tau_mass.png` (overlaying Gen if available).
+    """
     output_dir.mkdir(exist_ok=True)
 
-    # 1) LHE tau multiplicity
-    plt.figure(figsize=(8, 5))
-    max_count = int(np.max(lhe_tau_counts)) if len(lhe_tau_counts) else 0
-    bins = np.arange(-0.5, max_count + 1.5, 1.0)
-    plt.hist(
-        lhe_tau_counts,
-        bins=bins,
-        color="steelblue",
-        edgecolor="black",
-        alpha=0.9,
+    def mass_from_parts(parts, mask_minus, mask_plus):
+        lep_minus = parts[mask_minus]
+        lep_plus = parts[mask_plus]
+
+        lep_minus_lv = ak.zip(
+            {"pt": lep_minus.pt, "eta": lep_minus.eta, "phi": lep_minus.phi, "mass": lep_minus.mass},
+            with_name="PtEtaPhiMLorentzVector",
+            behavior=vector.behavior,
+        )
+        lep_plus_lv = ak.zip(
+            {"pt": lep_plus.pt, "eta": lep_plus.eta, "phi": lep_plus.phi, "mass": lep_plus.mass},
+            with_name="PtEtaPhiMLorentzVector",
+            behavior=vector.behavior,
+        )
+
+        return ak.to_numpy((lep_minus_lv[:, 0] + lep_plus_lv[:, 0]).mass)
+
+    lhe_masses = mass_from_parts(
+        lhe_selected.LHEPart,
+        lhe_selected.LHEPart.pdgId == 15,
+        lhe_selected.LHEPart.pdgId == -15,
     )
-    plt.xlabel("Number of LHE taus per event (|pdgId| = 15)")
-    plt.ylabel("Number of events")
-    plt.title("LHE tau multiplicity per event")
-    plt.grid(alpha=0.25)
-    plt.tight_layout()
-    p1 = output_dir / "hist_lhe_tau_multiplicity.png"
-    plt.savefig(p1, dpi=150)
-    plt.close()
 
-    # 2) Selected event counts per channel
-    labels = ["tau+tau-", "e+e-", "mu+mu-"]
-    values = [len(tau_events), len(electron_events), len(muon_events)]
-    plt.figure(figsize=(7, 5))
-    plt.bar(labels, values, color=["tab:blue", "tab:orange", "tab:green"], edgecolor="black")
-    plt.ylabel("Number of selected events")
-    plt.title("Events with exactly one opposite-sign LHE pair")
-    plt.grid(axis="y", alpha=0.25)
-    plt.tight_layout()
-    p2 = output_dir / "hist_selected_channel_counts.png"
-    plt.savefig(p2, dpi=150)
-    plt.close()
-
-    # 3) Dilepton mass
-    dilepton_mass = np.asarray(ak.to_numpy(lorentz_results["dilepton_mass"]))
     plt.figure(figsize=(8, 5))
-    plt.hist(dilepton_mass, bins=60, color="mediumpurple", edgecolor="black", alpha=0.9)
-    plt.xlabel(f"{lorentz_results['object_label']} mass [GeV]")
-    plt.ylabel("Events")
-    plt.title(f"{lorentz_results['object_label'].capitalize()} mass distribution")
-    plt.grid(alpha=0.25)
-    plt.tight_layout()
-    p3 = output_dir / f"hist_{lorentz_results['object_label']}_mass.png"
-    plt.savefig(p3, dpi=150)
-    plt.close()
+    bins = 60
+    plt.hist(lhe_masses, bins=bins, color="tab:blue", alpha=0.7, label="LHE")
 
-    # 4) Dilepton pT
-    dilepton_pt = np.asarray(ak.to_numpy(lorentz_results["dilepton_pt"]))
-    plt.figure(figsize=(8, 5))
-    plt.hist(dilepton_pt, bins=60, color="teal", edgecolor="black", alpha=0.9)
-    plt.xlabel(f"{lorentz_results['object_label']} pT [GeV]")
-    plt.ylabel("Events")
-    plt.title(f"{lorentz_results['object_label'].capitalize()} pT distribution")
-    plt.grid(alpha=0.25)
-    plt.tight_layout()
-    p4 = output_dir / f"hist_{lorentz_results['object_label']}_pt.png"
-    plt.savefig(p4, dpi=150)
-    plt.close()
+    if gen_selected is not None:
+        gen_masses = mass_from_parts(
+            gen_selected.GenPart,
+            (gen_selected.GenPart.pdgId == 15) & (gen_selected.GenPart.status == 23),
+            (gen_selected.GenPart.pdgId == -15) & (gen_selected.GenPart.status == 23),
+        )
+        plt.hist(gen_masses, bins=bins, color="tab:orange", alpha=0.5, label="GenPart")
 
-    # 5) DeltaR
-    delta_r = np.asarray(ak.to_numpy(lorentz_results["delta_r"]))
-    plt.figure(figsize=(8, 5))
-    plt.hist(delta_r, bins=60, color="indianred", edgecolor="black", alpha=0.9)
-    plt.xlabel(r"$\Delta R(\ell^{-}, \ell^{+})$")
+    plt.xlabel("Ditau mass [GeV]")
     plt.ylabel("Events")
-    plt.title(f"{lorentz_results['object_label'].capitalize()} DeltaR distribution")
-    plt.grid(alpha=0.25)
+    plt.title("Ditau invariant-mass (LHE, overlay Gen if present)")
+    plt.legend()
     plt.tight_layout()
-    p5 = output_dir / f"hist_{lorentz_results['object_label']}_deltaR.png"
-    plt.savefig(p5, dpi=150)
-    plt.close()
 
-    print(f"Saved: {p1}")
-    print(f"Saved: {p2}")
-    print(f"Saved: {p3}")
-    print(f"Saved: {p4}")
-    print(f"Saved: {p5}")
+    outp = output_dir / "hist_tau_mass.png"
+    plt.savefig(outp, dpi=150)
+    plt.close()
+    print(f"Saved: {outp}")
 
 
 def main():
-    """Load the file and make histogram of LHE tau multiplicity per event."""
     events = load_events(ROOT_FILE)
-    lhe_tau_counts = count_lhe_taus_per_event(events)
-    print(f"Total events: {len(lhe_tau_counts)}")
-    filtered_events, _ = select_events_with_one_tau_pair(events)
-    print(f"Number of events with exactly 1 tau+ and 1 tau- in LHEPart: {len(filtered_events)}")
-
-    electron_events, _ = select_events_with_one_ee_pair(events)
-    print(f"Number of events with exactly 1 electron and 1 positron in LHEPart: {len(electron_events)}")
-    muon_events, _ = select_events_with_one_mumu_pair(events)
-    print(f"Number of events with exactly 1 mu- and 1 mu+ in LHEPart: {len(muon_events)}")
-    lorentz_results = lorentz_vector_demo_for_muon_events(events, max_events=5)
-    print(
-        f"Computed {lorentz_results['object_label']} masses for "
-        f"{len(lorentz_results['dilepton_mass'])} selected events"
-    )
+    lhe_selected, gen_selected, lhe_mask = load_tau_pairs(events)
+    print(f"Events with exactly one LHE tau- and one LHE tau+: {len(lhe_selected)}")
+    if gen_selected is not None:
+        print(f"Events with exactly one GenPart tau- and tau+: {len(gen_selected)}")
 
     output_dir = HERE / "outputs"
-    save_basic_histograms(
-        output_dir=output_dir,
-        lhe_tau_counts=lhe_tau_counts,
-        tau_events=filtered_events,
-        electron_events=electron_events,
-        muon_events=muon_events,
-        lorentz_results=lorentz_results,
-    )
+    make_tau_histogram(output_dir, lhe_selected, gen_selected=gen_selected)
 
 
 if __name__ == "__main__":
