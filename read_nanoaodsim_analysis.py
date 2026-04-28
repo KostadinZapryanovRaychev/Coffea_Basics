@@ -133,3 +133,8 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+#TODO the histograms output to become root file and to be written as that
+#TODO to make histograms for green things in the pictures in from the table of Roumyana cabinet
+#TODO to find how make mutual chats in mattermost

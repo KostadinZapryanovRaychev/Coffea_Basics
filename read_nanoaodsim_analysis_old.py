@@ -97,6 +97,8 @@ def lorentz_vector_demo_for_muon_events(events, max_events=5):
         with_name="PtEtaPhiMLorentzVector",
         behavior=vector.behavior,
     )
+    #TODO to check if with=name consinst as reserved keyword PtEtaPhiMLorentzVector
+    #TODO each line to be known what exactly does
     lep_plus_lv = ak.zip(
         {
             "pt": lep_plus.pt,
@@ -108,7 +110,7 @@ def lorentz_vector_demo_for_muon_events(events, max_events=5):
         behavior=vector.behavior,
     )
 
-    lep_minus_lv = lep_minus_lv[:, 0]
+    lep_minus_lv = lep_minus_lv[:, 0] 
     lep_plus_lv = lep_plus_lv[:, 0]
 
     dilepton_lv = lep_minus_lv + lep_plus_lv
