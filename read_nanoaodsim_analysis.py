@@ -117,9 +117,11 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
             behavior=vector.behavior,
         )
         
-        # “take the first τ⁻ in every event” 
+        # “take the first τ⁻ and t+ in every event” 
+        # why we take the first
         return lep_minus_lv[:, 0], lep_plus_lv[:, 0]
 
+    #TODO to continue debugging from here
     # LHE deltas
     lhe_minus_lv, lhe_plus_lv = build_lv(
         lhe_selected.LHEPart, lhe_selected.LHEPart.pdgId == 15, lhe_selected.LHEPart.pdgId == -15
