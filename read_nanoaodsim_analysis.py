@@ -99,13 +99,15 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
 
     # with this function we build Lorentz vectors for the selected tau- and tau+ particles, both for LHE and Gen (if available). We use the `ak.zip` function to create a new Awkward Array that combines the pt, eta, phi, and mass of the selected particles into a single array of Lorentz vectors. The `with_name="PtEtaPhiMLorentzVector"` argument tells Awkward to treat these as Lorentz vectors, which allows us to easily calculate quantities like ΔR and Δφ later on.
     def build_lv(parts, mask_minus, mask_plus):
-        lep_minus = parts[mask_minus]
-        lep_plus = parts[mask_plus]
+        # reverse particles because 
+        lep_plus  = parts[mask_minus]
+        lep_minus = parts[mask_plus]
         
 
         # builds Lorentz vectors for the selected tau- and tau+ particles, both for LHE and Gen (if available). We use the `ak.zip` function to create a new Awkward Array that combines the pt, eta, phi, and mass of the selected particles into a single array of Lorentz vectors. The `with_name="PtEtaPhiMLorentzVector"` argument tells Awkward to treat these as Lorentz vectors, which allows us to easily calculate quantities like ΔR and Δφ later on.
         # https://coffea-hep.readthedocs.io/en/latest/search.html?q=Lorentz 
         # if we get inside vector code we see that we really initilize a Lorentz vector with pt, eta, phi and mass. So we can use all the methods of Lorentz vectors on these objects (like delta_r, delta_phi, etc.)
+        # we give the 4 elements pt , eta ,phi and mass,
         lep_minus_lv = ak.zip(
             {"pt": lep_minus.pt, "eta": lep_minus.eta, "phi": lep_minus.phi, "mass": lep_minus.mass},
             with_name="PtEtaPhiMLorentzVector",
@@ -122,11 +124,17 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         return lep_minus_lv[:, 0], lep_plus_lv[:, 0]
 
     #TODO to continue debugging from here
+    # Physical intuition:
+    # Back-to-back taus (large angle): decay at rest -> taus fly opposite directions (\u2190 \u2192).
+    # Close/boosted taus (small angle): fast-moving parent -> taus collimated forward (\u2192\u2192).
     # LHE deltas
     lhe_minus_lv, lhe_plus_lv = build_lv(
         lhe_selected.LHEPart, lhe_selected.LHEPart.pdgId == 15, lhe_selected.LHEPart.pdgId == -15
     )
+    # distance between two particles in the eta-phi space, defined as ΔR = sqrt((Δη)² + (Δφ)²). It is a commonly used metric in particle physics to quantify how close two particles are in the detector. A smaller ΔR indicates that the particles are closer together, while a larger ΔR indicates that they are farther apart.
     lhe_delta_r = ak.to_numpy(lhe_minus_lv.delta_r(lhe_plus_lv))
+
+    # Δφ is the difference in the azimuthal angle (φ) between two particles. The azimuthal angle is measured in the plane perpendicular to the beam axis, and it ranges from -π to π. The absolute value of Δφ (|Δφ|) is often used to quantify how separated two particles are in this angular dimension. A smaller |Δφ| indicates that the particles are closer together in the azimuthal direction, while a larger |Δφ| indicates that they are farther apart.
     lhe_delta_phi = ak.to_numpy(abs(lhe_minus_lv.delta_phi(lhe_plus_lv)))
     lhe_delta_eta = ak.to_numpy(abs(lhe_minus_lv.eta - lhe_plus_lv.eta))
 
@@ -169,6 +177,9 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
 
     # If Gen selected, overlay Gen histograms on same plots (appending)
     if gen_selected is not None:
+        # Physical intuition for GenPart overlay:
+        # Back-to-back taus (large angle): typical of a Z -> ττ decay at rest — taus fly opposite directions.
+        # Close/boosted taus (small angle): if the parent had high momentum, taus are collimated forward.
         gen_minus_lv, gen_plus_lv = build_lv(
             gen_selected.GenPart,
             (gen_selected.GenPart.pdgId == 15) & (gen_selected.GenPart.status == 23),
