@@ -122,10 +122,12 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         # “take the first τ⁻ and t+ in every event” 
         # why we take the first
         return lep_minus_lv[:, 0], lep_plus_lv[:, 0]
-    # Physical intuition:
-    # Back-to-back taus (large angle): decay at rest -> taus fly opposite directions (\u2190 \u2192).
-    # Close/boosted taus (small angle): fast-moving parent -> taus collimated forward (\u2192\u2192).
-    # LHE deltas
+    # Physical meaning of the three LHE histograms:
+    # DeltaR = sqrt((Delta eta)^2 + (Delta phi)^2): overall angular distance between the two taus.
+    # Large DeltaR means back-to-back taus; small DeltaR means boosted/collimated taus.
+    # DeltaPhi measures separation in the transverse plane: near pi = opposite directions, small = same direction.
+    # DeltaEta measures separation along the beam axis: large |DeltaEta| = one tau forward and one backward.
+    # LHE is the ideal hard-scattering picture, so it shows the clean theoretical tau-pair topology.
     lhe_minus_lv, lhe_plus_lv = build_lv(
         lhe_selected.LHEPart, lhe_selected.LHEPart.pdgId == 15, lhe_selected.LHEPart.pdgId == -15
     )
@@ -180,11 +182,10 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
     plt.close()
     print(f"Saved: {out_deta}")
 
-    # TODO we have to continue here
     if gen_selected is not None:
-        # Physical intuition for GenPart overlay:
-        # Back-to-back taus (large angle): typical of a Z -> ττ decay at rest — taus fly opposite directions.
-        # Close/boosted taus (small angle): if the parent had high momentum, taus are collimated forward.
+        # GenPart adds showering/decays, so it is closer to realistic event structure than LHE.
+        # If Gen is broader than LHE, it usually means radiation and decay effects have spread the angles.
+        # If Gen is shifted relative to LHE, it can indicate boosts or additional event activity.
         gen_minus_lv, gen_plus_lv = build_lv(
             gen_selected.GenPart,
             (gen_selected.GenPart.pdgId == 15) & (gen_selected.GenPart.status == 23),
@@ -194,8 +195,9 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         gen_delta_phi = ak.to_numpy(abs(gen_minus_lv.delta_phi(gen_plus_lv)))
         gen_delta_eta = ak.to_numpy(abs(gen_minus_lv.eta - gen_plus_lv.eta))
 
-        # overlay on DeltaR
+        # Overlay on DeltaR: most important plot for tau-pair topology.
         plt.figure(figsize=(8, 5))
+        # alpha controls the transparency so LHE and Gen can be compared on the same axes.
         plt.hist(lhe_delta_r, bins=bins_dr, color="tab:blue", alpha=0.5, label="LHE")
         plt.hist(gen_delta_r, bins=bins_dr, color="tab:orange", alpha=0.5, label="GenPart")
         plt.xlabel(r"$\Delta R(\tau^{-},\tau^{+})$")
@@ -208,7 +210,7 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         plt.close()
         print(f"Saved: {out_dr2}")
 
-        # overlay on |DeltaPhi|
+        # Overlay on |DeltaPhi|: near pi means back-to-back in the transverse plane.
         plt.figure(figsize=(8, 5))
         plt.hist(lhe_delta_phi, bins=60, color="tab:blue", alpha=0.5, label="LHE")
         plt.hist(gen_delta_phi, bins=60, color="tab:orange", alpha=0.5, label="GenPart")
@@ -222,7 +224,7 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         plt.close()
         print(f"Saved: {out_dphi2}")
 
-        # overlay on |DeltaEta|
+        # Overlay on |DeltaEta|: shows forward/backward separation along the beam direction.
         plt.figure(figsize=(8, 5))
         plt.hist(lhe_delta_eta, bins=60, color="tab:blue", alpha=0.5, label="LHE")
         plt.hist(gen_delta_eta, bins=60, color="tab:orange", alpha=0.5, label="GenPart")
