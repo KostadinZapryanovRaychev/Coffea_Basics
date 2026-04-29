@@ -1,5 +1,8 @@
 import numpy as np
 import awkward as ak
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 from coffea.nanoevents.methods import vector
 
 # data = np.array([10, 20, 30, 40])
@@ -30,11 +33,38 @@ from coffea.nanoevents.methods import vector
 
 # print(data[0].delta_r(data[1]))
 
-a = "Mitko"
 
-def say_hello(name):
-    print(f"Hello, {name}!")
+def make_dummy_histogram(output_dir: Path):
+	"""Create a simple side-by-side histogram comparison from generated dummy data."""
+	output_dir.mkdir(exist_ok=True)
 
-def add_numbers(a, b):
-    print(f"Adding {a} and {b}")
-    return a + b
+	rng = np.random.default_rng(42)
+	dummy_data = rng.normal(loc=0.0, scale=1.0, size=1000)
+	bins_list = [10, 30, 70]
+
+	fig, axes = plt.subplots(1, len(bins_list), figsize=(15, 4), sharey=True)
+	for ax, bins in zip(axes, bins_list):
+		ax.hist(dummy_data, bins=bins, color="tab:blue", alpha=0.75, edgecolor="black")
+		ax.set_title(f"{bins} bins")
+		ax.set_xlabel("Dummy value")
+		ax.grid(alpha=0.2)
+
+	axes[0].set_ylabel("Count")
+	fig.suptitle("How Binning Changes a Histogram", fontsize=14)
+	fig.tight_layout()
+
+	out_path = output_dir / "dummy_histogram_bins_comparison.png"
+	fig.savefig(out_path, dpi=150)
+	plt.close(fig)
+	print(f"Saved: {out_path}")
+
+
+def main():
+	here = Path(__file__).resolve().parent
+	output_dir = here / "outputs"
+	make_dummy_histogram(output_dir)
+
+
+if __name__ == "__main__":
+	main()
+

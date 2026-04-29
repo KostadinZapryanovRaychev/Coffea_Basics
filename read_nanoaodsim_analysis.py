@@ -122,8 +122,6 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         # “take the first τ⁻ and t+ in every event” 
         # why we take the first
         return lep_minus_lv[:, 0], lep_plus_lv[:, 0]
-
-    #TODO to continue debugging from here
     # Physical intuition:
     # Back-to-back taus (large angle): decay at rest -> taus fly opposite directions (\u2190 \u2192).
     # Close/boosted taus (small angle): fast-moving parent -> taus collimated forward (\u2192\u2192).
@@ -136,17 +134,24 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
 
     # Δφ is the difference in the azimuthal angle (φ) between two particles. The azimuthal angle is measured in the plane perpendicular to the beam axis, and it ranges from -π to π. The absolute value of Δφ (|Δφ|) is often used to quantify how separated two particles are in this angular dimension. A smaller |Δφ| indicates that the particles are closer together in the azimuthal direction, while a larger |Δφ| indicates that they are farther apart.
     lhe_delta_phi = ak.to_numpy(abs(lhe_minus_lv.delta_phi(lhe_plus_lv)))
+    # Δη is the difference in pseudorapidity (η) between two particles. Pseudorapidity is a spatial coordinate that describes the angle of a particle relative to the beam axis. The absolute value of Δη (|Δη|) is used to quantify how separated two particles are in this dimension. A smaller |Δη| indicates that the particles are closer together in pseudorapidity, while a larger |Δη| indicates that they are farther apart.
     lhe_delta_eta = ak.to_numpy(abs(lhe_minus_lv.eta - lhe_plus_lv.eta))
 
+    # define how much bins we should have ( what is the rule of thumb for that ? ) and make a histogram for ΔR, |Δφ|, and |Δη| for the LHE-selected tau pairs. We use Matplotlib to create the histograms, setting the number of bins to 60 and customizing the appearance with colors and labels. The histograms are saved as PNG files in the specified output directory.
     bins_dr = 60
+    # The size of figure in inches (widht, height)
     plt.figure(figsize=(8, 5))
+    # Historam content delta R on x and number of events on y, with 60 bins, blue color, 0.7 alpha for transparency and label LHE for legend
     plt.hist(lhe_delta_r, bins=bins_dr, color="tab:blue", alpha=0.7, label="LHE")
     plt.xlabel(r"$\Delta R(\tau^{-},\tau^{+})$")
     plt.ylabel("Events")
     plt.title("LHE ditau DeltaR")
     plt.legend()
+    # plt.tight_layout() automatically adjusts spacing so labels, titles, and plots don’t overlap or get cut off.
     plt.tight_layout()
+    # where and how to save the file
     out_dr = output_dir / "hist_tau_deltaR.png"
+    # DPI = dots per inch It controls image resolution (sharpness).
     plt.savefig(out_dr, dpi=150)
     plt.close()
     print(f"Saved: {out_dr}")
@@ -175,7 +180,7 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
     plt.close()
     print(f"Saved: {out_deta}")
 
-    # If Gen selected, overlay Gen histograms on same plots (appending)
+    # TODO we have to continue here
     if gen_selected is not None:
         # Physical intuition for GenPart overlay:
         # Back-to-back taus (large angle): typical of a Z -> ττ decay at rest — taus fly opposite directions.
