@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """NAOD_TAU tau-pair analysis entrypoint with comprehensive error handling."""
 
+## _init_ is used to marke each of helpers io helpers plotting so on import places
+
 from pathlib import Path
 import sys
 import logging
@@ -36,15 +38,9 @@ def main():
         SystemExit: On fatal errors (exit code 1)
     """
     try:
-        logger.info("=" * 70)
-        logger.info("NAOD_TAU Tau-Pair Analysis - Starting")
-        logger.info("=" * 70)
-        
         # Step 1: Load events from ROOT file
         try:
-            logger.info("\n[Step 1/3] Loading NanoAOD events from ROOT file...")
             events = load_events(ROOT_FILE)
-            logger.info("✓ Event loading complete")
         except FileNotFoundError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Cannot proceed without input ROOT file.")
@@ -67,9 +63,7 @@ def main():
         
         # Step 2: Select tau pairs
         try:
-            logger.info("\n[Step 2/3] Selecting tau pairs from events...")
             lhe_selected, gen_selected, _ = load_tau_pairs(events)
-            logger.info("✓ Tau pair selection complete")
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Event selection failed. Check input data integrity.")
@@ -92,10 +86,8 @@ def main():
         
         # Step 3: Generate histograms
         try:
-            logger.info("\n[Step 3/3] Generating histograms (PNG and ROOT formats)...")
             output_dir = HERE / "outputs"
             make_tau_histogram(output_dir, lhe_selected, gen_selected=gen_selected)
-            logger.info("✓ Histogram generation complete")
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Output directory validation failed.")
@@ -115,12 +107,6 @@ def main():
                 f"  Details: {str(e)}\n"
             )
             sys.exit(1)
-        
-        # Success
-        logger.info("\n" + "=" * 70)
-        logger.info("✓ Analysis completed successfully")
-        logger.info(f"Histograms saved to: {output_dir}")
-        logger.info("=" * 70)
         
     except KeyboardInterrupt:
         logger.warning("\n[WARNING] Analysis interrupted by user (Ctrl+C)")
