@@ -1,0 +1,2 @@
+#run source setup.sh
+it will set up the correct python libraries available in global env in lxplus

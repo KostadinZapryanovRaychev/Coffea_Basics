@@ -1,0 +1,14 @@
+# NAOD_TAU Project Dependencies
+# Required packages for tau-pair analysis
+
+# Core scientific libraries
+numpy>=1.21
+awkward>=2.0
+matplotlib>=3.5
+
+# ROOT and Coffea framework
+uproot>=5.0
+coffea>=0.7.0
+
+# Additional utilities
+pytest>=7.0
