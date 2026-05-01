@@ -8,9 +8,12 @@ This file is intentionally reduced: it provides two functions:
 """
 
 from pathlib import Path
+from typing import Optional
 
 import awkward as ak
+import numpy as np
 import matplotlib.pyplot as plt
+import uproot
 from coffea.nanoevents import NanoAODSchema, NanoEventsFactory
 from coffea.nanoevents.methods import vector
 
@@ -21,6 +24,109 @@ NanoAODSchema.warn_missing_crossrefs = False
 HERE = Path(__file__).resolve().parent
 ROOT_FILE = HERE / "nanoaodsim_coffea_1.root"
 TREE_NAME = "Events"
+
+
+def build_root_histogram(name: str, title: str, counts, bin_edges):
+    counts = np.asarray(counts, dtype=np.float64)
+    bin_edges = np.asarray(bin_edges, dtype=np.float64)
+
+    data = np.zeros(len(counts) + 2, dtype=np.float64)
+    data[1:-1] = counts
+    entries = float(counts.sum())
+    centers = 0.5 * (bin_edges[:-1] + bin_edges[1:])
+    sumw = float(counts.sum())
+    sumw2 = float(counts.sum())
+    sumwx = float(np.sum(counts * centers))
+    sumwx2 = float(np.sum(counts * centers * centers))
+    sumw2_array = np.zeros(len(counts) + 2, dtype=np.float64)
+    sumw2_array[1:-1] = counts
+
+    xaxis = uproot.writing.identify.to_TAxis(
+        "xaxis",
+        "",
+        len(counts),
+        float(bin_edges[0]),
+        float(bin_edges[-1]),
+    )
+    return uproot.writing.identify.to_TH1x(
+        name,
+        title,
+        data,
+        entries,
+        sumw,
+        sumw2,
+        sumwx,
+        sumwx2,
+        sumw2_array,
+        xaxis,
+    )
+
+
+def save_png_and_root(output_dir: Path, stem: str, png_title: str, values, *, bins, xlabel: str, ylabel: str, color: str = "tab:blue", alpha: float = 0.7, label: str = "LHE", root_title: Optional[str] = None):
+    values = np.asarray(values, dtype=np.float64)
+    bin_edges = np.linspace(values.min(), values.max(), int(bins) + 1)
+    counts, _ = np.histogram(values, bins=bin_edges)
+
+    plt.figure(figsize=(8, 5))
+    plt.hist(values, bins=bin_edges, color=color, alpha=alpha, label=label)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(png_title)
+    plt.legend()
+    plt.tight_layout()
+
+    png_path = output_dir / f"{stem}.png"
+    plt.savefig(png_path, dpi=150)
+    plt.close()
+    print(f"Saved: {png_path}")
+
+    root_path = output_dir / f"{stem}.root"
+    histogram = build_root_histogram(stem, root_title or png_title, counts, bin_edges)
+    with uproot.recreate(root_path) as root_file:
+        root_file[stem] = histogram
+    print(f"Saved: {root_path}")
+
+
+def save_overlay_png_and_root(
+    output_dir: Path,
+    stem: str,
+    png_title: str,
+    lhe_values,
+    gen_values,
+    *,
+    bins,
+    xlabel: str,
+    ylabel: str,
+    root_titles: tuple[str, str],
+):
+    lhe_values = np.asarray(lhe_values, dtype=np.float64)
+    gen_values = np.asarray(gen_values, dtype=np.float64)
+    combined = np.concatenate([lhe_values, gen_values])
+    bin_edges = np.linspace(combined.min(), combined.max(), int(bins) + 1)
+    lhe_counts, _ = np.histogram(lhe_values, bins=bin_edges)
+    gen_counts, _ = np.histogram(gen_values, bins=bin_edges)
+
+    plt.figure(figsize=(8, 5))
+    plt.hist(lhe_values, bins=bin_edges, color="tab:blue", alpha=0.5, label="LHE")
+    plt.hist(gen_values, bins=bin_edges, color="tab:orange", alpha=0.5, label="GenPart")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(png_title)
+    plt.legend()
+    plt.tight_layout()
+
+    png_path = output_dir / f"{stem}.png"
+    plt.savefig(png_path, dpi=150)
+    plt.close()
+    print(f"Saved: {png_path}")
+
+    root_path = output_dir / f"{stem}.root"
+    lhe_hist = build_root_histogram(f"{stem}_LHE", root_titles[0], lhe_counts, bin_edges)
+    gen_hist = build_root_histogram(f"{stem}_GenPart", root_titles[1], gen_counts, bin_edges)
+    with uproot.recreate(root_path) as root_file:
+        root_file[f"{stem}_LHE"] = lhe_hist
+        root_file[f"{stem}_GenPart"] = gen_hist
+    print(f"Saved: {root_path}")
 
 
 def load_events(root_file: Path):
@@ -94,7 +200,7 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
     """
 
     # ensure output directory exists if no such it creates it
-    output_dir.mkdir(exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
     
 
     # with this function we build Lorentz vectors for the selected tau- and tau+ particles, both for LHE and Gen (if available). We use the `ak.zip` function to create a new Awkward Array that combines the pt, eta, phi, and mass of the selected particles into a single array of Lorentz vectors. The `with_name="PtEtaPhiMLorentzVector"` argument tells Awkward to treat these as Lorentz vectors, which allows us to easily calculate quantities like ΔR and Δφ later on.
@@ -139,48 +245,39 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
     # Δη is the difference in pseudorapidity (η) between two particles. Pseudorapidity is a spatial coordinate that describes the angle of a particle relative to the beam axis. The absolute value of Δη (|Δη|) is used to quantify how separated two particles are in this dimension. A smaller |Δη| indicates that the particles are closer together in pseudorapidity, while a larger |Δη| indicates that they are farther apart.
     lhe_delta_eta = ak.to_numpy(abs(lhe_minus_lv.eta - lhe_plus_lv.eta))
 
-    # define how much bins we should have ( what is the rule of thumb for that ? ) and make a histogram for ΔR, |Δφ|, and |Δη| for the LHE-selected tau pairs. We use Matplotlib to create the histograms, setting the number of bins to 60 and customizing the appearance with colors and labels. The histograms are saved as PNG files in the specified output directory.
     bins_dr = 60
-    # The size of figure in inches (widht, height)
-    plt.figure(figsize=(8, 5))
-    # Historam content delta R on x and number of events on y, with 60 bins, blue color, 0.7 alpha for transparency and label LHE for legend
-    plt.hist(lhe_delta_r, bins=bins_dr, color="tab:blue", alpha=0.7, label="LHE")
-    plt.xlabel(r"$\Delta R(\tau^{-},\tau^{+})$")
-    plt.ylabel("Events")
-    plt.title("LHE ditau DeltaR")
-    plt.legend()
-    # plt.tight_layout() automatically adjusts spacing so labels, titles, and plots don’t overlap or get cut off.
-    plt.tight_layout()
-    # where and how to save the file
-    out_dr = output_dir / "hist_tau_deltaR.png"
-    # DPI = dots per inch It controls image resolution (sharpness).
-    plt.savefig(out_dr, dpi=150)
-    plt.close()
-    print(f"Saved: {out_dr}")
+    save_png_and_root(
+        output_dir,
+        "hist_tau_deltaR",
+        "LHE ditau DeltaR",
+        lhe_delta_r,
+        bins=bins_dr,
+        xlabel=r"$\Delta R(\tau^{-},\tau^{+})$",
+        ylabel="Events",
+        root_title="LHE ditau DeltaR",
+    )
 
-    plt.figure(figsize=(8, 5))
-    plt.hist(lhe_delta_phi, bins=60, color="tab:blue", alpha=0.7, label="LHE")
-    plt.xlabel(r"$|\Delta \phi(\tau^{-},\tau^{+})|$")
-    plt.ylabel("Events")
-    plt.title("LHE ditau |DeltaPhi|")
-    plt.legend()
-    plt.tight_layout()
-    out_dphi = output_dir / "hist_tau_deltaPhi.png"
-    plt.savefig(out_dphi, dpi=150)
-    plt.close()
-    print(f"Saved: {out_dphi}")
+    save_png_and_root(
+        output_dir,
+        "hist_tau_deltaPhi",
+        "LHE ditau |DeltaPhi|",
+        lhe_delta_phi,
+        bins=60,
+        xlabel=r"$|\Delta \phi(\tau^{-},\tau^{+})|$",
+        ylabel="Events",
+        root_title="LHE ditau |DeltaPhi|",
+    )
 
-    plt.figure(figsize=(8, 5))
-    plt.hist(lhe_delta_eta, bins=60, color="tab:blue", alpha=0.7, label="LHE")
-    plt.xlabel(r"$|\Delta \eta(\tau^{-},\tau^{+})|$")
-    plt.ylabel("Events")
-    plt.title("LHE ditau |DeltaEta|")
-    plt.legend()
-    plt.tight_layout()
-    out_deta = output_dir / "hist_tau_deltaEta.png"
-    plt.savefig(out_deta, dpi=150)
-    plt.close()
-    print(f"Saved: {out_deta}")
+    save_png_and_root(
+        output_dir,
+        "hist_tau_deltaEta",
+        "LHE ditau |DeltaEta|",
+        lhe_delta_eta,
+        bins=60,
+        xlabel=r"$|\Delta \eta(\tau^{-},\tau^{+})|$",
+        ylabel="Events",
+        root_title="LHE ditau |DeltaEta|",
+    )
 
     if gen_selected is not None:
         # GenPart adds showering/decays, so it is closer to realistic event structure than LHE.
@@ -196,47 +293,43 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         gen_delta_eta = ak.to_numpy(abs(gen_minus_lv.eta - gen_plus_lv.eta))
 
         # Overlay on DeltaR: most important plot for tau-pair topology.
-        plt.figure(figsize=(8, 5))
-        # alpha controls the transparency so LHE and Gen can be compared on the same axes.
-        plt.hist(lhe_delta_r, bins=bins_dr, color="tab:blue", alpha=0.5, label="LHE")
-        plt.hist(gen_delta_r, bins=bins_dr, color="tab:orange", alpha=0.5, label="GenPart")
-        plt.xlabel(r"$\Delta R(\tau^{-},\tau^{+})$")
-        plt.ylabel("Events")
-        plt.title("Ditau DeltaR (LHE vs GenPart)")
-        plt.legend()
-        plt.tight_layout()
-        out_dr2 = output_dir / "hist_tau_deltaR_LHE_vs_Gen.png"
-        plt.savefig(out_dr2, dpi=150)
-        plt.close()
-        print(f"Saved: {out_dr2}")
+        save_overlay_png_and_root(
+            output_dir,
+            "hist_tau_deltaR_LHE_vs_Gen",
+            "Ditau DeltaR (LHE vs GenPart)",
+            lhe_delta_r,
+            gen_delta_r,
+            bins=bins_dr,
+            xlabel=r"$\Delta R(\tau^{-},\tau^{+})$",
+            ylabel="Events",
+            root_titles=("LHE ditau DeltaR", "GenPart ditau DeltaR"),
+        )
 
         # Overlay on |DeltaPhi|: near pi means back-to-back in the transverse plane.
-        plt.figure(figsize=(8, 5))
-        plt.hist(lhe_delta_phi, bins=60, color="tab:blue", alpha=0.5, label="LHE")
-        plt.hist(gen_delta_phi, bins=60, color="tab:orange", alpha=0.5, label="GenPart")
-        plt.xlabel(r"$|\Delta \phi(\tau^{-},\tau^{+})|$")
-        plt.ylabel("Events")
-        plt.title("Ditau |DeltaPhi| (LHE vs GenPart)")
-        plt.legend()
-        plt.tight_layout()
-        out_dphi2 = output_dir / "hist_tau_deltaPhi_LHE_vs_Gen.png"
-        plt.savefig(out_dphi2, dpi=150)
-        plt.close()
-        print(f"Saved: {out_dphi2}")
+        save_overlay_png_and_root(
+            output_dir,
+            "hist_tau_deltaPhi_LHE_vs_Gen",
+            "Ditau |DeltaPhi| (LHE vs GenPart)",
+            lhe_delta_phi,
+            gen_delta_phi,
+            bins=60,
+            xlabel=r"$|\Delta \phi(\tau^{-},\tau^{+})|$",
+            ylabel="Events",
+            root_titles=("LHE ditau |DeltaPhi|", "GenPart ditau |DeltaPhi|"),
+        )
 
         # Overlay on |DeltaEta|: shows forward/backward separation along the beam direction.
-        plt.figure(figsize=(8, 5))
-        plt.hist(lhe_delta_eta, bins=60, color="tab:blue", alpha=0.5, label="LHE")
-        plt.hist(gen_delta_eta, bins=60, color="tab:orange", alpha=0.5, label="GenPart")
-        plt.xlabel(r"$|\Delta \eta(\tau^{-},\tau^{+})|$")
-        plt.ylabel("Events")
-        plt.title("Ditau |DeltaEta| (LHE vs GenPart)")
-        plt.legend()
-        plt.tight_layout()
-        out_deta2 = output_dir / "hist_tau_deltaEta_LHE_vs_Gen.png"
-        plt.savefig(out_deta2, dpi=150)
-        plt.close()
-        print(f"Saved: {out_deta2}")
+        save_overlay_png_and_root(
+            output_dir,
+            "hist_tau_deltaEta_LHE_vs_Gen",
+            "Ditau |DeltaEta| (LHE vs GenPart)",
+            lhe_delta_eta,
+            gen_delta_eta,
+            bins=60,
+            xlabel=r"$|\Delta \eta(\tau^{-},\tau^{+})|$",
+            ylabel="Events",
+            root_titles=("LHE ditau |DeltaEta|", "GenPart ditau |DeltaEta|"),
+        )
 
 
 def main():
@@ -246,15 +339,22 @@ def main():
     # if gen_selected is not None:
     #     print(f"Events with exactly one GenPart tau- and tau+: {len(gen_selected)}")
 
-    # output_dir = HERE / "outputs"
-    # make_tau_histogram(output_dir, lhe_selected, gen_selected=gen_selected)
+    output_dir = HERE / "outputs"
+    make_tau_histogram(output_dir, lhe_selected, gen_selected=gen_selected)
 
 
 if __name__ == "__main__":
     main()
 
 
-#TODO the histograms output to become root file and to be written as that
+
+# if you want to see the root files in histograms
+# root 
+# TFile f("hist_tau_deltaR.root");
+# f.ls();
+# TH1* h = (TH1*)f.Get("hist_tau_deltaR");
+# h->Draw();
+
 #TODO to make histograms for green things in the pictures in from the table of Roumyana cabinet
 #TODO to find how make mutual chats in mattermost
 
