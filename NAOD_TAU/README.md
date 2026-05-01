@@ -1,6 +1,35 @@
 # NAOD_TAU
 
-This folder contains the tau-pair NanoAOD analysis in a small package layout.
+Tau-pair NanoAOD analysis framework.
+
+## Quick Setup
+
+**Option A: CERN LCG** (if available)
+
+```bash
+source setup.sh
+python read_nanoaodsim_analysis.py
+```
+
+**Option B1: Local Python venv** (recommended)
+
+```bash
+cd ..  # Go to project root
+bash NAOD_TAU/setup_option_b_venv.sh
+source .venv_local/bin/activate
+python NAOD_TAU/read_nanoaodsim_analysis.py
+```
+
+**Option B2: Conda** (if conda installed)
+
+```bash
+cd ..  # Go to project root
+bash NAOD_TAU/setup_option_b_conda.sh
+conda activate naod-tau
+python NAOD_TAU/read_nanoaodsim_analysis.py
+```
+
+👉 **See [SETUP_OPTIONS.md](SETUP_OPTIONS.md) for detailed instructions**
 
 ## Structure
 
