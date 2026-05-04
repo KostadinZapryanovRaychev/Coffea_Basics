@@ -528,12 +528,170 @@ def build_tau_vectors(parts, mask_minus, mask_plus):
         raise RuntimeError(error_msg) from e
 
 
+def compute_ditau_kinematics(lep_minus_lv, lep_plus_lv):
+    """
+    Compute di-tau (tau pair) kinematic properties.
+    
+    Args:
+        lep_minus_lv: Lorentz vector for tau- (pdgId=15)
+        lep_plus_lv: Lorentz vector for tau+ (pdgId=-15)
+        
+    Returns:
+        Dictionary with keys:
+        - 'pt': Transverse momentum of di-tau
+        - 'pz': Longitudinal momentum of di-tau
+        - 'eta': Pseudo-rapidity of di-tau
+        - 'phi': Azimuthal angle of di-tau
+        - 'mass': Invariant mass of di-tau pair
+        
+    Raises:
+        AttributeError: If Lorentz vectors lack required methods
+    """
+    try:
+        ditau = lep_minus_lv + lep_plus_lv
+        
+        return {
+            'pt': ak.to_numpy(ditau.pt),
+            'pz': ak.to_numpy(ditau.pz),
+            'eta': ak.to_numpy(ditau.eta),
+            'phi': ak.to_numpy(ditau.phi),
+            'mass': ak.to_numpy(ditau.mass),
+        }
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Failed to compute di-tau kinematics\n"
+            f"  Exception type: {type(e).__name__}\n"
+            f"  Details: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def compute_delta_angles(lep_minus_lv, lep_plus_lv):
+    """
+    Compute delta angles between tau pair particles.
+    
+    Args:
+        lep_minus_lv: Lorentz vector for tau-
+        lep_plus_lv: Lorentz vector for tau+
+        
+    Returns:
+        Dictionary with keys:
+        - 'delta_r': ΔR = sqrt(Δη² + Δφ²)
+        - 'delta_phi': |Δφ| (absolute delta phi)
+        - 'delta_eta': |Δη| (absolute delta eta)
+        - 'delta_theta': Δθ (polar angle difference, theta = 2*arctan(exp(-eta)))
+        
+    Raises:
+        RuntimeError: If angle computation fails
+    """
+    try:
+        delta_r = ak.to_numpy(lep_minus_lv.delta_r(lep_plus_lv))
+        delta_phi = ak.to_numpy(abs(lep_minus_lv.delta_phi(lep_plus_lv)))
+        delta_eta = ak.to_numpy(abs(lep_minus_lv.eta - lep_plus_lv.eta))
+        
+        # Compute delta_theta from pseudo-rapidities
+        # theta = 2 * arctan(exp(-eta))
+        # delta_theta = |theta1 - theta2|
+        theta_minus = 2.0 * np.arctan(np.exp(-lep_minus_lv.eta))
+        theta_plus = 2.0 * np.arctan(np.exp(-lep_plus_lv.eta))
+        delta_theta = ak.to_numpy(abs(theta_minus - theta_plus))
+        
+        return {
+            'delta_r': delta_r,
+            'delta_phi': delta_phi,
+            'delta_eta': delta_eta,
+            'delta_theta': delta_theta,
+        }
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Failed to compute delta angles\n"
+            f"  Exception type: {type(e).__name__}\n"
+            f"  Details: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics, delta_angles):
+    """
+    Save a complete suite of histograms (ditau pt, pz, and delta angles).
+    
+    Args:
+        output_dir: Output directory path
+        stem_prefix: Filename prefix (e.g., "hist_tau_gen_parent")
+        label_prefix: Label prefix for titles (e.g., "GenPart Parent Taus")
+        ditau_kinematics: Dict with keys 'pt', 'pz', 'eta', 'phi', 'mass'
+        delta_angles: Dict with keys 'delta_r', 'delta_phi', 'delta_eta', 'delta_theta'
+        
+    Raises:
+        RuntimeError: On save failure
+    """
+    try:
+        # DiTau pt
+        logger.info(f"Saving {stem_prefix} ditau pt histogram...")
+        counts, bin_edges = compute_histogram_data(ditau_kinematics['pt'], 60)
+        save_png(output_dir, f"{stem_prefix}_ditau_pt", f"{label_prefix} Di-tau p_T",
+                ditau_kinematics['pt'], bin_edges, r"$p_T(\tau^{-}\tau^{+})$ [GeV]", "Events")
+        save_root(output_dir, f"{stem_prefix}_ditau_pt", counts, bin_edges,
+                 f"{label_prefix} Di-tau p_T")
+        
+        # DiTau pz
+        logger.info(f"Saving {stem_prefix} ditau pz histogram...")
+        counts, bin_edges = compute_histogram_data(ditau_kinematics['pz'], 60)
+        save_png(output_dir, f"{stem_prefix}_ditau_pz", f"{label_prefix} Di-tau p_z",
+                ditau_kinematics['pz'], bin_edges, r"$p_z(\tau^{-}\tau^{+})$ [GeV]", "Events")
+        save_root(output_dir, f"{stem_prefix}_ditau_pz", counts, bin_edges,
+                 f"{label_prefix} Di-tau p_z")
+        
+        # DeltaR
+        logger.info(f"Saving {stem_prefix} deltaR histogram...")
+        counts, bin_edges = compute_histogram_data(delta_angles['delta_r'], 60)
+        save_png(output_dir, f"{stem_prefix}_deltaR", f"{label_prefix} $\\Delta R$",
+                delta_angles['delta_r'], bin_edges, r"$\Delta R(\tau^{-},\tau^{+})$", "Events")
+        save_root(output_dir, f"{stem_prefix}_deltaR", counts, bin_edges,
+                 f"{label_prefix} $\\Delta R$")
+        
+        # DeltaPhi
+        logger.info(f"Saving {stem_prefix} deltaPhi histogram...")
+        counts, bin_edges = compute_histogram_data(delta_angles['delta_phi'], 60)
+        save_png(output_dir, f"{stem_prefix}_deltaPhi", f"{label_prefix} $|\\Delta\\phi|$",
+                delta_angles['delta_phi'], bin_edges, r"$|\Delta \phi(\tau^{-},\tau^{+})|$", "Events")
+        save_root(output_dir, f"{stem_prefix}_deltaPhi", counts, bin_edges,
+                 f"{label_prefix} $|\\Delta\\phi|$")
+        
+        # DeltaEta
+        logger.info(f"Saving {stem_prefix} deltaEta histogram...")
+        counts, bin_edges = compute_histogram_data(delta_angles['delta_eta'], 60)
+        save_png(output_dir, f"{stem_prefix}_deltaEta", f"{label_prefix} $|\\Delta\\eta|$",
+                delta_angles['delta_eta'], bin_edges, r"$|\Delta \eta(\tau^{-},\tau^{+})|$", "Events")
+        save_root(output_dir, f"{stem_prefix}_deltaEta", counts, bin_edges,
+                 f"{label_prefix} $|\\Delta\\eta|$")
+        
+        # DeltaTheta (NEW)
+        logger.info(f"Saving {stem_prefix} deltaTheta histogram...")
+        counts, bin_edges = compute_histogram_data(delta_angles['delta_theta'], 60)
+        save_png(output_dir, f"{stem_prefix}_deltaTheta", f"{label_prefix} $\\Delta\\theta$",
+                delta_angles['delta_theta'], bin_edges, r"$\Delta \theta(\tau^{-},\tau^{+})$ [rad]", "Events")
+        save_root(output_dir, f"{stem_prefix}_deltaTheta", counts, bin_edges,
+                 f"{label_prefix} $\\Delta\\theta$")
+        
+        logger.info(f"✓ Saved histogram suite: {stem_prefix}")
+    except Exception as e:
+        error_msg = f"\n[ERROR] Failed to save histogram suite '{stem_prefix}': {str(e)}\n"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
 def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
     """
-    Generate tau-pair histograms from LHE and GenPart selections.
+    Generate comprehensive tau-pair histograms including:
+    - Di-tau kinematics (pt, pz, eta, phi, mass)
+    - Delta angles (ΔR, Δφ, Δη, Δθ)
+    - Support for GenPart parent particles (status=23)
+    - Support for GenPart children particles (status=1)
     
-    Creates histograms for ΔR, |Δφ|, and |Δη| comparisons. If GenPart selection
-    is provided, also creates overlay comparisons.
+    Creates histograms in both PNG and ROOT formats.
     
     Args:
         output_dir: Directory to save histogram files (PNG and ROOT)
@@ -561,7 +719,11 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         except Exception as e:
             raise ValueError(f"Invalid LHE selection: {str(e)}") from e
         
-        # Build LHE Lorentz vectors
+        # ========== LHE HISTOGRAMS ==========
+        logger.info("=" * 60)
+        logger.info("GENERATING LHE HISTOGRAMS")
+        logger.info("=" * 60)
+        
         try:
             logger.info("Building LHE Lorentz vectors...")
             lhe_minus_lv, lhe_plus_lv = build_tau_vectors(
@@ -572,113 +734,128 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         except Exception as e:
             raise RuntimeError(f"Failed to build LHE Lorentz vectors: {str(e)}") from e
         
-        # Compute LHE kinematic variables
         try:
-            logger.info("Computing LHE kinematic variables...")
-            lhe_delta_r = ak.to_numpy(lhe_minus_lv.delta_r(lhe_plus_lv))
-            lhe_delta_phi = ak.to_numpy(abs(lhe_minus_lv.delta_phi(lhe_plus_lv)))
-            lhe_delta_eta = ak.to_numpy(abs(lhe_minus_lv.eta - lhe_plus_lv.eta))
+            logger.info("Computing LHE di-tau kinematics...")
+            lhe_ditau_kinematics = compute_ditau_kinematics(lhe_minus_lv, lhe_plus_lv)
+            
+            logger.info("Computing LHE delta angles...")
+            lhe_delta_angles = compute_delta_angles(lhe_minus_lv, lhe_plus_lv)
         except Exception as e:
             raise RuntimeError(f"Failed to compute LHE kinematic variables: {str(e)}") from e
-
-        bins_dr = 60
         
-        # DeltaR: compute once, save in both formats
         try:
-            logger.info("Saving deltaR histogram (PNG and ROOT)...")
-            counts, bin_edges = compute_histogram_data(lhe_delta_r, bins_dr)
-            save_png(output_dir, "hist_tau_deltaR", "LHE ditau DeltaR", lhe_delta_r, bin_edges, r"$\Delta R(\tau^{-},\tau^{+})$", "Events")
-            save_root(output_dir, "hist_tau_deltaR", counts, bin_edges, "LHE ditau DeltaR")
+            save_histogram_suite(output_dir, "hist_tau_lhe", "LHE", 
+                               lhe_ditau_kinematics, lhe_delta_angles)
         except Exception as e:
-            logger.error(f"Failed to save deltaR histogram: {str(e)}")
+            logger.error(f"Failed to save LHE histogram suite: {str(e)}")
             raise
         
-        # DeltaPhi: compute once, save in both formats
-        try:
-            logger.info("Saving deltaPhi histogram (PNG and ROOT)...")
-            counts, bin_edges = compute_histogram_data(lhe_delta_phi, 60)
-            save_png(output_dir, "hist_tau_deltaPhi", "LHE ditau |DeltaPhi|", lhe_delta_phi, bin_edges, r"$|\Delta \phi(\tau^{-},\tau^{+})|$", "Events")
-            save_root(output_dir, "hist_tau_deltaPhi", counts, bin_edges, "LHE ditau |DeltaPhi|")
-        except Exception as e:
-            logger.error(f"Failed to save deltaPhi histogram: {str(e)}")
-            raise
-        
-        # DeltaEta: compute once, save in both formats
-        try:
-            logger.info("Saving deltaEta histogram (PNG and ROOT)...")
-            counts, bin_edges = compute_histogram_data(lhe_delta_eta, 60)
-            save_png(output_dir, "hist_tau_deltaEta", "LHE ditau |DeltaEta|", lhe_delta_eta, bin_edges, r"$|\Delta \eta(\tau^{-},\tau^{+})|$", "Events")
-            save_root(output_dir, "hist_tau_deltaEta", counts, bin_edges, "LHE ditau |DeltaEta|")
-        except Exception as e:
-            logger.error(f"Failed to save deltaEta histogram: {str(e)}")
-            raise
-
-        # GenPart overlay histograms (optional)
+        # ========== GenPart PARENT PARTICLES (status=23) ==========
         if gen_selected is not None:
+            logger.info("=" * 60)
+            logger.info("GENERATING GenPart PARENT HISTOGRAMS (status=23)")
+            logger.info("=" * 60)
+            
             try:
                 n_gen = len(gen_selected)
                 if n_gen == 0:
-                    logger.warning("⚠ GenPart selection is empty. Skipping overlay histograms.")
-                    return
-                logger.info(f"Processing {n_gen} GenPart-selected events for overlay histograms")
-                
-                # Build GenPart Lorentz vectors
-                logger.info("Building GenPart Lorentz vectors...")
-                gen_minus_lv, gen_plus_lv = build_tau_vectors(
-                    gen_selected.GenPart,
-                    (gen_selected.GenPart.pdgId == 15) & (gen_selected.GenPart.status == 23),
-                    (gen_selected.GenPart.pdgId == -15) & (gen_selected.GenPart.status == 23),
-                )
-                
-                # Compute GenPart kinematic variables
-                logger.info("Computing GenPart kinematic variables...")
-                gen_delta_r = ak.to_numpy(gen_minus_lv.delta_r(gen_plus_lv))
-                gen_delta_phi = ak.to_numpy(abs(gen_minus_lv.delta_phi(gen_plus_lv)))
-                gen_delta_eta = ak.to_numpy(abs(gen_minus_lv.eta - gen_plus_lv.eta))
-
-                # DeltaR overlay: compute once, save in both formats
-                try:
-                    logger.info("Saving deltaR overlay histogram...")
-                    lhe_counts, gen_counts, bin_edges = compute_overlay_histogram_data(lhe_delta_r, gen_delta_r, bins_dr)
-                    save_overlay_png(output_dir, "hist_tau_deltaR_LHE_vs_Gen", "Ditau DeltaR (LHE vs GenPart)", lhe_delta_r, gen_delta_r, bin_edges, r"$\Delta R(\tau^{-},\tau^{+})$", "Events")
-                    save_overlay_root(output_dir, "hist_tau_deltaR_LHE_vs_Gen", lhe_counts, gen_counts, bin_edges, ("LHE ditau DeltaR", "GenPart ditau DeltaR"))
-                except Exception as e:
-                    logger.error(f"Failed to save deltaR overlay: {str(e)}")
-                    raise
-                
-                # DeltaPhi overlay: compute once, save in both formats
-                try:
-                    logger.info("Saving deltaPhi overlay histogram...")
-                    lhe_counts, gen_counts, bin_edges = compute_overlay_histogram_data(lhe_delta_phi, gen_delta_phi, 60)
-                    save_overlay_png(output_dir, "hist_tau_deltaPhi_LHE_vs_Gen", "Ditau |DeltaPhi| (LHE vs GenPart)", lhe_delta_phi, gen_delta_phi, bin_edges, r"$|\Delta \phi(\tau^{-},\tau^{+})|$", "Events")
-                    save_overlay_root(output_dir, "hist_tau_deltaPhi_LHE_vs_Gen", lhe_counts, gen_counts, bin_edges, ("LHE ditau |DeltaPhi|", "GenPart ditau |DeltaPhi|"))
-                except Exception as e:
-                    logger.error(f"Failed to save deltaPhi overlay: {str(e)}")
-                    raise
-                
-                # DeltaEta overlay: compute once, save in both formats
-                try:
-                    logger.info("Saving deltaEta overlay histogram...")
-                    lhe_counts, gen_counts, bin_edges = compute_overlay_histogram_data(lhe_delta_eta, gen_delta_eta, 60)
-                    save_overlay_png(output_dir, "hist_tau_deltaEta_LHE_vs_Gen", "Ditau |DeltaEta| (LHE vs GenPart)", lhe_delta_eta, gen_delta_eta, bin_edges, r"$|\Delta \eta(\tau^{-},\tau^{+})|$", "Events")
-                    save_overlay_root(output_dir, "hist_tau_deltaEta_LHE_vs_Gen", lhe_counts, gen_counts, bin_edges, ("LHE ditau |DeltaEta|", "GenPart ditau |DeltaEta|"))
-                except Exception as e:
-                    logger.error(f"Failed to save deltaEta overlay: {str(e)}")
-                    raise
-                
-                logger.info("✓ All overlay histograms generated successfully")
+                    logger.warning("⚠ GenPart selection is empty. Skipping GenPart histograms.")
+                else:
+                    logger.info(f"Processing {n_gen} GenPart-selected events")
+                    
+                    # Build GenPart Lorentz vectors for parent taus (status=23)
+                    try:
+                        logger.info("Building GenPart parent Lorentz vectors (status=23)...")
+                        gen_parent_minus_lv, gen_parent_plus_lv = build_tau_vectors(
+                            gen_selected.GenPart,
+                            (gen_selected.GenPart.pdgId == 15) & (gen_selected.GenPart.status == 23),
+                            (gen_selected.GenPart.pdgId == -15) & (gen_selected.GenPart.status == 23),
+                        )
+                    except Exception as e:
+                        raise RuntimeError(f"Failed to build GenPart parent Lorentz vectors: {str(e)}") from e
+                    
+                    try:
+                        logger.info("Computing GenPart parent di-tau kinematics...")
+                        gen_parent_ditau_kinematics = compute_ditau_kinematics(gen_parent_minus_lv, gen_parent_plus_lv)
+                        
+                        logger.info("Computing GenPart parent delta angles...")
+                        gen_parent_delta_angles = compute_delta_angles(gen_parent_minus_lv, gen_parent_plus_lv)
+                    except Exception as e:
+                        raise RuntimeError(f"Failed to compute GenPart parent kinematic variables: {str(e)}") from e
+                    
+                    try:
+                        save_histogram_suite(output_dir, "hist_tau_gen_parent", "GenPart Parent", 
+                                           gen_parent_ditau_kinematics, gen_parent_delta_angles)
+                    except Exception as e:
+                        logger.error(f"Failed to save GenPart parent histogram suite: {str(e)}")
+                        raise
             except Exception as e:
                 error_msg = (
-                    f"\n[ERROR] GenPart overlay histogram generation failed\n"
+                    f"\n[ERROR] GenPart parent histogram generation failed\n"
                     f"  Exception type: {type(e).__name__}\n"
                     f"  Details: {str(e)}\n"
                 )
                 logger.error(error_msg)
                 raise RuntimeError(error_msg) from e
+            
+            # ========== GenPart CHILDREN PARTICLES (status=1) ==========
+            logger.info("=" * 60)
+            logger.info("GENERATING GenPart CHILDREN HISTOGRAMS (status=1)")
+            logger.info("=" * 60)
+            
+            try:
+                # Extract children (status=1) particles
+                try:
+                    logger.info("Extracting GenPart children particles (status=1)...")
+                    gen_children = gen_selected.GenPart[gen_selected.GenPart.status == 1]
+                    
+                    n_children = len(gen_children)
+                    if n_children == 0:
+                        logger.warning("⚠ No GenPart children particles found (status=1). Skipping children histograms.")
+                    else:
+                        logger.info(f"Found {n_children} children particles across events")
+                        
+                        # Build children Lorentz vectors (using all status=1 particles)
+                        try:
+                            logger.info("Building GenPart children Lorentz vectors...")
+                            # For children, we take the first two particles of status=1 as daughters of the tau pair
+                            gen_child_minus_lv = gen_children[:, 0]
+                            gen_child_plus_lv = gen_children[:, 1] if len(gen_children[0]) > 1 else gen_children[:, 0]
+                        except Exception as e:
+                            logger.warning(f"⚠ Could not build children Lorentz vectors: {str(e)}")
+                            raise
+                        
+                        try:
+                            logger.info("Computing GenPart children di-tau kinematics...")
+                            gen_child_ditau_kinematics = compute_ditau_kinematics(gen_child_minus_lv, gen_child_plus_lv)
+                            
+                            logger.info("Computing GenPart children delta angles...")
+                            gen_child_delta_angles = compute_delta_angles(gen_child_minus_lv, gen_child_plus_lv)
+                        except Exception as e:
+                            raise RuntimeError(f"Failed to compute GenPart children kinematic variables: {str(e)}") from e
+                        
+                        try:
+                            save_histogram_suite(output_dir, "hist_tau_gen_children", "GenPart Children", 
+                                               gen_child_ditau_kinematics, gen_child_delta_angles)
+                        except Exception as e:
+                            logger.error(f"Failed to save GenPart children histogram suite: {str(e)}")
+                            raise
+                except Exception as e:
+                    logger.warning(f"⚠ GenPart children histogram generation skipped: {str(e)}")
+            except Exception as e:
+                error_msg = (
+                    f"\n[ERROR] GenPart children histogram generation failed\n"
+                    f"  Exception type: {type(e).__name__}\n"
+                    f"  Details: {str(e)}\n"
+                )
+                logger.error(error_msg)
+                # Don't raise here - children are optional
         else:
             logger.info("GenPart selection not provided. Generating LHE-only histograms.")
         
-        logger.info("✓ All histograms generated successfully")
+        logger.info("=" * 60)
+        logger.info("✓ ALL HISTOGRAMS GENERATED SUCCESSFULLY")
+        logger.info("=" * 60)
     except Exception as e:
         error_msg = (
             f"\n[ERROR] Histogram generation failed\n"
@@ -688,3 +865,4 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         )
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
+

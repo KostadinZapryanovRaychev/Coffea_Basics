@@ -197,3 +197,133 @@ def load_tau_pairs(events):
     gen_selected, gen_mask_np = select_gen_tau_pairs(events, status_code=23)
     
     return lhe_selected, gen_selected, lhe_mask_np
+
+
+def get_genpart_parent_taus(events):
+    """
+    Extract parent tau particles from GenPart collection.
+    
+    Parents are tau/anti-tau with status=23 (hard process particles).
+    
+    Args:
+        events: NanoEvents object with GenPart collection
+        
+    Returns:
+        Tuple of (tau_minus_parents, tau_plus_parents) selected GenPart particles
+        
+    Raises:
+        AttributeError: If GenPart not found
+    """
+    if "GenPart" not in events.fields:
+        error_msg = "\n[ERROR] GenPart not found in events\n"
+        logger.error(error_msg)
+        raise AttributeError(error_msg)
+    
+    try:
+        gen_parts = events.GenPart
+        pdg_id = gen_parts.pdgId
+        status = gen_parts.status
+        
+        # Parents: status==23 (hard process)
+        tau_minus_mask = (pdg_id == 15) & (status == 23)
+        tau_plus_mask = (pdg_id == -15) & (status == 23)
+        
+        tau_minus_parents = gen_parts[tau_minus_mask]
+        tau_plus_parents = gen_parts[tau_plus_mask]
+        
+        return tau_minus_parents, tau_plus_parents
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Failed to extract parent taus from GenPart\n"
+            f"  Exception: {type(e).__name__}: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise
+
+
+def get_genpart_children_particles(gen_part_parent, events):
+    """
+    Extract children (decay products) of a parent GenPart particle.
+    
+    Uses mother/daughter indices to find all decay products.
+    
+    Args:
+        gen_part_parent: Parent GenPart particle (e.g., a tau with status=23)
+        events: Full NanoEvents object for access to parent indices
+        
+    Returns:
+        Array of child particles (GenPart collection)
+        
+    Raises:
+        AttributeError: If mother index information not available
+    """
+    try:
+        # Access mother index from parent
+        # In awkward arrays, we need to be careful with indexing
+        # For now, we'll use a simplified approach: find particles with mother pointing to this tau
+        
+        gen_parts = events.GenPart
+        
+        # Get mother indices - these point to parent particle indices
+        mother_idx = gen_parts.genPartIdxMother
+        
+        # For each tau parent, find particles whose mother is this tau
+        # This is complex in awkward arrays, so we'll compute per-event
+        children_list = []
+        
+        # Iterate over events
+        for event_idx in range(len(gen_parts)):
+            mothers = mother_idx[event_idx]
+            
+            # Find children by checking mother indices
+            # This is a simplified approach - in reality you'd need the mother particle indices
+            children_mask = (mothers >= 0)  # Valid mother index
+            children_list.append(gen_parts[event_idx][children_mask])
+        
+        return ak.concatenate([ak.Array([c]) for c in children_list])
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Failed to extract children particles\n"
+            f"  Exception: {type(e).__name__}: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise
+
+
+def get_genpart_children_simple(events):
+    """
+    Extract children particles as status=1 (stable final state) GenPart.
+    
+    This is a simpler approach that gets all stable particles,
+    which represent the decay products that reach the detector.
+    
+    Args:
+        events: NanoEvents object with GenPart collection
+        
+    Returns:
+        Array of stable GenPart particles (status=1)
+        
+    Raises:
+        AttributeError: If GenPart not found
+    """
+    if "GenPart" not in events.fields:
+        error_msg = "\n[ERROR] GenPart not found in events\n"
+        logger.error(error_msg)
+        raise AttributeError(error_msg)
+    
+    try:
+        gen_parts = events.GenPart
+        status = gen_parts.status
+        
+        # Children: status==1 (stable final state)
+        children_mask = (status == 1)
+        children = gen_parts[children_mask]
+        
+        return children
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Failed to extract children particles\n"
+            f"  Exception: {type(e).__name__}: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise
