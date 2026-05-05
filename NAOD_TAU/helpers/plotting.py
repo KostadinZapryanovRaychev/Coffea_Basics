@@ -762,7 +762,7 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
         # ========== GenPart PARENT PARTICLES (status=23) ==========
         if gen_selected is not None:
             logger.info("=" * 60)
-            logger.info("GENERATING GenPart PARENT HISTOGRAMS (status=23)")
+            logger.info("GENERATING PYTHIA GenPart PARENT HISTOGRAMS (status=23)")
             logger.info("=" * 60)
             
             try:
@@ -793,7 +793,7 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
                         raise RuntimeError(f"Failed to compute GenPart parent kinematic variables: {str(e)}") from e
                     
                     try:
-                        save_histogram_suite(output_dir, "hist_tau_gen_parent", "GenPart Parent", 
+                        save_histogram_suite(output_dir, "hist_tau_gen_parent", "Pythia GenPart Parent", 
                                            gen_parent_ditau_kinematics, gen_parent_delta_angles)
                     except Exception as e:
                         logger.error(f"Failed to save GenPart parent histogram suite: {str(e)}")
@@ -809,7 +809,7 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
             
             # ========== GenPart CHILDREN PARTICLES (status=1) ==========
             logger.info("=" * 60)
-            logger.info("GENERATING GenPart CHILDREN HISTOGRAMS (status=1)")
+            logger.info("GENERATING PYTHIA GenPart CHILDREN HISTOGRAMS (status=1)")
             logger.info("=" * 60)
             
             try:
@@ -844,7 +844,7 @@ def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
                             raise RuntimeError(f"Failed to compute GenPart children kinematic variables: {str(e)}") from e
                         
                         try:
-                            save_histogram_suite(output_dir, "hist_tau_gen_children", "GenPart Children", 
+                            save_histogram_suite(output_dir, "hist_tau_gen_children", "Pythia GenPart Children", 
                                                gen_child_ditau_kinematics, gen_child_delta_angles)
                         except Exception as e:
                             logger.error(f"Failed to save GenPart children histogram suite: {str(e)}")

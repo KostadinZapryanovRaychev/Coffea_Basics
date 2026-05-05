@@ -59,7 +59,13 @@ Each histogram is written twice into `NAOD_TAU/outputs/`:
 - `.png` for quick visual inspection
 - `.root` for ROOT/TBrowser inspection
 
-The current analysis now also writes invariant-mass histograms for the LHE, GenPart parent, and GenPart child tau-pair levels. The GenPart selection is constrained to tau pairs whose mother is a Z boson (`pdgId = 23`) so the plotted sample is consistent with `Z \to \tau^+\tau^-` rather than an arbitrary tau pair.
+The current analysis now also writes invariant-mass histograms for the LHE, Pythia GenPart parent, and Pythia GenPart child tau-pair levels. The GenPart selection is constrained to tau pairs whose mother is a Z boson (`pdgId = 23`) so the plotted sample is consistent with `Z → τ⁺τ⁻` rather than an arbitrary tau pair.
+
+**Particle Levels:**
+
+- **LHE**: Les Houches Event (parton-level, before shower)
+- **Pythia GenPart Parent (status=23)**: Hard-process taus after parton shower (Pythia8 event generator)
+- **Pythia GenPart Children (status=1)**: Decay products of taus reaching stable state (Pythia8 hadronization)
 
 ## load_events -- what we load in load events actually ? in essence
 
@@ -75,19 +81,19 @@ Generate in MadGraph5 -- pp -> Z(some) --> tau+ tau- and this is saved in for in
    ✓ Pure theoretical prediction
    ✓ No shower, no radiation yet
    ✓ "Clean" particles from the interaction
-4. PARTON SHOWER (QCD radiation)
+4. PARTON SHOWER (QCD radiation) - **PYTHIA8**
    Particles emit additional gluons/photons as they move
    Like an explosion of extra particles
 
-Provided to Pythia8 (file.lhe) for further hadranization and processing ( those are GenPart)
+   Provided to **Pythia8** for further hadronization and processing
 
-5. HADRONIZATION (Confinement)
+5. HADRONIZATION (Confinement) - **PYTHIA8**
    Quarks/Gluons CANNOT exist alone in nature
    They group into COLORLESS hadrons:
    - Quarks → Pions, Kaons, protons, etc.
    - Taus → Still taus (leptons don't hadronize)
 
-   ← THIS IS GenPart (GENERATOR LEVEL)
+   ← THIS IS **Pythia GenPart** (GENERATOR LEVEL)
 
 6. DECAY (Unstable particles break apart)
    Tau → electrons/muons + neutrinos
@@ -108,6 +114,10 @@ In our file .root that is currently under analysis it has been written info from
 
 ## What the plots mean
 
-- `m(\tau^-\tau^+)` is the invariant mass of the tau pair, built from the Lorentz-vector sum of the two taus at each level.
-- `p_T`, `p_z`, `\eta`, `\phi`, `\Delta R`, `\Delta\phi`, `\Delta\eta`, and `\Delta\theta` describe the pair kinematics and angular separation.
-- Signed `\Delta\phi`, `\Delta\eta`, and `\Delta\theta` keep the asymmetry information that was previously lost when absolute values were used.
+- **LHE Level**: Parton-level tau pairs (before shower)
+- **Pythia GenPart Parent Level**: Hard-process taus from Pythia8 (after parton shower, before hadronization)
+- **Pythia GenPart Children Level**: Stable decay products from Pythia8 hadronization
+
+- `m(τ⁻τ⁺)` is the **invariant mass** of the tau pair, built from the Lorentz-vector sum of the two taus at each level. This reveals the mass of the mother particle (e.g., Z boson) that produced the tau pair.
+- `p_T`, `p_z`, `η`, `φ`, `ΔR`, `Δφ`, `Δη`, and `Δθ` describe the pair kinematics and angular separation.
+- **Signed** `Δφ`, `Δη`, and `Δθ` keep the asymmetry information that was previously lost when absolute values were used. This shows directional preferences in tau-pair production.
