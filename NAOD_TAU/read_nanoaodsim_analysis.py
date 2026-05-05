@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
+
 from NAOD_TAU.helpers.io import ROOT_FILE, HERE, load_events
 from NAOD_TAU.helpers.plotting import make_tau_histogram
 from NAOD_TAU.helpers.selection import load_tau_pairs
@@ -43,7 +44,6 @@ def main():
             events = load_events(ROOT_FILE)
         except FileNotFoundError as e:
             logger.error(f"\n{str(e)}")
-            logger.error("Cannot proceed without input ROOT file.")
             sys.exit(1)
         except ValueError as e:
             logger.error(f"\n{str(e)}")

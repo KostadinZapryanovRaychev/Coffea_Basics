@@ -587,15 +587,15 @@ def compute_delta_angles(lep_minus_lv, lep_plus_lv):
     """
     try:
         delta_r = ak.to_numpy(lep_minus_lv.delta_r(lep_plus_lv))
-        delta_phi = ak.to_numpy(abs(lep_minus_lv.delta_phi(lep_plus_lv)))
-        delta_eta = ak.to_numpy(abs(lep_minus_lv.eta - lep_plus_lv.eta))
+        delta_phi = ak.to_numpy(lep_minus_lv.delta_phi(lep_plus_lv))
+        delta_eta = ak.to_numpy(lep_minus_lv.eta - lep_plus_lv.eta)
         
         # Compute delta_theta from pseudo-rapidities
         # theta = 2 * arctan(exp(-eta))
-        # delta_theta = |theta1 - theta2|
+        # delta_theta = theta1 - theta2
         theta_minus = 2.0 * np.arctan(np.exp(-lep_minus_lv.eta))
         theta_plus = 2.0 * np.arctan(np.exp(-lep_plus_lv.eta))
-        delta_theta = ak.to_numpy(abs(theta_minus - theta_plus))
+        delta_theta = ak.to_numpy(theta_minus - theta_plus)
         
         return {
             'delta_r': delta_r,
@@ -655,18 +655,18 @@ def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics
         # DeltaPhi
         logger.info(f"Saving {stem_prefix} deltaPhi histogram...")
         counts, bin_edges = compute_histogram_data(delta_angles['delta_phi'], 60)
-        save_png(output_dir, f"{stem_prefix}_deltaPhi", f"{label_prefix} $|\\Delta\\phi|$",
-                delta_angles['delta_phi'], bin_edges, r"$|\Delta \phi(\tau^{-},\tau^{+})|$", "Events")
+        save_png(output_dir, f"{stem_prefix}_deltaPhi", f"{label_prefix} $\\Delta\\phi$",
+                delta_angles['delta_phi'], bin_edges, r"$\Delta \phi(\tau^{-},\tau^{+})$", "Events")
         save_root(output_dir, f"{stem_prefix}_deltaPhi", counts, bin_edges,
-                 f"{label_prefix} $|\\Delta\\phi|$")
+                 f"{label_prefix} $\\Delta\\phi$")
         
         # DeltaEta
         logger.info(f"Saving {stem_prefix} deltaEta histogram...")
         counts, bin_edges = compute_histogram_data(delta_angles['delta_eta'], 60)
-        save_png(output_dir, f"{stem_prefix}_deltaEta", f"{label_prefix} $|\\Delta\\eta|$",
-                delta_angles['delta_eta'], bin_edges, r"$|\Delta \eta(\tau^{-},\tau^{+})|$", "Events")
+        save_png(output_dir, f"{stem_prefix}_deltaEta", f"{label_prefix} $\\Delta\\eta$",
+                delta_angles['delta_eta'], bin_edges, r"$\Delta \eta(\tau^{-},\tau^{+})$", "Events")
         save_root(output_dir, f"{stem_prefix}_deltaEta", counts, bin_edges,
-                 f"{label_prefix} $|\\Delta\\eta|$")
+                 f"{label_prefix} $\\Delta\\eta$")
         
         # DeltaTheta (NEW)
         logger.info(f"Saving {stem_prefix} deltaTheta histogram...")
