@@ -77,7 +77,7 @@ Generate in MadGraph5 -- pp -> Z(some) --> tau+ tau- and this is saved in for in
    Particles emit additional gluons/photons as they move
    Like an explosion of extra particles
 
-Provided to Pythia8 (file.lhe) for further hadranization and processing
+Provided to Pythia8 (file.lhe) for further hadranization and processing ( those are GenPart)
 
 5. HADRONIZATION (Confinement)
    Quarks/Gluons CANNOT exist alone in nature
