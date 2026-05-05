@@ -104,6 +104,8 @@ Provided to Pythia8 (file.lhe) for further hadranization and processing ( those 
    "I see a track, a photon, and some energy..."
    "That must be a tau decay!"
 
+In our file .root that is currently under analysis it has been written info from madGraph5 , Pythia and more using CMSSW.
+
 ## What the plots mean
 
 - `m(\tau^-\tau^+)` is the invariant mass of the tau pair, built from the Lorentz-vector sum of the two taus at each level.
