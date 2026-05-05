@@ -71,7 +71,7 @@ def select_lhe_tau_pairs(events):
         raise RuntimeError(error_msg) from e
 
 
-def select_gen_tau_pairs(events, status_code=23):
+def select_gen_tau_pairs(events, status_code=23, require_z_origin=True, mother_pdg_id=23):
     """
     SELECT GenPart TAU PAIRS (LAYER 2: GENERATOR LEVEL AFTER SHOWER)
     
@@ -91,6 +91,10 @@ def select_gen_tau_pairs(events, status_code=23):
     - status=23: Hard process (primary outgoing particles)
     - status=1:  Stable final state (what actually reaches detector)
     - status=2:  Decayed particle
+    
+        Z-ORIGIN FILTER:
+        - When require_z_origin=True, both taus must have a mother with pdgId=23
+            so the selected sample is consistent with Z -> tau+ tau- production.
     
     Args:
         events: NanoEvents object with GenPart collection
@@ -117,6 +121,36 @@ def select_gen_tau_pairs(events, status_code=23):
         
         # Selection: exactly 1 tau + 1 anti-tau per event
         gen_mask = (n_tau == 1) & (n_antitau == 1)
+
+        if require_z_origin:
+            if "genPartIdxMother" not in events.GenPart.fields:
+                raise AttributeError(
+                    "GenPart.genPartIdxMother is required to check Z origin but is missing"
+                )
+
+            tau_minus_parents = events.GenPart[(pdg_gen == 15) & (status_gen == status_code)]
+            tau_plus_parents = events.GenPart[(pdg_gen == -15) & (status_gen == status_code)]
+
+            tau_minus_mother_idx = tau_minus_parents.genPartIdxMother
+            tau_plus_mother_idx = tau_plus_parents.genPartIdxMother
+
+            safe_tau_minus_mother_idx = ak.where(tau_minus_mother_idx >= 0, tau_minus_mother_idx, 0)
+            safe_tau_plus_mother_idx = ak.where(tau_plus_mother_idx >= 0, tau_plus_mother_idx, 0)
+
+            tau_minus_mother_pdg = events.GenPart.pdgId[safe_tau_minus_mother_idx]
+            tau_plus_mother_pdg = events.GenPart.pdgId[safe_tau_plus_mother_idx]
+
+            tau_minus_from_z = ak.any(
+                (tau_minus_mother_idx >= 0) & (tau_minus_mother_pdg == mother_pdg_id),
+                axis=1,
+            )
+            tau_plus_from_z = ak.any(
+                (tau_plus_mother_idx >= 0) & (tau_plus_mother_pdg == mother_pdg_id),
+                axis=1,
+            )
+
+            gen_mask = gen_mask & tau_minus_from_z & tau_plus_from_z
+
         gen_selected = events[gen_mask]
         gen_mask_np = ak.to_numpy(gen_mask)
         
@@ -194,7 +228,7 @@ def load_tau_pairs(events):
     lhe_selected, lhe_mask_np = select_lhe_tau_pairs(events)
     
     # ========== LAYER 2: GenPart SELECTION (optional) ==========
-    gen_selected, gen_mask_np = select_gen_tau_pairs(events, status_code=23)
+    gen_selected, gen_mask_np = select_gen_tau_pairs(events, status_code=23, require_z_origin=True)
     
     return lhe_selected, gen_selected, lhe_mask_np
 

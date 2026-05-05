@@ -59,6 +59,8 @@ Each histogram is written twice into `NAOD_TAU/outputs/`:
 - `.png` for quick visual inspection
 - `.root` for ROOT/TBrowser inspection
 
+The current analysis now also writes invariant-mass histograms for the LHE, GenPart parent, and GenPart child tau-pair levels. The GenPart selection is constrained to tau pairs whose mother is a Z boson (`pdgId = 23`) so the plotted sample is consistent with `Z \to \tau^+\tau^-` rather than an arbitrary tau pair.
+
 ## load_events -- what we load in load events actually ? in essence
 
 COLLISION EVENT CHAIN:
@@ -101,3 +103,9 @@ Provided to Pythia8 (file.lhe) for further hadranization and processing ( those 
 8. RECONSTRUCTION (Physicists rebuild particles)
    "I see a track, a photon, and some energy..."
    "That must be a tau decay!"
+
+## What the plots mean
+
+- `m(\tau^-\tau^+)` is the invariant mass of the tau pair, built from the Lorentz-vector sum of the two taus at each level.
+- `p_T`, `p_z`, `\eta`, `\phi`, `\Delta R`, `\Delta\phi`, `\Delta\eta`, and `\Delta\theta` describe the pair kinematics and angular separation.
+- Signed `\Delta\phi`, `\Delta\eta`, and `\Delta\theta` keep the asymmetry information that was previously lost when absolute values were used.

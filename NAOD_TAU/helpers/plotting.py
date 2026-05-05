@@ -613,7 +613,7 @@ def compute_delta_angles(lep_minus_lv, lep_plus_lv):
 
 def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics, delta_angles):
     """
-    Save a complete suite of histograms (ditau pt, pz, and delta angles).
+    Save a complete suite of histograms (ditau pt, pz, mass, and delta angles).
     
     Args:
         output_dir: Output directory path
@@ -626,9 +626,20 @@ def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics
         RuntimeError: On save failure
     """
     try:
+        shape_bins = 80
+        mass_bins = 120
+
+        # Invariant mass
+        logger.debug(f"Saving {stem_prefix} invariant mass histogram...")
+        counts, bin_edges = compute_histogram_data(ditau_kinematics['mass'], mass_bins)
+        save_png(output_dir, f"{stem_prefix}_ditau_mass", f"{label_prefix} Invariant Mass",
+            ditau_kinematics['mass'], bin_edges, r"$m(\tau^{-}\tau^{+})$ [GeV]", "Events")
+        save_root(output_dir, f"{stem_prefix}_ditau_mass", counts, bin_edges,
+             f"{label_prefix} Invariant Mass")
+
         # DiTau pt
         logger.debug(f"Saving {stem_prefix} ditau pt histogram...")
-        counts, bin_edges = compute_histogram_data(ditau_kinematics['pt'], 60)
+        counts, bin_edges = compute_histogram_data(ditau_kinematics['pt'], shape_bins)
         save_png(output_dir, f"{stem_prefix}_ditau_pt", f"{label_prefix} Di-tau p_T",
                 ditau_kinematics['pt'], bin_edges, r"$p_T(\tau^{-}\tau^{+})$ [GeV]", "Events")
         save_root(output_dir, f"{stem_prefix}_ditau_pt", counts, bin_edges,
@@ -636,7 +647,7 @@ def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics
         
         # DiTau pz
         logger.debug(f"Saving {stem_prefix} ditau pz histogram...")
-        counts, bin_edges = compute_histogram_data(ditau_kinematics['pz'], 60)
+        counts, bin_edges = compute_histogram_data(ditau_kinematics['pz'], shape_bins)
         save_png(output_dir, f"{stem_prefix}_ditau_pz", f"{label_prefix} Di-tau p_z",
                 ditau_kinematics['pz'], bin_edges, r"$p_z(\tau^{-}\tau^{+})$ [GeV]", "Events")
         save_root(output_dir, f"{stem_prefix}_ditau_pz", counts, bin_edges,
@@ -644,7 +655,7 @@ def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics
         
         # DeltaR
         logger.debug(f"Saving {stem_prefix} deltaR histogram...")
-        counts, bin_edges = compute_histogram_data(delta_angles['delta_r'], 60)
+        counts, bin_edges = compute_histogram_data(delta_angles['delta_r'], shape_bins)
         save_png(output_dir, f"{stem_prefix}_deltaR", f"{label_prefix} $\\Delta R$",
                 delta_angles['delta_r'], bin_edges, r"$\Delta R(\tau^{-},\tau^{+})$", "Events")
         save_root(output_dir, f"{stem_prefix}_deltaR", counts, bin_edges,
@@ -652,7 +663,7 @@ def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics
         
         # DeltaPhi
         logger.debug(f"Saving {stem_prefix} deltaPhi histogram...")
-        counts, bin_edges = compute_histogram_data(delta_angles['delta_phi'], 60)
+        counts, bin_edges = compute_histogram_data(delta_angles['delta_phi'], shape_bins)
         save_png(output_dir, f"{stem_prefix}_deltaPhi", f"{label_prefix} $\\Delta\\phi$",
                 delta_angles['delta_phi'], bin_edges, r"$\Delta \phi(\tau^{-},\tau^{+})$", "Events")
         save_root(output_dir, f"{stem_prefix}_deltaPhi", counts, bin_edges,
@@ -660,7 +671,7 @@ def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics
         
         # DeltaEta
         logger.debug(f"Saving {stem_prefix} deltaEta histogram...")
-        counts, bin_edges = compute_histogram_data(delta_angles['delta_eta'], 60)
+        counts, bin_edges = compute_histogram_data(delta_angles['delta_eta'], shape_bins)
         save_png(output_dir, f"{stem_prefix}_deltaEta", f"{label_prefix} $\\Delta\\eta$",
                 delta_angles['delta_eta'], bin_edges, r"$\Delta \eta(\tau^{-},\tau^{+})$", "Events")
         save_root(output_dir, f"{stem_prefix}_deltaEta", counts, bin_edges,
@@ -668,7 +679,7 @@ def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics
         
         # DeltaTheta (NEW)
         logger.debug(f"Saving {stem_prefix} deltaTheta histogram...")
-        counts, bin_edges = compute_histogram_data(delta_angles['delta_theta'], 60)
+        counts, bin_edges = compute_histogram_data(delta_angles['delta_theta'], shape_bins)
         save_png(output_dir, f"{stem_prefix}_deltaTheta", f"{label_prefix} $\\Delta\\theta$",
                 delta_angles['delta_theta'], bin_edges, r"$\Delta \theta(\tau^{-},\tau^{+})$ [rad]", "Events")
         save_root(output_dir, f"{stem_prefix}_deltaTheta", counts, bin_edges,

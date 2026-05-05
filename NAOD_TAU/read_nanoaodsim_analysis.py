@@ -16,9 +16,7 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
-# Allow INFO level for io module (file loading)
 logging.getLogger("NAOD_TAU.helpers.io").setLevel(logging.INFO)
-# Allow INFO level for plotting module (summary messages)
 logging.getLogger("NAOD_TAU.helpers.plotting").setLevel(logging.INFO)
 
 if __package__ is None or __package__ == "":
