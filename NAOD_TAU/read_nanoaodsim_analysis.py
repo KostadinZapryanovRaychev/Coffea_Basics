@@ -9,16 +9,21 @@ import logging
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,  # Default level: show WARNING and above
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
     ]
 )
 logger = logging.getLogger(__name__)
+# Allow INFO level for io module (file loading)
+logging.getLogger("NAOD_TAU.helpers.io").setLevel(logging.INFO)
+# Allow INFO level for plotting module (summary messages)
+logging.getLogger("NAOD_TAU.helpers.plotting").setLevel(logging.INFO)
 
 if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 
 from NAOD_TAU.helpers.io import ROOT_FILE, HERE, load_events
 from NAOD_TAU.helpers.plotting import make_tau_histogram
@@ -43,7 +48,6 @@ def main():
             events = load_events(ROOT_FILE)
         except FileNotFoundError as e:
             logger.error(f"\n{str(e)}")
-            logger.error("Cannot proceed without input ROOT file.")
             sys.exit(1)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
@@ -107,6 +111,11 @@ def main():
                 f"  Details: {str(e)}\n"
             )
             sys.exit(1)
+        
+        # Analysis completed successfully
+        logger.info("=" * 60)
+        logger.info("✓ ANALYSIS COMPLETED SUCCESSFULLY")
+        logger.info("=" * 60)
         
     except KeyboardInterrupt:
         logger.warning("\n[WARNING] Analysis interrupted by user (Ctrl+C)")

@@ -57,12 +57,11 @@ def load_events(root_file: Path):
     # Load events via NanoEventsFactory
     try:
         logger.info(f"Loading NanoAOD events from: {root_file}")
-        logger.info(f"Tree name: {TREE_NAME}")
         events = NanoEventsFactory.from_root(
             {str(root_file): TREE_NAME},
             schemaclass=NanoAODSchema
         ).events()
-        logger.info(f"Successfully loaded {len(events)} events")
+        logger.info(f"✓ Successfully loaded {len(events)} events")
         return events
     except KeyError as e:
         error_msg = (
