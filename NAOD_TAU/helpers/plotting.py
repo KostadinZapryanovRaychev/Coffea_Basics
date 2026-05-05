@@ -43,6 +43,8 @@ def build_root_histogram(name: str, title: str, counts, bin_edges):
         if np.any(np.isnan(bin_edges)) or np.any(np.isinf(bin_edges)):
             raise ValueError("Bin edges contain NaN or Inf values")
         
+        ##TODO cos for delta _ phi ( range 1 - 1 200 bins) LHE
+        
         data = np.zeros(len(counts) + 2, dtype=np.float64)
         data[1:-1] = counts
         entries = float(counts.sum())

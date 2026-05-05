@@ -63,6 +63,7 @@ Each histogram is written twice into `NAOD_TAU/outputs/`:
 
 COLLISION EVENT CHAIN:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generate in MadGraph5 -- pp -> Z(some) --> tau+ tau- and this is saved in for instance file.lhe
 
 1. TWO PROTONS COLLIDE at LHC
    Proton + Proton → COLLISION
@@ -75,6 +76,9 @@ COLLISION EVENT CHAIN:
 4. PARTON SHOWER (QCD radiation)
    Particles emit additional gluons/photons as they move
    Like an explosion of extra particles
+
+Provided to Pythia8 (file.lhe) for further hadranization and processing
+
 5. HADRONIZATION (Confinement)
    Quarks/Gluons CANNOT exist alone in nature
    They group into COLORLESS hadrons:
