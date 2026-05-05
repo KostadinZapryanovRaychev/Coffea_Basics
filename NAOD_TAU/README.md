@@ -121,3 +121,5 @@ In our file .root that is currently under analysis it has been written info from
 - `m(τ⁻τ⁺)` is the **invariant mass** of the tau pair, built from the Lorentz-vector sum of the two taus at each level. This reveals the mass of the mother particle (e.g., Z boson) that produced the tau pair.
 - `p_T`, `p_z`, `η`, `φ`, `ΔR`, `Δφ`, `Δη`, and `Δθ` describe the pair kinematics and angular separation.
 - **Signed** `Δφ`, `Δη`, and `Δθ` keep the asymmetry information that was previously lost when absolute values were used. This shows directional preferences in tau-pair production.
+
+TODO this to be used as formula and to be written: https://journals.aps.org/prd/abstract/10.1103/PhysRevD.111.112004
