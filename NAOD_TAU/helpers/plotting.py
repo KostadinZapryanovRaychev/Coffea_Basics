@@ -278,7 +278,33 @@ def save_lhe_histogram_pt(output_dir: Path, pt):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e    
      
+def save_lhe_histogram_etha(output_dir: Path, eta):
+    """
+    Save eta distribution histogram for LHE tau pairs.
     
+    Args:
+        output_dir: Output directory
+        eta: Eta values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-20, bin_edge_max=20)
+        save_png(
+            output_dir,
+            "lhe_eta",
+            "LHE Taus Eta Distribution",
+            eta,
+            bin_edges,
+            r"$\eta(\tau^{-}\tau^{+})$",
+            "Events",
+        )
+        return "lhe_eta", "LHE Taus Eta Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
 def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
     """
     Create and save histograms for LHE-selected tau pairs.
@@ -299,12 +325,13 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
              lhe_selected.LHEPart.pdgId == 15,
              lhe_selected.LHEPart.pdgId == -15,
         )
-        mass = (lhe_minus_lv + lhe_plus_lv).mass
-        save_lhe_mass_histogram(output_dir, mass)
+        # for all particles 
+        save_lhe_mass_histogram(output_dir, (lhe_minus_lv + lhe_plus_lv).mass)
         save_lhe_phi_histogram_by_default_method(output_dir, (lhe_minus_lv + lhe_plus_lv).phi)
         save_lhe_phi_naturally(output_dir, lhe_minus_lv, lhe_plus_lv)
         save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz)
         save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt)
+        save_lhe_histogram_etha(output_dir, (lhe_minus_lv + lhe_plus_lv).eta)
     except ValueError as e:
         logger.error(f"\n{str(e)}")
         raise ValueError(str(e)) from e

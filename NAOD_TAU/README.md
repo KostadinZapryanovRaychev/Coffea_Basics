@@ -368,12 +368,6 @@ BATCH ANALYSIS SUMMARY
 
 ### Latest Enhancements (Current Release)
 
-1. **2D Correlation Histograms**
-   - `compute_histogram_data_2d()` — 2D histogram computation
-   - `build_root_histogram_2d()` — ROOT TH2x object creation
-   - Three new plot functions: Δφ vs M, ΔR vs M, Δη vs M
-   - ROOT I/O support for 2D histograms
-
 2. **Enhanced ROOT Output**
    - `save_lhe_histograms_root()` now handles both 1D and 2D
    - Automatic routing based on histogram tuple length (4-tuple vs 5-tuple)
