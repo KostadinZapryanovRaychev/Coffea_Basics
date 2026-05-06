@@ -52,20 +52,102 @@ or as a module:
 python -m NAOD_TAU.read_nanoaodsim_analysis
 ```
 
+## File Configuration
+
+The analysis reads files from **`NAOD_TAU/file_config.json`**. This allows batch processing of multiple files without code changes. File paths in the config are relative to the project root.
+
+**Example configuration:**
+
+```json
+{
+  "root_files": [
+    {
+      "name": "nanoaodsim_coffea_1",
+      "path": "nanoaodsim_coffea_1.root",
+      "tree": "Events",
+      "enabled": true
+    },
+    {
+      "name": "nanoaodsim_coffea_2",
+      "path": "nanoaodsim_coffea_2.root",
+      "tree": "Events",
+      "enabled": false
+    }
+  ]
+}
+```
+
+**Fields:**
+
+- `name`: Display name for the file (used in output directory)
+- `path`: Relative path from project root
+- `tree`: ROOT tree name (default: "Events")
+- `enabled`: Process this file (true/false)
+
+**Features:**
+
+- Add/remove files by editing JSON
+- Enable/disable files without deleting entries
+- Process multiple files in one run
+- Each file gets its own output directory
+
+## Batch Processing
+
+The analysis automatically processes **all enabled files** from `file_config.json`:
+
+1. Loads each file sequentially
+2. Selects tau pairs
+3. Generates histograms in separate output directories
+4. Reports summary with success/skip counts
+
+Example output structure:
+
+```
+NAOD_TAU/outputs/
+├── nanoaodsim_coffea_1/
+│   ├── lhe_mass.png
+│   ├── lhe_mass.root
+│   ├── lhe_delta_r.png
+│   ├── lhe_delta_r.root
+│   └── ...
+└── nanoaodsim_coffea_2/
+    ├── lhe_mass.png
+    ├── lhe_mass.root
+    └── ...
+```
+
 ## Outputs
 
-Each histogram is written twice into `NAOD_TAU/outputs/`:
+Histograms are written to `NAOD_TAU/outputs/` in per-file directories:
 
-- `.png` for quick visual inspection
-- `.root` for ROOT/TBrowser inspection
+- **PNG files** for quick visual inspection (matplotlib)
+- **ROOT files** for detailed analysis (ROOT/TBrowser)
 
-The current analysis now also writes invariant-mass histograms for the LHE, Pythia GenPart parent, and Pythia GenPart child tau-pair levels. The GenPart selection is constrained to tau pairs whose mother is a Z boson (`pdgId = 23`) so the plotted sample is consistent with `Z → τ⁺τ⁻` rather than an arbitrary tau pair.
+Each enabled file in `file_config.json` gets its own output directory:
 
-**Particle Levels:**
+```
+outputs/
+  file1_name/
+    lhe_mass.png
+    lhe_mass.root
+    lhe_delta_r.png
+    lhe_delta_r.root
+    lhe_delta_phi.png
+    lhe_delta_phi.root
+    lhe_delta_eta.png
+    lhe_delta_eta.root
+  file2_name/
+    (same histograms for file 2)
+```
 
-- **LHE**: Les Houches Event (parton-level, before shower)
-- **Pythia GenPart Parent (status=23)**: Hard-process taus after parton shower (Pythia8 event generator)
-- **Pythia GenPart Children (status=1)**: Decay products of taus reaching stable state (Pythia8 hadronization)
+**LHE-Only Analysis (Current):**
+
+The current analysis plots LHE particles (parton-level, before shower):
+
+- `lhe_mass` — Di-tau invariant mass distribution
+- `lhe_delta_r` — ΔR between tau- and tau+
+- `lhe_delta_phi` — Azimuthal angle difference (signed, range [-π, π])
+- `lhe_delta_eta` — Pseudorapidity difference (signed)
 
 ## load_events -- what we load in load events actually ? in essence
 
