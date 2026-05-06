@@ -24,7 +24,7 @@ if __package__ is None or __package__ == "":
 
 
 from NAOD_TAU.helpers.io import ROOT_FILE, HERE, load_events
-from NAOD_TAU.helpers.plotting import make_tau_histogram
+from NAOD_TAU.helpers.plotting import make_tau_histogram_lhe
 from NAOD_TAU.helpers.selection import load_tau_pairs
 
 
@@ -86,10 +86,10 @@ def main():
             )
             sys.exit(1)
         
-        # Step 3: Generate histograms
+        # Step 3: Generate LHE histograms
         try:
             output_dir = HERE / "outputs"
-            make_tau_histogram(output_dir, lhe_selected, gen_selected=gen_selected)
+            make_tau_histogram_lhe(output_dir, lhe_selected)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Output directory validation failed.")

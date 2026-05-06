@@ -692,182 +692,329 @@ def save_histogram_suite(output_dir, stem_prefix, label_prefix, ditau_kinematics
         raise RuntimeError(error_msg) from e
 
 
-def make_tau_histogram(output_dir: Path, lhe_selected, gen_selected=None):
+def create_output_directory(output_dir: Path) -> Path:
     """
-    Generate comprehensive tau-pair histograms including:
-    - Di-tau kinematics (pt, pz, eta, phi, mass)
-    - Delta angles (ΔR, Δφ, Δη, Δθ)
-    - Support for GenPart parent particles (status=23)
-    - Support for GenPart children particles (status=1)
+    Create output directory for histogram files.
     
-    Creates histograms in both PNG and ROOT formats.
+    Args:
+        output_dir: Path to directory to create
+        
+    Returns:
+        Path object for the created directory
+        
+    Raises:
+        ValueError: If directory cannot be created
+    """
+    try:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Output directory: {output_dir}")
+        return output_dir
+    except OSError as e:
+        error_msg = f"Cannot create output directory: {output_dir}\n  Details: {str(e)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg) from e
+
+
+def validate_lhe_events(lhe_selected) -> int:
+    """
+    Validate LHE event selection.
+    
+    Args:
+        lhe_selected: NanoEvents with LHE particles
+        
+    Returns:
+        Number of events in selection
+        
+    Raises:
+        ValueError: If selection is invalid or empty
+    """
+    try:
+        n_events = len(lhe_selected)
+        if n_events == 0:
+            raise ValueError("LHE selection is empty (0 events)")
+        logger.debug(f"Validated {n_events} LHE-selected events")
+        return n_events
+    except Exception as e:
+        error_msg = f"Invalid LHE selection: {str(e)}"
+        logger.error(error_msg)
+        raise ValueError(error_msg) from e
+
+
+def build_lhe_tau_vectors(lhe_selected):
+    """
+    Build Lorentz vectors for tau- and tau+ from LHEPart collection.
+    
+    Args:
+        lhe_selected: NanoEvents with valid LHE tau pairs
+        
+    Returns:
+        Tuple of (lhe_minus_lv, lhe_plus_lv) Lorentz vectors
+        
+    Raises:
+        RuntimeError: If Lorentz vector construction fails
+    """
+    try:
+        logger.debug("Building LHE Lorentz vectors...")
+        lhe_minus_lv, lhe_plus_lv = build_tau_vectors(
+            lhe_selected.LHEPart,
+            lhe_selected.LHEPart.pdgId == 15,
+            lhe_selected.LHEPart.pdgId == -15,
+        )
+        logger.debug("✓ LHE Lorentz vectors built successfully")
+        return lhe_minus_lv, lhe_plus_lv
+    except Exception as e:
+        error_msg = f"Failed to build LHE Lorentz vectors: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def compute_lhe_ditau_kinematics(lhe_minus_lv, lhe_plus_lv):
+    """
+    Compute di-tau (tau pair) kinematic properties from LHE.
+    
+    Args:
+        lhe_minus_lv: Lorentz vector for tau- (pdgId=15)
+        lhe_plus_lv: Lorentz vector for tau+ (pdgId=-15)
+        
+    Returns:
+        Dictionary with keys 'pt', 'pz', 'eta', 'phi', 'mass'
+        
+    Raises:
+        RuntimeError: If kinematics computation fails
+    """
+    try:
+        logger.debug("Computing LHE di-tau kinematics...")
+        lhe_ditau_kinematics = compute_ditau_kinematics(lhe_minus_lv, lhe_plus_lv)
+        logger.debug("✓ LHE di-tau kinematics computed")
+        return lhe_ditau_kinematics
+    except Exception as e:
+        error_msg = f"Failed to compute LHE di-tau kinematics: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def compute_lhe_delta_angles(lhe_minus_lv, lhe_plus_lv):
+    """
+    Compute delta angles (ΔR, Δφ, Δη) between tau pair.
+    
+    Args:
+        lhe_minus_lv: Lorentz vector for tau- (pdgId=15)
+        lhe_plus_lv: Lorentz vector for tau+ (pdgId=-15)
+        
+    Returns:
+        Dictionary with keys 'delta_r', 'delta_phi', 'delta_eta'
+        
+    Raises:
+        RuntimeError: If angle computation fails
+    """
+    try:
+        logger.debug("Computing LHE delta angles...")
+        lhe_delta_angles = compute_delta_angles(lhe_minus_lv, lhe_plus_lv)
+        logger.debug("✓ LHE delta angles computed")
+        return lhe_delta_angles
+    except Exception as e:
+        error_msg = f"Failed to compute LHE delta angles: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_lhe_mass_histogram(output_dir: Path, mass):
+    """
+    Save invariant mass distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        mass: Mass values array
+        
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE invariant mass histogram...")
+        counts, bin_edges = compute_histogram_data(mass, bins=120)
+        save_png(
+            output_dir, 
+            "lhe_mass", 
+            "LHE Di-tau Invariant Mass",
+            mass, 
+            bin_edges, 
+            r"$m(\tau^{-}\tau^{+})$ [GeV]", 
+            "Events"
+        )
+        save_root(
+            output_dir, 
+            "lhe_mass", 
+            counts, 
+            bin_edges,
+            "LHE Di-tau Invariant Mass"
+        )
+        logger.info("✓ Saved LHE mass histogram")
+    except Exception as e:
+        error_msg = f"Failed to save LHE mass histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_lhe_delta_r_histogram(output_dir: Path, delta_r):
+    """
+    Save ΔR distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_r: Delta R values array
+        
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE ΔR histogram...")
+        counts, bin_edges = compute_histogram_data(delta_r, bins=80)
+        save_png(
+            output_dir, 
+            "lhe_delta_r", 
+            "LHE $\\Delta R$",
+            delta_r, 
+            bin_edges, 
+            r"$\Delta R(\tau^{-},\tau^{+})$", 
+            "Events"
+        )
+        save_root(
+            output_dir, 
+            "lhe_delta_r", 
+            counts, 
+            bin_edges,
+            "LHE $\\Delta R$"
+        )
+        logger.info("✓ Saved LHE ΔR histogram")
+    except Exception as e:
+        error_msg = f"Failed to save LHE ΔR histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_lhe_delta_phi_histogram(output_dir: Path, delta_phi):
+    """
+    Save Δφ distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_phi: Delta phi values array (range [-π, π])
+        
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE Δφ histogram...")
+        counts, bin_edges = compute_histogram_data(delta_phi, bins=80)
+        save_png(
+            output_dir, 
+            "lhe_delta_phi", 
+            "LHE $\\Delta\\phi$",
+            delta_phi, 
+            bin_edges, 
+            r"$\Delta \phi(\tau^{-},\tau^{+})$ [rad]", 
+            "Events"
+        )
+        save_root(
+            output_dir, 
+            "lhe_delta_phi", 
+            counts, 
+            bin_edges,
+            "LHE $\\Delta\\phi$"
+        )
+        logger.info("✓ Saved LHE Δφ histogram")
+    except Exception as e:
+        error_msg = f"Failed to save LHE Δφ histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_lhe_delta_eta_histogram(output_dir: Path, delta_eta):
+    """
+    Save Δη distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_eta: Delta eta values array
+        
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE Δη histogram...")
+        counts, bin_edges = compute_histogram_data(delta_eta, bins=80)
+        save_png(
+            output_dir, 
+            "lhe_delta_eta", 
+            "LHE $\\Delta\\eta$",
+            delta_eta, 
+            bin_edges, 
+            r"$\Delta \eta(\tau^{-},\tau^{+})$", 
+            "Events"
+        )
+        save_root(
+            output_dir, 
+            "lhe_delta_eta", 
+            counts, 
+            bin_edges,
+            "LHE $\\Delta\\eta$"
+        )
+        logger.info("✓ Saved LHE Δη histogram")
+    except Exception as e:
+        error_msg = f"Failed to save LHE Δη histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
+    """
+    Generate LHE tau-pair histograms (mass, ΔR, Δφ, Δη).
+    
+    Orchestrates the complete LHE histogram generation pipeline:
+    1. Create output directory
+    2. Validate LHE events
+    3. Build Lorentz vectors
+    4. Compute kinematics and angles
+    5. Save individual histograms
     
     Args:
         output_dir: Directory to save histogram files (PNG and ROOT)
         lhe_selected: NanoEvents with valid LHE tau pairs
-        gen_selected: Optional NanoEvents with valid GenPart tau pairs for comparison
         
     Raises:
         ValueError: If output directory cannot be created or events are invalid
         RuntimeError: If histogram generation or file I/O fails
     """
     try:
-        # Create output directory
-        try:
-            output_dir.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Output directory: {output_dir}")
-        except OSError as e:
-            raise ValueError(f"Cannot create output directory: {output_dir}\n  Details: {str(e)}") from e
-        
-        # Validate LHE selection
-        try:
-            n_lhe = len(lhe_selected)
-            if n_lhe == 0:
-                raise ValueError("LHE selection is empty (0 events)")
-            logger.debug(f"Processing {n_lhe} LHE-selected events")
-        except Exception as e:
-            raise ValueError(f"Invalid LHE selection: {str(e)}") from e
-        
-        # ========== LHE HISTOGRAMS ==========
         logger.info("=" * 60)
-        logger.info("GENERATING LHE HISTOGRAMS")
+        logger.info("GENERATING LHE TAU HISTOGRAMS")
         logger.info("=" * 60)
         
-        try:
-            logger.debug("Building LHE Lorentz vectors...")
-            lhe_minus_lv, lhe_plus_lv = build_tau_vectors(
-                lhe_selected.LHEPart,
-                lhe_selected.LHEPart.pdgId == 15,
-                lhe_selected.LHEPart.pdgId == -15,
-            )
-        except Exception as e:
-            raise RuntimeError(f"Failed to build LHE Lorentz vectors: {str(e)}") from e
+        # Step 1: Create output directory
+        create_output_directory(output_dir)
         
-        try:
-            logger.debug("Computing LHE di-tau kinematics...")
-            lhe_ditau_kinematics = compute_ditau_kinematics(lhe_minus_lv, lhe_plus_lv)
-            
-            logger.debug("Computing LHE delta angles...")
-            lhe_delta_angles = compute_delta_angles(lhe_minus_lv, lhe_plus_lv)
-        except Exception as e:
-            raise RuntimeError(f"Failed to compute LHE kinematic variables: {str(e)}") from e
+        # Step 2: Validate LHE selection
+        validate_lhe_events(lhe_selected)
         
-        try:
-            save_histogram_suite(output_dir, "hist_tau_lhe", "LHE", 
-                               lhe_ditau_kinematics, lhe_delta_angles)
-        except Exception as e:
-            logger.error(f"Failed to save LHE histogram suite: {str(e)}")
-            raise
+        # Step 3: Build Lorentz vectors
+        lhe_minus_lv, lhe_plus_lv = build_lhe_tau_vectors(lhe_selected)
         
-        # ========== GenPart PARENT PARTICLES (status=23) ==========
-        if gen_selected is not None:
-            logger.info("=" * 60)
-            logger.info("GENERATING PYTHIA GenPart PARENT HISTOGRAMS (status=23)")
-            logger.info("=" * 60)
-            
-            try:
-                n_gen = len(gen_selected)
-                if n_gen == 0:
-                    logger.warning("⚠ GenPart selection is empty. Skipping GenPart histograms.")
-                else:
-                    logger.debug(f"Processing {n_gen} GenPart-selected events")
-                    
-                    # Build GenPart Lorentz vectors for parent taus (status=23)
-                    try:
-                        logger.debug("Building GenPart parent Lorentz vectors (status=23)...")
-                        gen_parent_minus_lv, gen_parent_plus_lv = build_tau_vectors(
-                            gen_selected.GenPart,
-                            (gen_selected.GenPart.pdgId == 15) & (gen_selected.GenPart.status == 23),
-                            (gen_selected.GenPart.pdgId == -15) & (gen_selected.GenPart.status == 23),
-                        )
-                    except Exception as e:
-                        raise RuntimeError(f"Failed to build GenPart parent Lorentz vectors: {str(e)}") from e
-                    
-                    try:
-                        logger.debug("Computing GenPart parent di-tau kinematics...")
-                        gen_parent_ditau_kinematics = compute_ditau_kinematics(gen_parent_minus_lv, gen_parent_plus_lv)
-                        
-                        logger.debug("Computing GenPart parent delta angles...")
-                        gen_parent_delta_angles = compute_delta_angles(gen_parent_minus_lv, gen_parent_plus_lv)
-                    except Exception as e:
-                        raise RuntimeError(f"Failed to compute GenPart parent kinematic variables: {str(e)}") from e
-                    
-                    try:
-                        save_histogram_suite(output_dir, "hist_tau_gen_parent", "Pythia GenPart Parent", 
-                                           gen_parent_ditau_kinematics, gen_parent_delta_angles)
-                    except Exception as e:
-                        logger.error(f"Failed to save GenPart parent histogram suite: {str(e)}")
-                        raise
-            except Exception as e:
-                error_msg = (
-                    f"\n[ERROR] GenPart parent histogram generation failed\n"
-                    f"  Exception type: {type(e).__name__}\n"
-                    f"  Details: {str(e)}\n"
-                )
-                logger.error(error_msg)
-                raise RuntimeError(error_msg) from e
-            
-            # ========== GenPart CHILDREN PARTICLES (status=1) ==========
-            logger.info("=" * 60)
-            logger.info("GENERATING PYTHIA GenPart CHILDREN HISTOGRAMS (status=1)")
-            logger.info("=" * 60)
-            
-            try:
-                # Extract children (status=1) particles
-                try:
-                    logger.debug("Extracting GenPart children particles (status=1)...")
-                    gen_children = gen_selected.GenPart[gen_selected.GenPart.status == 1]
-                    
-                    n_children = len(gen_children)
-                    if n_children == 0:
-                        logger.warning("⚠ No GenPart children particles found (status=1). Skipping children histograms.")
-                    else:
-                        logger.debug(f"Found {n_children} children particles across events")
-                        
-                        # Build children Lorentz vectors (using all status=1 particles)
-                        try:
-                            logger.debug("Building GenPart children Lorentz vectors...")
-                            # For children, we take the first two particles of status=1 as daughters of the tau pair
-                            gen_child_minus_lv = gen_children[:, 0]
-                            gen_child_plus_lv = gen_children[:, 1] if len(gen_children[0]) > 1 else gen_children[:, 0]
-                        except Exception as e:
-                            logger.warning(f"⚠ Could not build children Lorentz vectors: {str(e)}")
-                            raise
-                        
-                        try:
-                            logger.debug("Computing GenPart children di-tau kinematics...")
-                            gen_child_ditau_kinematics = compute_ditau_kinematics(gen_child_minus_lv, gen_child_plus_lv)
-                            
-                            logger.debug("Computing GenPart children delta angles...")
-                            gen_child_delta_angles = compute_delta_angles(gen_child_minus_lv, gen_child_plus_lv)
-                        except Exception as e:
-                            raise RuntimeError(f"Failed to compute GenPart children kinematic variables: {str(e)}") from e
-                        
-                        try:
-                            save_histogram_suite(output_dir, "hist_tau_gen_children", "Pythia GenPart Children", 
-                                               gen_child_ditau_kinematics, gen_child_delta_angles)
-                        except Exception as e:
-                            logger.error(f"Failed to save GenPart children histogram suite: {str(e)}")
-                            raise
-                except Exception as e:
-                    logger.warning(f"⚠ GenPart children histogram generation skipped: {str(e)}")
-            except Exception as e:
-                error_msg = (
-                    f"\n[ERROR] GenPart children histogram generation failed\n"
-                    f"  Exception type: {type(e).__name__}\n"
-                    f"  Details: {str(e)}\n"
-                )
-                logger.error(error_msg)
-                # Don't raise here - children are optional
-        else:
-            logger.info("GenPart selection not provided. Generating LHE-only histograms.")
+        # Step 4: Compute kinematics and angles
+        lhe_ditau_kinematics = compute_lhe_ditau_kinematics(lhe_minus_lv, lhe_plus_lv)
+        lhe_delta_angles = compute_lhe_delta_angles(lhe_minus_lv, lhe_plus_lv)
+        
+        # Step 5: Save histograms
+        save_lhe_mass_histogram(output_dir, lhe_ditau_kinematics['mass'])
+        save_lhe_delta_r_histogram(output_dir, lhe_delta_angles['delta_r'])
+        save_lhe_delta_phi_histogram(output_dir, lhe_delta_angles['delta_phi'])
+        save_lhe_delta_eta_histogram(output_dir, lhe_delta_angles['delta_eta'])
         
         logger.info("=" * 60)
-        logger.info("✓ ALL HISTOGRAMS GENERATED SUCCESSFULLY")
+        logger.info("✓ LHE HISTOGRAMS GENERATED SUCCESSFULLY")
         logger.info("=" * 60)
     except Exception as e:
         error_msg = (
-            f"\n[ERROR] Histogram generation failed\n"
+            f"\n[ERROR] LHE histogram generation failed\n"
             f"  Output directory: {output_dir}\n"
             f"  Exception type: {type(e).__name__}\n"
             f"  Details: {str(e)}\n"

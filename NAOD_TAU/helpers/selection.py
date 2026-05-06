@@ -361,3 +361,45 @@ def get_genpart_children_simple(events):
         )
         logger.error(error_msg)
         raise
+
+
+def get_lhe_tau_pairs(events):
+    """
+    Extract tau pairs from LHEPart collection.
+    
+    This is a utility function to get the actual tau particles from LHE selection.
+    
+    Args:
+        events: NanoEvents object with LHEPart collection
+    Returns:
+        Tuple of (tau_minus, tau_plus) arrays of LHE particles
+    Raises:
+        AttributeError: If LHEPart not found
+    """
+    if "LHEPart" not in events.fields:
+        error_msg = "\n[ERROR] LHEPart not found in events\n"
+        logger.error(error_msg)
+        raise AttributeError(error_msg)
+    
+    try:
+        lhe_parts = events.LHEPart
+        pdg_id = lhe_parts.pdgId
+        
+        tau_minus_mask = (pdg_id == 15)
+        tau_plus_mask = (pdg_id == -15)
+        
+        tau_minus = lhe_parts[tau_minus_mask]
+        tau_plus = lhe_parts[tau_plus_mask]
+        
+        return tau_minus, tau_plus
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Failed to extract tau pairs from LHEPart\n"
+            f"  Exception: {type(e).__name__}: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise
+
+
+
+
