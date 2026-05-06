@@ -1,0 +1,12 @@
+{
+  "root_files": [
+    {
+      "name": "nanoaodsim_coffea_1",
+      "path": "nanoaodsim_coffea_1.root",
+      "tree": "Events",
+      "description": "NanoAOD simulation from Coffea",
+      "enabled": true
+    }
+  ],
+  "notes": "Paths are relative to the project root directory. Set 'enabled' to true/false to include/exclude files."
+}
