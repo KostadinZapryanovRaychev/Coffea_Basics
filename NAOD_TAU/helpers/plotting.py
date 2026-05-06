@@ -14,6 +14,82 @@ from .image_processing import save_png
 logger = logging.getLogger(__name__)
 
 
+def check_zprime_candidates(mass_values, mass_threshold_range=(100, 5000)):
+    """
+    Analyze invariant mass distribution to identify Z' (hypothetical mother particle) candidates.
+    
+    The simplest check: find the mass distribution peak and report statistics.
+    A clear peak in the mass distribution indicates potential Z' decay events.
+    
+    Args:
+        mass_values: Array of di-tau invariant mass values
+        mass_threshold_range: Mass window (min, max) in GeV for Z' hypothesis. Default (100, 5000) GeV.
+        
+    Returns:
+        Dictionary with Z' candidate analysis:
+        {
+            'total_events': int,
+            'events_in_window': int,
+            'window_percentage': float,
+            'mass_mean': float,
+            'mass_median': float,
+            'mass_std': float,
+            'mass_mode_bin': float (bin center with most events),
+            'is_zprime_candidate': bool (True if >10% events in mass window)
+        }
+    """
+    try:
+        mass_array = np.asarray(mass_values, dtype=np.float64)
+        mass_array = mass_array[np.isfinite(mass_array)]
+        
+        total = len(mass_array)
+        if total == 0:
+            return {
+                'total_events': 0,
+                'events_in_window': 0,
+                'window_percentage': 0.0,
+                'mass_mean': np.nan,
+                'mass_median': np.nan,
+                'mass_std': np.nan,
+                'mass_mode_bin': np.nan,
+                'is_zprime_candidate': False,
+            }
+        
+        # Count events in mass window
+        in_window = np.sum((mass_array >= mass_threshold_range[0]) & (mass_array <= mass_threshold_range[1]))
+        window_pct = 100.0 * in_window / total if total > 0 else 0.0
+        
+        # Find mode (bin with most counts)
+        counts, bin_edges = np.histogram(mass_array, bins=100)
+        mode_bin_idx = np.argmax(counts)
+        mode_mass = (bin_edges[mode_bin_idx] + bin_edges[mode_bin_idx + 1]) / 2.0
+        
+        result = {
+            'total_events': int(total),
+            'events_in_window': int(in_window),
+            'window_percentage': float(window_pct),
+            'mass_mean': float(np.mean(mass_array)),
+            'mass_median': float(np.median(mass_array)),
+            'mass_std': float(np.std(mass_array)),
+            'mass_mode_bin': float(mode_mass),
+            'is_zprime_candidate': bool(window_pct > 10.0),  # Heuristic: >10% in mass window suggests Z' signal
+        }
+        
+        logger.info(
+            f"\n[Z' CANDIDATE ANALYSIS]\n"
+            f"  Total events: {result['total_events']}\n"
+            f"  Events in window [{mass_threshold_range[0]}, {mass_threshold_range[1]}] GeV: {result['events_in_window']} ({result['window_percentage']:.1f}%)\n"
+            f"  Mass mean: {result['mass_mean']:.1f} GeV | median: {result['mass_median']:.1f} GeV | std: {result['mass_std']:.1f} GeV\n"
+            f"  Mass mode (peak): {result['mass_mode_bin']:.1f} GeV\n"
+            f"  ✓ Z' CANDIDATE: {result['is_zprime_candidate']} (>10% signal in mass window)\n"
+        )
+        
+        return result
+    except Exception as e:
+        logger.error(f"Error in check_zprime_candidates: {str(e)}")
+        return {'is_zprime_candidate': False, 'error': str(e)}
+
+
 def compute_histogram_data(values, bins , bin_edge_min=None, bin_edge_max=None):
     """
     Compute histogram bin edges and counts from raw values.
@@ -190,36 +266,6 @@ def save_lhe_phi_histogram_by_default_method(output_dir: Path, phi):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
     
-def save_lhe_phi_naturally(output_dir: Path ,lhe_minus_lv, lhe_plus_lv):
-    """
-    Save phi distribution histogram for LHE tau pairs using natural method.
-    
-    Args:
-        output_dir: Output directory
-        lhe_minus_lv: Lorentz vectors for tau-
-        lhe_plus_lv: Lorentz vectors for tau+
-    Returns:
-        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
-    Raises:        RuntimeError: If histogram save fails
-    """
-    try:
-        phi = lhe_minus_lv.phi - lhe_plus_lv.phi
-        counts , bin_edges = compute_histogram_data(phi, bins=100, bin_edge_min=-3.2, bin_edge_max=3.2)
-        save_png(
-            output_dir,
-            "lhe_phi_natural",
-            "LHE Taus Pair Phi Distribution (Natural Method)",
-            phi,
-            bin_edges,
-            r"$\phi(\tau^{-}\tau^{+})$ [rad]",
-            "Events",
-        )
-        return "lhe_phi_natural", "LHE Taus Pair Phi Distribution (Natural Method)", counts, bin_edges
-    except Exception as e:
-        error_msg = f"Failed to save LHE phi histogram (natural method): {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
-    
 def save_lhe_histogram_pz(output_dir: Path, pz):
     """
     Save pz distribution histogram for LHE tau pairs.
@@ -302,6 +348,36 @@ def save_lhe_histogram_etha(output_dir: Path, eta):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
+def save_lhe_delta_phi_lepton_pair_histogram(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
+    """
+    Save delta-phi distribution histogram for lepton pairs (tau- vs tau+).
+    
+    Args:
+        output_dir: Output directory
+        lhe_minus_lv: Lorentz vectors for tau-
+        lhe_plus_lv: Lorentz vectors for tau+
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        delta_phi = lhe_minus_lv.phi - lhe_plus_lv.phi
+        counts , bin_edges = compute_histogram_data(delta_phi, bins=60, bin_edge_min=-3.2, bin_edge_max=3.2)
+        save_png(
+            output_dir,
+            "lhe_delta_phi_lepton_pair",
+            "LHE Lepton Pair Delta Phi",
+            delta_phi,
+            bin_edges,
+            r"$\Delta\phi(\tau^{-} - \tau^{+})$ [rad]",
+            "Events",
+        )
+        return "lhe_delta_phi_lepton_pair", "LHE Lepton Pair Delta Phi", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE delta-phi lepton pair histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
 def save_lhe_delta_eta_lepton_pair_histogram(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
     """
     Save delta-eta distribution histogram for lepton pairs (tau- vs tau+).
@@ -352,15 +428,30 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
              lhe_selected.LHEPart.pdgId == 15,
              lhe_selected.LHEPart.pdgId == -15,
         )
-        # for all particles 
-        save_lhe_mass_histogram(output_dir, (lhe_minus_lv + lhe_plus_lv).mass)
+        
+        # Compute di-tau invariant mass for Z' candidate check
+        ditau_mass = (lhe_minus_lv + lhe_plus_lv).mass
+        
+        # for all pairs (candidates for mother particle / Z')
+        save_lhe_mass_histogram(output_dir, ditau_mass)
         save_lhe_phi_histogram_by_default_method(output_dir, (lhe_minus_lv + lhe_plus_lv).phi)
-        save_lhe_phi_naturally(output_dir, lhe_minus_lv, lhe_plus_lv)
         save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz)
         save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt)
         save_lhe_histogram_etha(output_dir, (lhe_minus_lv + lhe_plus_lv).eta)
-        # for lepton pairs
+        
+        # for lepton pairs (tau- vs tau+)
+        save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
         save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
+        
+        # Check for Z' candidates: analyze invariant mass distribution
+        check_zprime_candidates(ditau_mass, mass_threshold_range=(100, 5000))
+        
+    except ValueError as e:
+        logger.error(f"\n{str(e)}")
+        raise ValueError(str(e)) from e
+    except RuntimeError as e:
+        logger.error(f"\n{str(e)}")
+        raise RuntimeError(str(e)) from e
     except ValueError as e:
         logger.error(f"\n{str(e)}")
         raise ValueError(str(e)) from e
