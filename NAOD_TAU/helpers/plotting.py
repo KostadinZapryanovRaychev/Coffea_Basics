@@ -8,19 +8,22 @@ from coffea.nanoevents.methods import vector
 
 from .root_writer import save_lhe_histograms_root
 from .validation import create_output_directory, validate_lhe_events
+from .image_processing import save_png
 
 
 logger = logging.getLogger(__name__)
 
 
-def compute_histogram_data(values, bins):
+def compute_histogram_data(values, bins , bin_edge_min=None, bin_edge_max=None):
     """
     Compute histogram bin edges and counts from raw values.
     
     Args:
         values: Array-like of numeric values
         bins: Number of bins or bin edges
-        
+        bin_edge_min: Minimum value for bin edges
+        bin_edge_max: Maximum value for bin edges
+
     Returns:
         Tuple of (counts, bin_edges)
         
@@ -42,13 +45,11 @@ def compute_histogram_data(values, bins):
         if len(valid_values) == 0:
             raise ValueError("No valid (finite) values in input array")
         
-        value_min = valid_values.min()
-        value_max = valid_values.max()
         
-        if value_min == value_max:
-            logger.warning(f"⚠ All values are identical ({value_min}). Histogram will be degenerate.")
         
-        bin_edges = np.linspace(value_min, value_max, int(bins) + 1)
+        
+        
+        bin_edges = np.linspace(bin_edge_min, bin_edge_max, int(bins) + 1)
         counts, _ = np.histogram(values, bins=bin_edges)
         return counts, bin_edges
     except (ValueError, TypeError) as e:
@@ -145,54 +146,139 @@ def save_lhe_mass_histogram(output_dir: Path, mass):
     """
     try:
         logger.debug("Saving LHE invariant mass histogram...")
-        counts, bin_edges = compute_histogram_data(mass, bins=120)
+        counts , bin_edges = compute_histogram_data(mass, bins=100 , bin_edge_min=0, bin_edge_max=500)
         save_png(
             output_dir,
             "lhe_mass",
-            "LHE Di-tau Invariant Mass",
+            "LHE Taus Pair Invariant Mass",
             mass,
             bin_edges,
             r"$m(\tau^{-}\tau^{+})$ [GeV]",
             "Events",
         )
-        return "lhe_mass", "LHE Di-tau Invariant Mass", counts, bin_edges
+        return "lhe_mass", "LHE Taus Pair Invariant Mass", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE mass histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
+    
 
-def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edges, xlabel: str, ylabel: str):
+def save_lhe_phi_histogram_by_default_method(output_dir: Path, phi):
     """
-    Save a histogram as a PNG file.
+    Save phi distribution histogram for LHE tau pairs.
     
     Args:
-        output_dir: Directory to save the PNG file
-        histogram_name: Base name for the histogram (without extension)
-        title: Title of the histogram
-        values: Array of values to histogram
-        bin_edges: Edges of the histogram bins
-        xlabel: Label for x-axis
-        ylabel: Label for y-axis
-    Raises:        RuntimeError: If saving the PNG file fails
+        output_dir: Output directory
+        phi: Phi values array
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
     """
     try:
-        plt.figure(figsize=(8, 6))
-        plt.hist(values, bins=bin_edges, histtype='stepfilled', color='blue', alpha=0.7)
-        plt.title(title)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.grid(True, linestyle='--', alpha=0.5)
-        png_path = output_dir / f"{histogram_name}.png"
-        plt.savefig(png_path)
-        plt.close()
-        logger.debug(f"Saved PNG histogram: {png_path}")
+        counts , bin_edges = compute_histogram_data(phi, bins=2500, bin_edge_min=-3.2, bin_edge_max=3.2)
+        save_png(
+            output_dir,
+            "lhe_phi",
+            "LHE Taus Pair Phi Distribution",
+            phi,
+            bin_edges,
+            r"$\phi(\tau^{-}\tau^{+})$ [rad]",
+            "Events",
+        )
+        return "lhe_phi", "LHE Taus Pair Phi Distribution", counts, bin_edges
     except Exception as e:
-        error_msg = f"Failed to save PNG histogram '{histogram_name}': {str(e)}"
+        error_msg = f"Failed to save LHE phi histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
+    
 
+def save_lhe_phi_naturally(output_dir: Path ,lhe_minus_lv, lhe_plus_lv):
+    """
+    Save phi distribution histogram for LHE tau pairs using natural method.
+    
+    Args:
+        output_dir: Output directory
+        lhe_minus_lv: Lorentz vectors for tau-
+        lhe_plus_lv: Lorentz vectors for tau+
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        phi = lhe_minus_lv.phi - lhe_plus_lv.phi
+        counts , bin_edges = compute_histogram_data(phi, bins=100, bin_edge_min=-3.2, bin_edge_max=3.2)
+        save_png(
+            output_dir,
+            "lhe_phi_natural",
+            "LHE Taus Pair Phi Distribution (Natural Method)",
+            phi,
+            bin_edges,
+            r"$\phi(\tau^{-}\tau^{+})$ [rad]",
+            "Events",
+        )
+        return "lhe_phi_natural", "LHE Taus Pair Phi Distribution (Natural Method)", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE phi histogram (natural method): {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+    
+def save_lhe_histogram_pz(output_dir: Path, pz):
+    """
+    Save pz distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        pz: Pz values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
 
+        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-2000, bin_edge_max=2000)
+        save_png(
+            output_dir,
+            "lhe_pz",
+            "LHE Taus Pz Distribution",
+            pz,
+            bin_edges,
+            r"$p_{z}(\tau^{-}\tau^{+})$ [GeV]",
+            "Events",
+        )
+        return "lhe_pz", "LHE Taus Pz Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE pz histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+    
 
+def save_lhe_histogram_pt(output_dir: Path, pt):
+    """
+    Save pt distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        pt: Pt values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=0.01)
+        save_png(
+            output_dir,
+            "lhe_pt",
+            "LHE Taus Pt Distribution",
+            pt,
+            bin_edges,
+            r"$p_{T}(\tau^{-}\tau^{+})$ [GeV]",
+            "Events",
+        )
+        return "lhe_pt", "LHE Taus Pt Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE pt histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e    
+     
+    
 def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
     """
     Create and save histograms for LHE-selected tau pairs.
@@ -206,6 +292,7 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
     """
     try:
         n_events = validate_lhe_events(lhe_selected)
+        print(f"Processing {n_events} LHE-selected events for histogramming...")
         
         lhe_minus_lv, lhe_plus_lv = build_tau_vectors(
              lhe_selected.LHEPart,
@@ -214,6 +301,10 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
         )
         mass = (lhe_minus_lv + lhe_plus_lv).mass
         save_lhe_mass_histogram(output_dir, mass)
+        save_lhe_phi_histogram_by_default_method(output_dir, (lhe_minus_lv + lhe_plus_lv).phi)
+        save_lhe_phi_naturally(output_dir, lhe_minus_lv, lhe_plus_lv)
+        save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz)
+        save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt)
     except ValueError as e:
         logger.error(f"\n{str(e)}")
         raise ValueError(str(e)) from e
