@@ -14,15 +14,17 @@ from .image_processing import save_png
 logger = logging.getLogger(__name__)
 
 
-def check_zprime_candidates(mass_values, mass_threshold_range=(100, 5000)):
+def check_zprime_candidates(mass_values, output_dir: Path = None, mass_threshold_range=(100, 5000)):
     """
     Analyze invariant mass distribution to identify Z' (hypothetical mother particle) candidates.
+    Creates a visualization of the mass distribution with Z' mass window highlighted.
     
     The simplest check: find the mass distribution peak and report statistics.
     A clear peak in the mass distribution indicates potential Z' decay events.
     
     Args:
         mass_values: Array of di-tau invariant mass values
+        output_dir: Optional output directory to save Z' candidate plot (PNG)
         mass_threshold_range: Mass window (min, max) in GeV for Z' hypothesis. Default (100, 5000) GeV.
         
     Returns:
@@ -84,10 +86,102 @@ def check_zprime_candidates(mass_values, mass_threshold_range=(100, 5000)):
             f"  ✓ Z' CANDIDATE: {result['is_zprime_candidate']} (>10% signal in mass window)\n"
         )
         
+        # Create Z' candidate visualization if output_dir provided
+        if output_dir is not None:
+            try:
+                _plot_zprime_candidates(output_dir, mass_array, result, mass_threshold_range)
+            except Exception as e:
+                logger.warning(f"Could not create Z' candidate plot: {str(e)}")
+        
         return result
     except Exception as e:
         logger.error(f"Error in check_zprime_candidates: {str(e)}")
         return {'is_zprime_candidate': False, 'error': str(e)}
+
+
+def _plot_zprime_candidates(output_dir: Path, mass_array, result, mass_threshold_range):
+    """
+    Create a visualization of the invariant mass distribution for Z' candidates.
+    Highlights the Z' mass window and shows peak/mean markers.
+    
+    Args:
+        output_dir: Output directory to save the plot
+        mass_array: Array of mass values
+        result: Dictionary with analysis results from check_zprime_candidates
+        mass_threshold_range: Mass window tuple (min, max) in GeV
+    """
+    try:
+        fig, ax = plt.subplots(figsize=(10, 7))
+        
+        # Create histogram
+        counts, bin_edges, patches = ax.hist(
+            mass_array, 
+            bins=150, 
+            histtype='stepfilled', 
+            color='steelblue', 
+            alpha=0.7,
+            edgecolor='navy',
+            linewidth=1.5,
+            label='All events'
+        )
+        
+        # Highlight Z' mass window
+        for i, patch in enumerate(patches):
+            bin_center = (bin_edges[i] + bin_edges[i+1]) / 2.0
+            if mass_threshold_range[0] <= bin_center <= mass_threshold_range[1]:
+                patch.set_facecolor('orangered')
+                patch.set_alpha(0.8)
+        
+        # Add vertical lines for peak and mean
+        ax.axvline(result['mass_mode_bin'], color='red', linestyle='--', linewidth=2.5, 
+                   label=f"Peak: {result['mass_mode_bin']:.1f} GeV")
+        ax.axvline(result['mass_mean'], color='green', linestyle='--', linewidth=2.5, 
+                   label=f"Mean: {result['mass_mean']:.1f} GeV")
+        
+        # Shade the Z' window region
+        ax.axvspan(mass_threshold_range[0], mass_threshold_range[1], alpha=0.15, color='orange', 
+                   label=f"Z' window [{mass_threshold_range[0]}, {mass_threshold_range[1]}] GeV")
+        
+        # Add statistics text box
+        zprime_status = "✓ Z' CANDIDATE" if result['is_zprime_candidate'] else "✗ No Z' signal"
+        stats_text = (
+            f"Z' Candidate Analysis\n"
+            f"━━━━━━━━━━━━━━━━━━━\n"
+            f"Total events: {result['total_events']:,}\n"
+            f"Events in window: {result['events_in_window']:,} ({result['window_percentage']:.1f}%)\n"
+            f"Mean: {result['mass_mean']:.1f} ± {result['mass_std']:.1f} GeV\n"
+            f"Median: {result['mass_median']:.1f} GeV\n"
+            f"Mode: {result['mass_mode_bin']:.1f} GeV\n"
+            f"\n{zprime_status}\n"
+            f"(>10% in window)"
+        )
+        
+        ax.text(0.98, 0.97, stats_text, transform=ax.transAxes, 
+                fontsize=10, verticalalignment='top', horizontalalignment='right',
+                bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8),
+                family='monospace')
+        
+        # Formatting
+        ax.set_xlabel(r"$m(\tau^{-}\tau^{+})$ [GeV]", fontsize=12, fontweight='bold')
+        ax.set_ylabel("Events", fontsize=12, fontweight='bold')
+        ax.set_title("Z' Candidate Analysis: Di-tau Invariant Mass Distribution", 
+                     fontsize=13, fontweight='bold', pad=15)
+        ax.legend(loc='upper left', fontsize=10, framealpha=0.95)
+        ax.grid(True, linestyle='--', alpha=0.4)
+        
+        # Save figure
+        zprime_plot_path = output_dir / "zprime_candidate_analysis.png"
+        plt.tight_layout()
+        plt.savefig(zprime_plot_path, dpi=150, bbox_inches='tight')
+        plt.close()
+        
+        logger.info(f"✓ Saved Z' candidate plot: {zprime_plot_path}")
+        
+    except Exception as e:
+        logger.error(f"Error creating Z' candidate plot: {str(e)}")
+        raise RuntimeError(f"Failed to create Z' candidate plot: {str(e)}") from e
+
+
 
 
 def compute_histogram_data(values, bins , bin_edge_min=None, bin_edge_max=None):
@@ -443,8 +537,8 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
         save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
         save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
         
-        # Check for Z' candidates: analyze invariant mass distribution
-        check_zprime_candidates(ditau_mass, mass_threshold_range=(100, 5000))
+        # Check for Z' candidates: analyze invariant mass distribution with visualization
+        check_zprime_candidates(ditau_mass, output_dir=output_dir, mass_threshold_range=(100, 5000))
         
     except ValueError as e:
         logger.error(f"\n{str(e)}")
