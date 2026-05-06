@@ -855,6 +855,43 @@ def save_lhe_mass_histogram(output_dir: Path, mass):
         raise RuntimeError(error_msg) from e
 
 
+def save_lhe_pt_histogram(output_dir: Path, pt):
+    """
+    Save transverse momentum distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        pt: Di-tau transverse momentum values array
+        
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE pT histogram...")
+        counts, bin_edges = compute_histogram_data(pt, bins=80)
+        save_png(
+            output_dir,
+            "lhe_pt",
+            "LHE Di-tau Transverse Momentum",
+            pt,
+            bin_edges,
+            r"$p_T(\tau^{-}\tau^{+})$ [GeV]",
+            "Events",
+        )
+        save_root(
+            output_dir,
+            "lhe_pt",
+            counts,
+            bin_edges,
+            "LHE Di-tau Transverse Momentum",
+        )
+        logger.info("✓ Saved LHE pT histogram")
+    except Exception as e:
+        error_msg = f"Failed to save LHE pT histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
 def save_lhe_delta_r_histogram(output_dir: Path, delta_r):
     """
     Save ΔR distribution histogram for LHE tau pairs.
@@ -888,6 +925,44 @@ def save_lhe_delta_r_histogram(output_dir: Path, delta_r):
         logger.info("✓ Saved LHE ΔR histogram")
     except Exception as e:
         error_msg = f"Failed to save LHE ΔR histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_lhe_cos_delta_eta_histogram(output_dir: Path, delta_eta):
+    """
+    Save cos(Δη) distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_eta: Delta eta values array
+        
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE cos(Δη) histogram...")
+        cos_delta_eta = np.cos(delta_eta)
+        counts, bin_edges = compute_histogram_data(cos_delta_eta, bins=80)
+        save_png(
+            output_dir,
+            "lhe_cos_delta_eta",
+            "LHE $\\cos(\\Delta\\eta)$",
+            cos_delta_eta,
+            bin_edges,
+            r"$\cos(\Delta \eta(\tau^{-},\tau^{+}))$",
+            "Events",
+        )
+        save_root(
+            output_dir,
+            "lhe_cos_delta_eta",
+            counts,
+            bin_edges,
+            "LHE $\\cos(\\Delta\\eta)$",
+        )
+        logger.info("✓ Saved LHE cos(Δη) histogram")
+    except Exception as e:
+        error_msg = f"Failed to save LHE cos(Δη) histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
@@ -929,46 +1004,9 @@ def save_lhe_delta_phi_histogram(output_dir: Path, delta_phi):
         raise RuntimeError(error_msg) from e
 
 
-def save_lhe_delta_eta_histogram(output_dir: Path, delta_eta):
-    """
-    Save Δη distribution histogram for LHE tau pairs.
-    
-    Args:
-        output_dir: Output directory
-        delta_eta: Delta eta values array
-        
-    Raises:
-        RuntimeError: If histogram save fails
-    """
-    try:
-        logger.debug("Saving LHE Δη histogram...")
-        counts, bin_edges = compute_histogram_data(delta_eta, bins=80)
-        save_png(
-            output_dir, 
-            "lhe_delta_eta", 
-            "LHE $\\Delta\\eta$",
-            delta_eta, 
-            bin_edges, 
-            r"$\Delta \eta(\tau^{-},\tau^{+})$", 
-            "Events"
-        )
-        save_root(
-            output_dir, 
-            "lhe_delta_eta", 
-            counts, 
-            bin_edges,
-            "LHE $\\Delta\\eta$"
-        )
-        logger.info("✓ Saved LHE Δη histogram")
-    except Exception as e:
-        error_msg = f"Failed to save LHE Δη histogram: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
-
-
 def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
     """
-    Generate LHE tau-pair histograms (mass, ΔR, Δφ, Δη).
+    Generate LHE tau-pair histograms (pT, mass, ΔR, Δφ, cos(Δη)).
     
     Orchestrates the complete LHE histogram generation pipeline:
     1. Create output directory
@@ -1005,9 +1043,10 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
         
         # Step 5: Save histograms
         save_lhe_mass_histogram(output_dir, lhe_ditau_kinematics['mass'])
+        save_lhe_pt_histogram(output_dir, lhe_ditau_kinematics['pt'])
         save_lhe_delta_r_histogram(output_dir, lhe_delta_angles['delta_r'])
         save_lhe_delta_phi_histogram(output_dir, lhe_delta_angles['delta_phi'])
-        save_lhe_delta_eta_histogram(output_dir, lhe_delta_angles['delta_eta'])
+        save_lhe_cos_delta_eta_histogram(output_dir, lhe_delta_angles['delta_eta'])
         
         logger.info("=" * 60)
         logger.info("✓ LHE HISTOGRAMS GENERATED SUCCESSFULLY")

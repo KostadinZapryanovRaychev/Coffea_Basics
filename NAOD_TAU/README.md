@@ -107,8 +107,14 @@ NAOD_TAU/outputs/
 ├── nanoaodsim_coffea_1/
 │   ├── lhe_mass.png
 │   ├── lhe_mass.root
+│   ├── lhe_pt.png
+│   ├── lhe_pt.root
 │   ├── lhe_delta_r.png
 │   ├── lhe_delta_r.root
+│   ├── lhe_delta_phi.png
+│   ├── lhe_delta_phi.root
+│   ├── lhe_cos_delta_eta.png
+│   ├── lhe_cos_delta_eta.root
 │   └── ...
 └── nanoaodsim_coffea_2/
     ├── lhe_mass.png
@@ -130,12 +136,14 @@ outputs/
   file1_name/
     lhe_mass.png
     lhe_mass.root
+      lhe_pt.png
+      lhe_pt.root
     lhe_delta_r.png
     lhe_delta_r.root
     lhe_delta_phi.png
     lhe_delta_phi.root
-    lhe_delta_eta.png
-    lhe_delta_eta.root
+      lhe_cos_delta_eta.png
+      lhe_cos_delta_eta.root
   file2_name/
     (same histograms for file 2)
 ```
@@ -145,9 +153,10 @@ outputs/
 The current analysis plots LHE particles (parton-level, before shower):
 
 - `lhe_mass` — Di-tau invariant mass distribution
+- `lhe_pt` — Di-tau transverse momentum distribution
 - `lhe_delta_r` — ΔR between tau- and tau+
 - `lhe_delta_phi` — Azimuthal angle difference (signed, range [-π, π])
-- `lhe_delta_eta` — Pseudorapidity difference (signed)
+- `lhe_cos_delta_eta` — Cosine of the pseudorapidity difference
 
 ## load_events -- what we load in load events actually ? in essence
 
