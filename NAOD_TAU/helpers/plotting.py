@@ -162,7 +162,6 @@ def save_lhe_mass_histogram(output_dir: Path, mass):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
     
-
 def save_lhe_phi_histogram_by_default_method(output_dir: Path, phi):
     """
     Save phi distribution histogram for LHE tau pairs.
@@ -191,7 +190,6 @@ def save_lhe_phi_histogram_by_default_method(output_dir: Path, phi):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
     
-
 def save_lhe_phi_naturally(output_dir: Path ,lhe_minus_lv, lhe_plus_lv):
     """
     Save phi distribution histogram for LHE tau pairs using natural method.
@@ -250,7 +248,6 @@ def save_lhe_histogram_pz(output_dir: Path, pz):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
     
-
 def save_lhe_histogram_pt(output_dir: Path, pt):
     """
     Save pt distribution histogram for LHE tau pairs.
