@@ -106,19 +106,15 @@ Example output structure:
 NAOD_TAU/outputs/
 ├── nanoaodsim_coffea_1/
 │   ├── lhe_mass.png
-│   ├── lhe_mass.root
 │   ├── lhe_pt.png
-│   ├── lhe_pt.root
 │   ├── lhe_delta_r.png
-│   ├── lhe_delta_r.root
 │   ├── lhe_delta_phi.png
-│   ├── lhe_delta_phi.root
 │   ├── lhe_cos_delta_eta.png
-│   ├── lhe_cos_delta_eta.root
+│   ├── lhe_histograms.root
 │   └── ...
 └── nanoaodsim_coffea_2/
     ├── lhe_mass.png
-    ├── lhe_mass.root
+   ├── lhe_histograms.root
     └── ...
 ```
 
@@ -127,7 +123,7 @@ NAOD_TAU/outputs/
 Histograms are written to `NAOD_TAU/outputs/` in per-file directories:
 
 - **PNG files** for quick visual inspection (matplotlib)
-- **ROOT files** for detailed analysis (ROOT/TBrowser)
+- **One ROOT file per sample** for detailed analysis (ROOT/TBrowser)
 
 Each enabled file in `file_config.json` gets its own output directory:
 
@@ -135,17 +131,13 @@ Each enabled file in `file_config.json` gets its own output directory:
 outputs/
   file1_name/
     lhe_mass.png
-    lhe_mass.root
       lhe_pt.png
-      lhe_pt.root
     lhe_delta_r.png
-    lhe_delta_r.root
     lhe_delta_phi.png
-    lhe_delta_phi.root
       lhe_cos_delta_eta.png
-      lhe_cos_delta_eta.root
+      lhe_histograms.root
   file2_name/
-    (same histograms for file 2)
+      (same histograms for file 2, with one combined ROOT file)
 ```
 
 **LHE-Only Analysis (Current):**

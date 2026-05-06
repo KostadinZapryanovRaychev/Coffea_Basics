@@ -826,6 +826,9 @@ def save_lhe_mass_histogram(output_dir: Path, mass):
         output_dir: Output directory
         mass: Mass values array
         
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+
     Raises:
         RuntimeError: If histogram save fails
     """
@@ -841,14 +844,8 @@ def save_lhe_mass_histogram(output_dir: Path, mass):
             r"$m(\tau^{-}\tau^{+})$ [GeV]", 
             "Events"
         )
-        save_root(
-            output_dir, 
-            "lhe_mass", 
-            counts, 
-            bin_edges,
-            "LHE Di-tau Invariant Mass"
-        )
         logger.info("✓ Saved LHE mass histogram")
+        return "lhe_mass", "LHE Di-tau Invariant Mass", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE mass histogram: {str(e)}"
         logger.error(error_msg)
@@ -863,6 +860,9 @@ def save_lhe_pt_histogram(output_dir: Path, pt):
         output_dir: Output directory
         pt: Di-tau transverse momentum values array
         
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+
     Raises:
         RuntimeError: If histogram save fails
     """
@@ -878,14 +878,8 @@ def save_lhe_pt_histogram(output_dir: Path, pt):
             r"$p_T(\tau^{-}\tau^{+})$ [GeV]",
             "Events",
         )
-        save_root(
-            output_dir,
-            "lhe_pt",
-            counts,
-            bin_edges,
-            "LHE Di-tau Transverse Momentum",
-        )
         logger.info("✓ Saved LHE pT histogram")
+        return "lhe_pt", "LHE Di-tau Transverse Momentum", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE pT histogram: {str(e)}"
         logger.error(error_msg)
@@ -900,6 +894,9 @@ def save_lhe_delta_r_histogram(output_dir: Path, delta_r):
         output_dir: Output directory
         delta_r: Delta R values array
         
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+
     Raises:
         RuntimeError: If histogram save fails
     """
@@ -915,14 +912,8 @@ def save_lhe_delta_r_histogram(output_dir: Path, delta_r):
             r"$\Delta R(\tau^{-},\tau^{+})$", 
             "Events"
         )
-        save_root(
-            output_dir, 
-            "lhe_delta_r", 
-            counts, 
-            bin_edges,
-            "LHE $\\Delta R$"
-        )
         logger.info("✓ Saved LHE ΔR histogram")
+        return "lhe_delta_r", "LHE $\\Delta R$", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE ΔR histogram: {str(e)}"
         logger.error(error_msg)
@@ -937,6 +928,9 @@ def save_lhe_cos_delta_eta_histogram(output_dir: Path, delta_eta):
         output_dir: Output directory
         delta_eta: Delta eta values array
         
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+
     Raises:
         RuntimeError: If histogram save fails
     """
@@ -953,14 +947,8 @@ def save_lhe_cos_delta_eta_histogram(output_dir: Path, delta_eta):
             r"$\cos(\Delta \eta(\tau^{-},\tau^{+}))$",
             "Events",
         )
-        save_root(
-            output_dir,
-            "lhe_cos_delta_eta",
-            counts,
-            bin_edges,
-            "LHE $\\cos(\\Delta\\eta)$",
-        )
         logger.info("✓ Saved LHE cos(Δη) histogram")
+        return "lhe_cos_delta_eta", "LHE $\\cos(\\Delta\\eta)$", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE cos(Δη) histogram: {str(e)}"
         logger.error(error_msg)
@@ -975,6 +963,9 @@ def save_lhe_delta_phi_histogram(output_dir: Path, delta_phi):
         output_dir: Output directory
         delta_phi: Delta phi values array (range [-π, π])
         
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+
     Raises:
         RuntimeError: If histogram save fails
     """
@@ -990,16 +981,57 @@ def save_lhe_delta_phi_histogram(output_dir: Path, delta_phi):
             r"$\Delta \phi(\tau^{-},\tau^{+})$ [rad]", 
             "Events"
         )
-        save_root(
-            output_dir, 
-            "lhe_delta_phi", 
-            counts, 
-            bin_edges,
-            "LHE $\\Delta\\phi$"
-        )
         logger.info("✓ Saved LHE Δφ histogram")
+        return "lhe_delta_phi", "LHE $\\Delta\\phi$", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE Δφ histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_lhe_histograms_root(output_dir: Path, root_stem: str, histogram_specs):
+    """
+    Save multiple LHE histograms into a single ROOT file.
+
+    Args:
+        output_dir: Output directory
+        root_stem: ROOT filename stem without extension
+        histogram_specs: Iterable of (histogram_name, title, counts, bin_edges)
+
+    Raises:
+        RuntimeError: If ROOT file save fails
+    """
+    try:
+        if not output_dir.exists():
+            raise ValueError(f"Output directory does not exist: {output_dir}")
+
+        if not output_dir.is_dir():
+            raise ValueError(f"Output path is not a directory: {output_dir}")
+
+        root_path = output_dir / f"{root_stem}.root"
+
+        try:
+            with uproot.recreate(root_path) as root_file:
+                for histogram_name, title, counts, bin_edges in histogram_specs:
+                    histogram = build_root_histogram(histogram_name, title, counts, bin_edges)
+                    root_file[histogram_name] = histogram
+            logger.debug(f"Saved combined ROOT: {root_path}")
+        except IOError as io_err:
+            raise IOError(f"Cannot write ROOT file: {root_path}\n  Details: {str(io_err)}") from io_err
+    except (ValueError, IOError) as e:
+        error_msg = (
+            f"\n[ERROR] Failed to save combined LHE ROOT file '{root_stem}'\n"
+            f"  Output dir: {output_dir}\n"
+            f"  Details: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Unexpected error saving combined LHE ROOT file '{root_stem}'\n"
+            f"  Exception type: {type(e).__name__}\n"
+            f"  Details: {str(e)}\n"
+        )
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
@@ -1041,12 +1073,15 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
         lhe_ditau_kinematics = compute_lhe_ditau_kinematics(lhe_minus_lv, lhe_plus_lv)
         lhe_delta_angles = compute_lhe_delta_angles(lhe_minus_lv, lhe_plus_lv)
         
-        # Step 5: Save histograms
-        save_lhe_mass_histogram(output_dir, lhe_ditau_kinematics['mass'])
-        save_lhe_pt_histogram(output_dir, lhe_ditau_kinematics['pt'])
-        save_lhe_delta_r_histogram(output_dir, lhe_delta_angles['delta_r'])
-        save_lhe_delta_phi_histogram(output_dir, lhe_delta_angles['delta_phi'])
-        save_lhe_cos_delta_eta_histogram(output_dir, lhe_delta_angles['delta_eta'])
+        # Step 5: Save PNGs individually and write one combined ROOT file
+        histogram_specs = [
+            save_lhe_mass_histogram(output_dir, lhe_ditau_kinematics['mass']),
+            save_lhe_pt_histogram(output_dir, lhe_ditau_kinematics['pt']),
+            save_lhe_delta_r_histogram(output_dir, lhe_delta_angles['delta_r']),
+            save_lhe_delta_phi_histogram(output_dir, lhe_delta_angles['delta_phi']),
+            save_lhe_cos_delta_eta_histogram(output_dir, lhe_delta_angles['delta_eta']),
+        ]
+        save_lhe_histograms_root(output_dir, "lhe_histograms", histogram_specs)
         
         logger.info("=" * 60)
         logger.info("✓ LHE HISTOGRAMS GENERATED SUCCESSFULLY")
