@@ -128,7 +128,6 @@ def analyze_single_file(file_path: Path, tree_name: str, file_entry: dict,
         # Step 3: Generate LHE histograms
         try:
             output_dir = get_output_directory_for_file(base_output_dir, file_entry)
-            logger.debug(f"Output directory: {output_dir}")
             make_tau_histogram_lhe(output_dir, lhe_selected)
         except ValueError as e:
             logger.error(f"\n{str(e)}")

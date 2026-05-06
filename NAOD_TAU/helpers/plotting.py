@@ -161,42 +161,6 @@ def save_lhe_mass_histogram(output_dir: Path, mass):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-
-def save_lhe_cos_delta_eta_histogram(output_dir: Path, delta_eta):
-    """
-    Save cos(Δη) distribution histogram for LHE tau pairs.
-    
-    Args:
-        output_dir: Output directory
-        delta_eta: Delta eta values array
-        
-    Returns:
-        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
-
-    Raises:
-        RuntimeError: If histogram save fails
-    """
-    try:
-        logger.debug("Saving LHE cos(Δη) histogram...")
-        cos_delta_eta = np.cos(delta_eta)
-        counts, bin_edges = compute_histogram_data(cos_delta_eta, bins=80)
-        save_png(
-            output_dir,
-            "lhe_cos_delta_eta",
-            "LHE $\\cos(\\Delta\\eta)$",
-            cos_delta_eta,
-            bin_edges,
-            r"$\cos(\Delta \eta(\tau^{-},\tau^{+}))$",
-            "Events",
-        )
-        logger.info("✓ Saved LHE cos(Δη) histogram")
-        return "lhe_cos_delta_eta", "LHE $\\cos(\\Delta\\eta)$", counts, bin_edges
-    except Exception as e:
-        error_msg = f"Failed to save LHE cos(Δη) histogram: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
-
-
 def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edges, xlabel: str, ylabel: str):
     """
     Save a histogram as a PNG file.
@@ -226,60 +190,37 @@ def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edge
         error_msg = f"Failed to save PNG histogram '{histogram_name}': {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
-    
 
-def compute_lhe_tau_minus_kinematics(lhe_minus_lv):
+
+
+def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
     """
-    Compute kinematic properties for tau- from LHE Lorentz vector.
+    Create and save histograms for LHE-selected tau pairs.
     
     Args:
-        lhe_minus_lv: Lorentz vector for tau- (pdgId=15)
-    Returns:
-        Dictionary with keys:
-        - 'pt': Transverse momentum of tau-
-        - 'pz': Longitudinal momentum of tau-
-        - 'eta': Pseudo-rapidity of tau-
-        - 'phi': Azimuthal angle of tau-
-        - 'mass': Mass of tau-
-    Raises:       RuntimeError: If kinematic computation fails      
+        output_dir: Directory to save histograms
+        lhe_selected: NanoEvents with LHE-selected tau pairs
+    Raises:
+        ValueError: If LHE selection is invalid
+        RuntimeError: If histogram creation or saving fails
     """
     try:
-        return {
-            'pt': ak.to_numpy(lhe_minus_lv.pt),
-            'pz': ak.to_numpy(lhe_minus_lv.pz),
-            'eta': ak.to_numpy(lhe_minus_lv.eta),
-            'phi': ak.to_numpy(lhe_minus_lv.phi),
-            'mass': ak.to_numpy(lhe_minus_lv.mass),
-        }
+        n_events = validate_lhe_events(lhe_selected)
+        
+        lhe_minus_lv, lhe_plus_lv = build_tau_vectors(
+             lhe_selected.LHEPart,
+             lhe_selected.LHEPart.pdgId == 15,
+             lhe_selected.LHEPart.pdgId == -15,
+        )
+        mass = (lhe_minus_lv + lhe_plus_lv).mass
+        save_lhe_mass_histogram(output_dir, mass)
+    except ValueError as e:
+        logger.error(f"\n{str(e)}")
+        raise ValueError(str(e)) from e
+    except RuntimeError as e:
+        logger.error(f"\n{str(e)}")
+        raise RuntimeError(str(e)) from e
     except Exception as e:
-        error_msg = f"Failed to compute tau- kinematics: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e    
-    
-def compute_lhe_tau_plus_kinematics(lhe_plus_lv):
-    """
-    Compute kinematic properties for tau+ from LHE Lorentz vector.
-    
-    Args:
-        lhe_plus_lv: Lorentz vector for tau+ (pdgId=-15)
-    Returns:
-        Dictionary with keys:
-        - 'pt': Transverse momentum of tau+
-        - 'pz': Longitudinal momentum of tau+
-        - 'eta': Pseudo-rapidity of tau+
-        - 'phi': Azimuthal angle of tau+
-        - 'mass': Mass of tau+
-    Raises:       RuntimeError: If kinematic computation fails      
-    """
-    try:
-        return {
-            'pt': ak.to_numpy(lhe_plus_lv.pt),
-            'pz': ak.to_numpy(lhe_plus_lv.pz),
-            'eta': ak.to_numpy(lhe_plus_lv.eta),
-            'phi': ak.to_numpy(lhe_plus_lv.phi),
-            'mass': ak.to_numpy(lhe_plus_lv.mass),
-        }
-    except Exception as e:
-        error_msg = f"Failed to compute tau+ kinematics: {str(e)}"
+        error_msg = f"Unexpected error in make_tau_histogram_lhe: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
