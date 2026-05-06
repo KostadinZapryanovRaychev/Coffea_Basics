@@ -150,6 +150,159 @@ def compute_histogram_data(values, bins):
         raise RuntimeError(error_msg) from e
 
 
+def compute_histogram_data_2d(values_x, values_y, bins_x, bins_y):
+    """
+    Compute 2D histogram bin edges and counts from raw values.
+    
+    Args:
+        values_x: Array-like of numeric values (x-axis)
+        values_y: Array-like of numeric values (y-axis)
+        bins_x: Number of bins or bin edges for x-axis
+        bins_y: Number of bins or bin edges for y-axis
+        
+    Returns:
+        Tuple of (counts, bin_edges_x, bin_edges_y)
+        
+    Raises:
+        ValueError: If values array is invalid or empty
+        TypeError: If bins parameter is invalid
+    """
+    try:
+        values_x = np.asarray(values_x, dtype=np.float64)
+        values_y = np.asarray(values_y, dtype=np.float64)
+        
+        if len(values_x) == 0 or len(values_y) == 0:
+            raise ValueError("Cannot compute histogram from empty values array")
+        
+        if len(values_x) != len(values_y):
+            raise ValueError("X and Y value arrays must have same length")
+        
+        valid_mask = np.isfinite(values_x) & np.isfinite(values_y)
+        if np.sum(valid_mask) == 0:
+            raise ValueError("No valid (finite) values in input arrays")
+        
+        valid_x = values_x[valid_mask]
+        valid_y = values_y[valid_mask]
+        
+        x_min, x_max = valid_x.min(), valid_x.max()
+        y_min, y_max = valid_y.min(), valid_y.max()
+        
+        bin_edges_x = np.linspace(x_min, x_max, int(bins_x) + 1)
+        bin_edges_y = np.linspace(y_min, y_max, int(bins_y) + 1)
+        
+        counts, _, _ = np.histogram2d(values_x, values_y, bins=[bin_edges_x, bin_edges_y])
+        return counts, bin_edges_x, bin_edges_y
+    except (ValueError, TypeError) as e:
+        error_msg = (
+            f"\n[ERROR] Failed to compute 2D histogram data\n"
+            f"  Values X shape: {np.asarray(values_x).shape}\n"
+            f"  Values Y shape: {np.asarray(values_y).shape}\n"
+            f"  Bins X: {bins_x}, Bins Y: {bins_y}\n"
+            f"  Details: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg) from e
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Unexpected error computing 2D histogram data\n"
+            f"  Exception type: {type(e).__name__}\n"
+            f"  Details: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def build_root_histogram_2d(name: str, title: str, counts, bin_edges_x, bin_edges_y):
+    """
+    Construct a ROOT 2D histogram object with metadata.
+    
+    Args:
+        name: Histogram identifier
+        title: Histogram display title
+        counts: 2D bin contents (NxM array)
+        bin_edges_x: X-axis bin edge positions
+        bin_edges_y: Y-axis bin edge positions
+        
+    Returns:
+        ROOT TH2x histogram object
+        
+    Raises:
+        ValueError: If histogram data is invalid or incompatible
+    """
+    try:
+        counts = np.asarray(counts, dtype=np.float64)
+        bin_edges_x = np.asarray(bin_edges_x, dtype=np.float64)
+        bin_edges_y = np.asarray(bin_edges_y, dtype=np.float64)
+        
+        n_bins_x = len(bin_edges_x) - 1
+        n_bins_y = len(bin_edges_y) - 1
+        
+        if counts.shape != (n_bins_x, n_bins_y):
+            raise ValueError(
+                f"Bin count shape mismatch: {counts.shape} but expected ({n_bins_x}, {n_bins_y})"
+            )
+        
+        if np.any(np.isnan(counts)) or np.any(np.isinf(counts)):
+            raise ValueError("Histogram contains NaN or Inf values")
+        
+        if np.any(np.isnan(bin_edges_x)) or np.any(np.isinf(bin_edges_x)):
+            raise ValueError("X bin edges contain NaN or Inf values")
+        
+        if np.any(np.isnan(bin_edges_y)) or np.any(np.isinf(bin_edges_y)):
+            raise ValueError("Y bin edges contain NaN or Inf values")
+        
+        data = np.zeros((n_bins_x + 2) * (n_bins_y + 2), dtype=np.float64)
+        entries = float(counts.sum())
+        sumw = float(counts.sum())
+        sumw2 = float(counts.sum())
+        
+        for i in range(n_bins_x):
+            for j in range(n_bins_y):
+                data[(i + 1) * (n_bins_y + 2) + (j + 1)] = counts[i, j]
+        
+        xaxis = uproot.writing.identify.to_TAxis(
+            "xaxis",
+            "",
+            n_bins_x,
+            float(bin_edges_x[0]),
+            float(bin_edges_x[-1]),
+        )
+        yaxis = uproot.writing.identify.to_TAxis(
+            "yaxis",
+            "",
+            n_bins_y,
+            float(bin_edges_y[0]),
+            float(bin_edges_y[-1]),
+        )
+        
+        return uproot.writing.identify.to_TH2x(
+            name,
+            title,
+            data,
+            entries,
+            sumw,
+            sumw2,
+            xaxis,
+            yaxis,
+        )
+    except (ValueError, TypeError) as e:
+        error_msg = (
+            f"\n[ERROR] Failed to build 2D ROOT histogram '{name}'\n"
+            f"  Title: {title}\n"
+            f"  Details: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise ValueError(error_msg) from e
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Unexpected error building 2D ROOT histogram '{name}'\n"
+            f"  Exception type: {type(e).__name__}\n"
+            f"  Details: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
 def save_png(
     output_dir: Path,
     stem: str,
@@ -989,6 +1142,120 @@ def save_lhe_delta_phi_histogram(output_dir: Path, delta_phi):
         raise RuntimeError(error_msg) from e
 
 
+def save_lhe_delta_phi_vs_mass_histogram(output_dir: Path, delta_phi, mass):
+    """
+    Save 2D scatter plot of Δφ vs invariant mass for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_phi: Delta phi values array (range [-π, π])
+        mass: Mass values array
+        
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges_x, bin_edges_y) for combined ROOT output
+
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE Δφ vs M histogram...")
+        counts, bin_edges_x, bin_edges_y = compute_histogram_data_2d(delta_phi, mass, bins_x=80, bins_y=80)
+        
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
+        h = ax.hist2d(delta_phi, mass, bins=[bin_edges_x, bin_edges_y], cmap='viridis')
+        ax.set_xlabel(r"$\Delta \phi(\tau^{-},\tau^{+})$ [rad]", fontsize=11)
+        ax.set_ylabel(r"$M(\tau^{-},\tau^{+})$ [GeV]", fontsize=11)
+        ax.set_title("LHE $\\Delta\\phi$ vs Invariant Mass", fontsize=12, fontweight="bold")
+        plt.colorbar(h[3], ax=ax, label="Events")
+        
+        png_path = output_dir / "lhe_delta_phi_vs_mass.png"
+        plt.savefig(png_path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        logger.info(f"✓ Saved LHE Δφ vs M histogram PNG: {png_path}")
+        
+        return "lhe_delta_phi_vs_mass", "LHE $\\Delta\\phi$ vs M", counts, bin_edges_x, bin_edges_y
+    except Exception as e:
+        error_msg = f"Failed to save LHE Δφ vs M histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_lhe_delta_r_vs_mass_histogram(output_dir: Path, delta_r, mass):
+    """
+    Save 2D scatter plot of ΔR vs invariant mass for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_r: Delta R values array
+        mass: Mass values array
+        
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges_x, bin_edges_y) for combined ROOT output
+
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE ΔR vs M histogram...")
+        counts, bin_edges_x, bin_edges_y = compute_histogram_data_2d(delta_r, mass, bins_x=80, bins_y=80)
+        
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
+        h = ax.hist2d(delta_r, mass, bins=[bin_edges_x, bin_edges_y], cmap='viridis')
+        ax.set_xlabel(r"$\Delta R(\tau^{-},\tau^{+})$", fontsize=11)
+        ax.set_ylabel(r"$M(\tau^{-},\tau^{+})$ [GeV]", fontsize=11)
+        ax.set_title("LHE $\\Delta R$ vs Invariant Mass", fontsize=12, fontweight="bold")
+        plt.colorbar(h[3], ax=ax, label="Events")
+        
+        png_path = output_dir / "lhe_delta_r_vs_mass.png"
+        plt.savefig(png_path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        logger.info(f"✓ Saved LHE ΔR vs M histogram PNG: {png_path}")
+        
+        return "lhe_delta_r_vs_mass", "LHE $\\Delta R$ vs M", counts, bin_edges_x, bin_edges_y
+    except Exception as e:
+        error_msg = f"Failed to save LHE ΔR vs M histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def save_lhe_delta_eta_vs_mass_histogram(output_dir: Path, delta_eta, mass):
+    """
+    Save 2D scatter plot of Δη vs invariant mass for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_eta: Delta eta values array
+        mass: Mass values array
+        
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges_x, bin_edges_y) for combined ROOT output
+
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        logger.debug("Saving LHE Δη vs M histogram...")
+        counts, bin_edges_x, bin_edges_y = compute_histogram_data_2d(delta_eta, mass, bins_x=80, bins_y=80)
+        
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=150)
+        h = ax.hist2d(delta_eta, mass, bins=[bin_edges_x, bin_edges_y], cmap='viridis')
+        ax.set_xlabel(r"$\Delta \eta(\tau^{-},\tau^{+})$", fontsize=11)
+        ax.set_ylabel(r"$M(\tau^{-},\tau^{+})$ [GeV]", fontsize=11)
+        ax.set_title("LHE $\\Delta\\eta$ vs Invariant Mass", fontsize=12, fontweight="bold")
+        plt.colorbar(h[3], ax=ax, label="Events")
+        
+        png_path = output_dir / "lhe_delta_eta_vs_mass.png"
+        plt.savefig(png_path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
+        logger.info(f"✓ Saved LHE Δη vs M histogram PNG: {png_path}")
+        
+        return "lhe_delta_eta_vs_mass", "LHE $\\Delta\\eta$ vs M", counts, bin_edges_x, bin_edges_y
+    except Exception as e:
+        error_msg = f"Failed to save LHE Δη vs M histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
 def save_lhe_histograms_root(output_dir: Path, root_stem: str, histogram_specs):
     """
     Save multiple LHE histograms into a single ROOT file.
@@ -1012,8 +1279,18 @@ def save_lhe_histograms_root(output_dir: Path, root_stem: str, histogram_specs):
 
         try:
             with uproot.recreate(root_path) as root_file:
-                for histogram_name, title, counts, bin_edges in histogram_specs:
-                    histogram = build_root_histogram(histogram_name, title, counts, bin_edges)
+                for spec in histogram_specs:
+                    # Handle both 1D and 2D histograms
+                    if len(spec) == 4:
+                        # 1D histogram: (histogram_name, title, counts, bin_edges)
+                        histogram_name, title, counts, bin_edges = spec
+                        histogram = build_root_histogram(histogram_name, title, counts, bin_edges)
+                    elif len(spec) == 5:
+                        # 2D histogram: (histogram_name, title, counts, bin_edges_x, bin_edges_y)
+                        histogram_name, title, counts, bin_edges_x, bin_edges_y = spec
+                        histogram = build_root_histogram_2d(histogram_name, title, counts, bin_edges_x, bin_edges_y)
+                    else:
+                        raise ValueError(f"Invalid histogram spec length: {len(spec)}, expected 4 or 5")
                     root_file[histogram_name] = histogram
             logger.debug(f"Saved combined ROOT: {root_path}")
         except IOError as io_err:
@@ -1080,6 +1357,9 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
             save_lhe_delta_r_histogram(output_dir, lhe_delta_angles['delta_r']),
             save_lhe_delta_phi_histogram(output_dir, lhe_delta_angles['delta_phi']),
             save_lhe_cos_delta_eta_histogram(output_dir, lhe_delta_angles['delta_eta']),
+            save_lhe_delta_phi_vs_mass_histogram(output_dir, lhe_delta_angles['delta_phi'], lhe_ditau_kinematics['mass']),
+            save_lhe_delta_r_vs_mass_histogram(output_dir, lhe_delta_angles['delta_r'], lhe_ditau_kinematics['mass']),
+            save_lhe_delta_eta_vs_mass_histogram(output_dir, lhe_delta_angles['delta_eta'], lhe_ditau_kinematics['mass']),
         ]
         save_lhe_histograms_root(output_dir, "lhe_histograms", histogram_specs)
         
