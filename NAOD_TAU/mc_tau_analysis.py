@@ -100,7 +100,6 @@ def analyze_single_file(file_path: Path, tree_name: str, file_entry: dict,
         
         # Step 2: Select tau pairs
         try:
-            logger.debug("Selecting tau pairs...")
             lhe_selected, gen_selected, _ = load_tau_pairs(events)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
