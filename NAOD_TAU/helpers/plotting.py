@@ -302,6 +302,36 @@ def save_lhe_histogram_etha(output_dir: Path, eta):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
+def save_lhe_delta_eta_lepton_pair_histogram(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
+    """
+    Save delta-eta distribution histogram for lepton pairs (tau- vs tau+).
+    
+    Args:
+        output_dir: Output directory
+        lhe_minus_lv: Lorentz vectors for tau-
+        lhe_plus_lv: Lorentz vectors for tau+
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        delta_eta = lhe_minus_lv.eta - lhe_plus_lv.eta
+        counts , bin_edges = compute_histogram_data(delta_eta, bins=1000, bin_edge_min=-10, bin_edge_max=10)
+        save_png(
+            output_dir,
+            "lhe_delta_eta_lepton_pair",
+            "LHE Lepton Pair Delta Eta",
+            delta_eta,
+            bin_edges,
+            r"$\Delta\eta(\tau^{-} - \tau^{+})$",
+            "Events",
+        )
+        return "lhe_delta_eta_lepton_pair", "LHE Lepton Pair Delta Eta", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE delta-eta lepton pair histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
 def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
     """
     Create and save histograms for LHE-selected tau pairs.
@@ -329,6 +359,8 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
         save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz)
         save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt)
         save_lhe_histogram_etha(output_dir, (lhe_minus_lv + lhe_plus_lv).eta)
+        # for lepton pairs
+        save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
     except ValueError as e:
         logger.error(f"\n{str(e)}")
         raise ValueError(str(e)) from e
