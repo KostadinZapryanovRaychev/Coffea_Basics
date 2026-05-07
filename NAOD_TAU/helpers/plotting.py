@@ -19,6 +19,7 @@ def make_raw_all_tau_histograms(output_dir: Path, events):
     
     Analyzes the complete LHEPart collection BEFORE any pair selection.
     This shows the raw tau kinematic distributions across all events.
+    Saves all histograms to a single combined ROOT file.
     
     Args:
         output_dir: Directory to save histograms
@@ -48,7 +49,9 @@ def make_raw_all_tau_histograms(output_dir: Path, events):
         total_taus = len(taus_pt)
         logger.info(f"Analyzing {total_taus} raw tau particles from all events...")
         
-        # Create histograms
+        # Collect histogram specs
+        histogram_specs = []
+        
         try:
             # pT distribution
             counts, bin_edges = compute_histogram_data(taus_pt, bins=100, bin_edge_min=0, bin_edge_max=500)
@@ -61,6 +64,7 @@ def make_raw_all_tau_histograms(output_dir: Path, events):
                 r"$p_T(\tau)$ [GeV]",
                 "Tau count",
             )
+            histogram_specs.append(("raw_all_taus_pt", "All Raw Tau Particles: pT Distribution", counts, bin_edges))
             logger.info("✓ Saved raw tau pT histogram")
         except Exception as e:
             logger.error(f"Failed to save raw tau pT histogram: {str(e)}")
@@ -77,6 +81,7 @@ def make_raw_all_tau_histograms(output_dir: Path, events):
                 r"$\eta(\tau)$",
                 "Tau count",
             )
+            histogram_specs.append(("raw_all_taus_eta", "All Raw Tau Particles: η Distribution", counts, bin_edges))
             logger.info("✓ Saved raw tau eta histogram")
         except Exception as e:
             logger.error(f"Failed to save raw tau eta histogram: {str(e)}")
@@ -93,6 +98,7 @@ def make_raw_all_tau_histograms(output_dir: Path, events):
                 r"$\phi(\tau)$ [rad]",
                 "Tau count",
             )
+            histogram_specs.append(("raw_all_taus_phi", "All Raw Tau Particles: φ Distribution", counts, bin_edges))
             logger.info("✓ Saved raw tau phi histogram")
         except Exception as e:
             logger.error(f"Failed to save raw tau phi histogram: {str(e)}")
@@ -109,9 +115,15 @@ def make_raw_all_tau_histograms(output_dir: Path, events):
                 r"$p_z(\tau)$ [GeV]",
                 "Tau count",
             )
+            histogram_specs.append(("raw_all_taus_pz", "All Raw Tau Particles: pz Distribution", counts, bin_edges))
             logger.info("✓ Saved raw tau pz histogram")
         except Exception as e:
             logger.error(f"Failed to save raw tau pz histogram: {str(e)}")
+        
+        # Save all histograms to combined ROOT file
+        if histogram_specs:
+            save_lhe_histograms_root(output_dir, "raw_all_taus", histogram_specs)
+            logger.info(f"✓ Saved combined ROOT file with {len(histogram_specs)} raw tau histograms")
         
         logger.info(f"✓ Completed raw tau analysis for {total_taus} particles")
         
@@ -628,6 +640,7 @@ def make_raw_tau_histograms(output_dir: Path, lhe_taus):
 def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
     """
     Create and save histograms for LHE-selected tau pairs.
+    Saves all histograms to a single combined ROOT file.
     
     Args:
         output_dir: Directory to save histograms
@@ -644,18 +657,23 @@ def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
              lhe_selected.LHEPart.pdgId == 15,
              lhe_selected.LHEPart.pdgId == -15)
         
+        # Collect all histogram specs
+        histogram_specs = []
         
         # for all pairs (candidates for mother particle / Z')
-        save_lhe_mass_histogram(output_dir, (lhe_minus_lv + lhe_plus_lv).mass)
-        save_lhe_phi_histogram_by_default_method(output_dir, (lhe_minus_lv + lhe_plus_lv).phi)
-        save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt)
-        save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz)
-        save_lhe_histogram_etha(output_dir, (lhe_minus_lv + lhe_plus_lv).eta)
-        
+        histogram_specs.append(save_lhe_mass_histogram(output_dir, (lhe_minus_lv + lhe_plus_lv).mass))
+        histogram_specs.append(save_lhe_phi_histogram_by_default_method(output_dir, (lhe_minus_lv + lhe_plus_lv).phi))
+        histogram_specs.append(save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt))
+        histogram_specs.append(save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz))
+        histogram_specs.append(save_lhe_histogram_etha(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
         
         # for lepton pairs (tau- vs tau+)
-        save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
-        save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
+        histogram_specs.append(save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
+        histogram_specs.append(save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
+        
+        # Save all histograms to combined ROOT file
+        save_lhe_histograms_root(output_dir, "tau_pair_histograms", histogram_specs)
+        logger.info(f"✓ Saved combined ROOT file with {len(histogram_specs)} tau pair histograms")
         
         # Check for Z' candidates: analyze invariant mass distribution with visualization
         # check_zprime_candidates((lhe_minus_lv + lhe_plus_lv).mass, output_dir=output_dir, mass_threshold_range=(100, 5000))
