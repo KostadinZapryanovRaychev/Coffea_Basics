@@ -265,8 +265,258 @@ def save_lhe_delta_eta_lepton_pair_histogram(output_dir: Path, lhe_minus_lv, lhe
         error_msg = f"Failed to save LHE delta-eta lepton pair histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
+    
+def save_raw_tau_pt_distribution(output_dir: Path, lhe_parts):
+    """
+    Plot the raw transverse momentum (pt) distribution directly
+    from the awkward-array particle collection before Lorentz
+    vector construction.
 
-def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
+    Args:
+        output_dir: Directory where the histogram will be saved
+        lhe_parts: LHE particle collection (lhe_selected.LHEPart)
+
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges)
+
+    Raises:
+        RuntimeError: If histogram creation fails
+    """
+    try:
+        
+        tau_minus = lhe_parts[lhe_parts.pdgId == 15]
+        tau_plus = lhe_parts[lhe_parts.pdgId == -15]
+        
+        # Extract raw pt values
+        raw_pt_minus = ak.flatten(tau_minus.pt)
+        raw_pt_plus = ak.flatten(tau_plus.pt)
+
+        # Combine both tau species into one distribution
+        raw_pt = ak.to_numpy(
+            ak.concatenate([raw_pt_minus, raw_pt_plus])
+        )
+
+        # Compute histogram
+        counts, bin_edges = compute_histogram_data(
+            raw_pt,
+            bins=200,
+            bin_edge_min=0,
+            bin_edge_max=250
+        )
+
+        # Save histogram image
+        save_png(
+            output_dir,
+            "raw_tau_pt",
+            "Raw Tau Transverse Momentum Distribution",
+            raw_pt,
+            bin_edges,
+            r"$p_{T}(\tau)$ [GeV]",
+            "Events",
+        )
+
+        return (
+            "raw_tau_pt",
+            "Raw Tau Transverse Momentum Distribution",
+            counts,
+            bin_edges,
+        )
+
+    except Exception as e:
+        error_msg = f"Failed to save raw tau pt histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def save_raw_tau_eta_distribution(output_dir: Path, lhe_parts):
+    """
+    Plot the raw pseudorapidity (eta) distribution directly
+    from the awkward-array particle collection before Lorentz
+    vector construction.
+
+    Args:
+        output_dir: Directory where the histogram will be saved
+        lhe_parts: LHE particle collection (lhe_selected.LHEPart)
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges)
+    Raises:        RuntimeError: If histogram creation fails
+    """
+    try:
+        tau_minus = lhe_parts[lhe_parts.pdgId == 15]
+        tau_plus = lhe_parts[lhe_parts.pdgId == -15]
+        
+        # Extract raw eta values
+        raw_eta_minus = ak.flatten(tau_minus.eta)
+        raw_eta_plus = ak.flatten(tau_plus.eta)
+
+        # Combine both tau species into one distribution
+        raw_eta = ak.to_numpy(
+            ak.concatenate([raw_eta_minus, raw_eta_plus])
+        )
+
+        # Compute histogram
+        counts, bin_edges = compute_histogram_data(
+            raw_eta,
+            bins=200,
+            bin_edge_min=-10,
+            bin_edge_max=10
+        )
+
+        # Save histogram image
+        save_png(
+            output_dir,
+            "raw_tau_eta",
+            "Raw Tau Pseudorapidity Distribution",
+            raw_eta,
+            bin_edges,
+            r"$\eta(\tau)$",
+            "Events",
+        )
+
+        return (
+            "raw_tau_eta",
+            "Raw Tau Pseudorapidity Distribution",
+            counts,
+            bin_edges,
+        )
+
+    except Exception as e:
+        error_msg = f"Failed to save raw tau eta histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def save_raw_tau_phi_distribution(output_dir: Path, lhe_parts):
+    """
+    Plot the raw azimuthal angle (phi) distribution directly
+    from the awkward-array particle collection before Lorentz
+    vector construction.
+
+    Args:
+        output_dir: Directory where the histogram will be saved
+        lhe_parts: LHE particle collection (lhe_selected.LHEPart)
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges)
+    Raises:        RuntimeError: If histogram creation fails
+    """
+    try:
+        tau_minus = lhe_parts[lhe_parts.pdgId == 15]
+        tau_plus = lhe_parts[lhe_parts.pdgId == -15]
+        
+        # Extract raw phi values
+        raw_phi_minus = ak.flatten(tau_minus.phi)
+        raw_phi_plus = ak.flatten(tau_plus.phi)
+
+        # Combine both tau species into one distribution
+        raw_phi = ak.to_numpy(
+            ak.concatenate([raw_phi_minus, raw_phi_plus])
+        )
+
+        # Compute histogram
+        counts, bin_edges = compute_histogram_data(
+            raw_phi,
+            bins=200,
+            bin_edge_min=-3.2,
+            bin_edge_max=3.2
+        )
+
+        # Save histogram image
+        save_png(
+            output_dir,
+            "raw_tau_phi",
+            "Raw Tau Azimuthal Angle Distribution",
+            raw_phi,
+            bin_edges,
+            r"$\phi(\tau)$ [rad]",
+            "Events",
+        )
+
+        return (
+            "raw_tau_phi",
+            "Raw Tau Azimuthal Angle Distribution",
+            counts,
+            bin_edges,
+        )
+
+    except Exception as e:
+        error_msg = f"Failed to save raw tau phi histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+    
+def save_raw_tau_pz_distribution(output_dir: Path, lhe_parts):
+    """
+    Plot the raw longitudinal momentum (pz) distribution directly
+    from the awkward-array particle collection before Lorentz
+    vector construction.
+
+    Args:
+        output_dir: Directory where the histogram will be saved
+        lhe_parts: LHE particle collection (lhe_selected.LHEPart)
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges)
+    Raises:        RuntimeError: If histogram creation fails
+    """
+    try:
+        tau_minus = lhe_parts[lhe_parts.pdgId == 15]
+        tau_plus = lhe_parts[lhe_parts.pdgId == -15]
+        
+        # Extract raw pz values
+        raw_pz_minus = ak.flatten(tau_minus.pz)
+        raw_pz_plus = ak.flatten(tau_plus.pz)
+
+        # Combine both tau species into one distribution
+        raw_pz = ak.to_numpy(
+            ak.concatenate([raw_pz_minus, raw_pz_plus])
+        )
+
+        # Compute histogram
+        counts, bin_edges = compute_histogram_data(
+            raw_pz,
+            bins=200,
+            bin_edge_min=-2000,
+            bin_edge_max=2000
+        )
+
+        # Save histogram image
+        save_png(
+            output_dir,
+            "raw_tau_pz",
+            "Raw Tau Longitudinal Momentum Distribution",
+            raw_pz,
+            bin_edges,
+            r"$p_{z}(\tau)$ [GeV]",
+            "Events",
+        )
+
+        return (
+            "raw_tau_pz",
+            "Raw Tau Longitudinal Momentum Distribution",
+            counts,
+            bin_edges,
+        )
+
+    except Exception as e:
+        error_msg = f"Failed to save raw tau pz histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+  
+
+def make_raw_tau_histograms(output_dir: Path, lhe_taus):
+    """
+    Create and save histograms for raw tau kinematic distributions
+    directly from the LHE particle collection before Lorentz vector construction.
+    
+    Args:
+        output_dir: Directory to save histograms
+        lhe_taus: LHE particle collection (lhe_selected.LHEPart)
+    Raises:        RuntimeError: If histogram creation or saving fails
+    """    
+    try:
+        save_raw_tau_pt_distribution(output_dir, lhe_taus)
+        save_raw_tau_eta_distribution(output_dir, lhe_taus)
+        save_raw_tau_phi_distribution(output_dir, lhe_taus)
+        save_raw_tau_pz_distribution(output_dir, lhe_taus)
+    except Exception as e:
+        error_msg = f"Unexpected error in make_raw_tau_histograms: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e        
+
+def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
     """
     Create and save histograms for LHE-selected tau pairs.
     
@@ -292,16 +542,17 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
         # for all pairs (candidates for mother particle / Z')
         save_lhe_mass_histogram(output_dir, ditau_mass)
         save_lhe_phi_histogram_by_default_method(output_dir, (lhe_minus_lv + lhe_plus_lv).phi)
-        save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz)
         save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt)
+        save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz)
         save_lhe_histogram_etha(output_dir, (lhe_minus_lv + lhe_plus_lv).eta)
+        
         
         # for lepton pairs (tau- vs tau+)
         save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
         save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
         
         # Check for Z' candidates: analyze invariant mass distribution with visualization
-        check_zprime_candidates(ditau_mass, output_dir=output_dir, mass_threshold_range=(100, 5000))
+        # check_zprime_candidates(ditau_mass, output_dir=output_dir, mass_threshold_range=(100, 5000))
         
     except ValueError as e:
         logger.error(f"\n{str(e)}")
@@ -319,3 +570,4 @@ def make_tau_histogram_lhe(output_dir: Path, lhe_selected):
         error_msg = f"Unexpected error in make_tau_histogram_lhe: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
+  

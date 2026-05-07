@@ -233,173 +233,32 @@ def load_tau_pairs(events):
     return lhe_selected, gen_selected, lhe_mask_np
 
 
-def get_genpart_parent_taus(events):
+
+
+def load_all_taus(events):
     """
-    Extract parent tau particles from GenPart collection.
+    Load all tau and anti-tau particles from LHEPart and GenPart (if available).
     
-    Parents are tau/anti-tau with status=23 (hard process particles).
+    This function retrieves all tau candidates without applying the 1 tau + 1 anti-tau selection.
+    It is useful for diagnostic purposes to understand the full particle content before selection.
     
     Args:
-        events: NanoEvents object with GenPart collection
-        
+        events: NanoEvents object containing LHEPart and optionally GenPart collections 
     Returns:
-        Tuple of (tau_minus_parents, tau_plus_parents) selected GenPart particles
-        
-    Raises:
-        AttributeError: If GenPart not found
+        Tuple of (lhe_taus, gen_taus):
+        - lhe_taus: All tau and anti-tau particles from LHEPart (or None if LHEPart missing)
+        - gen_taus: All tau and anti-tau particles from GenPart (or None if GenPart missing)
     """
-    if "GenPart" not in events.fields:
-        error_msg = "\n[ERROR] GenPart not found in events\n"
-        logger.error(error_msg)
-        raise AttributeError(error_msg)
+    lhe_taus = None
+    gen_taus = None
     
-    try:
-        gen_parts = events.GenPart
-        pdg_id = gen_parts.pdgId
-        status = gen_parts.status
-        
-        # Parents: status==23 (hard process)
-        tau_minus_mask = (pdg_id == 15) & (status == 23)
-        tau_plus_mask = (pdg_id == -15) & (status == 23)
-        
-        tau_minus_parents = gen_parts[tau_minus_mask]
-        tau_plus_parents = gen_parts[tau_plus_mask]
-        
-        return tau_minus_parents, tau_plus_parents
-    except Exception as e:
-        error_msg = (
-            f"\n[ERROR] Failed to extract parent taus from GenPart\n"
-            f"  Exception: {type(e).__name__}: {str(e)}\n"
-        )
-        logger.error(error_msg)
-        raise
-
-
-def get_genpart_children_particles(gen_part_parent, events):
-    """
-    Extract children (decay products) of a parent GenPart particle.
+    if "LHEPart" in events.fields:
+        pdg_lhe = events.LHEPart.pdgId
+        lhe_taus = events.LHEPart[(pdg_lhe == 15) | (pdg_lhe == -15)]
     
-    Uses mother/daughter indices to find all decay products.
+    if "GenPart" in events.fields:
+        pdg_gen = events.GenPart.pdgId
+        gen_taus = events.GenPart[(pdg_gen == 15) | (pdg_gen == -15)]
     
-    Args:
-        gen_part_parent: Parent GenPart particle (e.g., a tau with status=23)
-        events: Full NanoEvents object for access to parent indices
-        
-    Returns:
-        Array of child particles (GenPart collection)
-        
-    Raises:
-        AttributeError: If mother index information not available
-    """
-    try:
-        # Access mother index from parent
-        # In awkward arrays, we need to be careful with indexing
-        # For now, we'll use a simplified approach: find particles with mother pointing to this tau
-        
-        gen_parts = events.GenPart
-        
-        # Get mother indices - these point to parent particle indices
-        mother_idx = gen_parts.genPartIdxMother
-        
-        # For each tau parent, find particles whose mother is this tau
-        # This is complex in awkward arrays, so we'll compute per-event
-        children_list = []
-        
-        # Iterate over events
-        for event_idx in range(len(gen_parts)):
-            mothers = mother_idx[event_idx]
-            
-            # Find children by checking mother indices
-            # This is a simplified approach - in reality you'd need the mother particle indices
-            children_mask = (mothers >= 0)  # Valid mother index
-            children_list.append(gen_parts[event_idx][children_mask])
-        
-        return ak.concatenate([ak.Array([c]) for c in children_list])
-    except Exception as e:
-        error_msg = (
-            f"\n[ERROR] Failed to extract children particles\n"
-            f"  Exception: {type(e).__name__}: {str(e)}\n"
-        )
-        logger.error(error_msg)
-        raise
-
-
-def get_genpart_children_simple(events):
-    """
-    Extract children particles as status=1 (stable final state) GenPart.
-    
-    This is a simpler approach that gets all stable particles,
-    which represent the decay products that reach the detector.
-    
-    Args:
-        events: NanoEvents object with GenPart collection
-        
-    Returns:
-        Array of stable GenPart particles (status=1)
-        
-    Raises:
-        AttributeError: If GenPart not found
-    """
-    if "GenPart" not in events.fields:
-        error_msg = "\n[ERROR] GenPart not found in events\n"
-        logger.error(error_msg)
-        raise AttributeError(error_msg)
-    
-    try:
-        gen_parts = events.GenPart
-        status = gen_parts.status
-        
-        # Children: status==1 (stable final state)
-        children_mask = (status == 1)
-        children = gen_parts[children_mask]
-        
-        return children
-    except Exception as e:
-        error_msg = (
-            f"\n[ERROR] Failed to extract children particles\n"
-            f"  Exception: {type(e).__name__}: {str(e)}\n"
-        )
-        logger.error(error_msg)
-        raise
-
-
-def get_lhe_tau_pairs(events):
-    """
-    Extract tau pairs from LHEPart collection.
-    
-    This is a utility function to get the actual tau particles from LHE selection.
-    
-    Args:
-        events: NanoEvents object with LHEPart collection
-    Returns:
-        Tuple of (tau_minus, tau_plus) arrays of LHE particles
-    Raises:
-        AttributeError: If LHEPart not found
-    """
-    if "LHEPart" not in events.fields:
-        error_msg = "\n[ERROR] LHEPart not found in events\n"
-        logger.error(error_msg)
-        raise AttributeError(error_msg)
-    
-    try:
-        lhe_parts = events.LHEPart
-        pdg_id = lhe_parts.pdgId
-        
-        tau_minus_mask = (pdg_id == 15)
-        tau_plus_mask = (pdg_id == -15)
-        
-        tau_minus = lhe_parts[tau_minus_mask]
-        tau_plus = lhe_parts[tau_plus_mask]
-        
-        return tau_minus, tau_plus
-    except Exception as e:
-        error_msg = (
-            f"\n[ERROR] Failed to extract tau pairs from LHEPart\n"
-            f"  Exception: {type(e).__name__}: {str(e)}\n"
-        )
-        logger.error(error_msg)
-        raise
-
-
-
+    return lhe_taus, gen_taus
 
