@@ -17,7 +17,7 @@ def create_output_directory(output_dir: Path) -> Path:
         logger.error(error_msg)
         raise ValueError(error_msg) from e
 
-def validate_lhe_events(lhe_selected) -> int:
+def validate_lhe_events(lhe_selected) -> None:
     """
     Validate LHE event selection.
     

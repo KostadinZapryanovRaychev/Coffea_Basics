@@ -12,6 +12,115 @@ from .vector_builder import build_tau_vectors
 
 logger = logging.getLogger(__name__)
 
+
+def make_raw_all_tau_histograms(output_dir: Path, events):
+    """
+    Create and save histograms for ALL tau particles in the dataset.
+    
+    Analyzes the complete LHEPart collection BEFORE any pair selection.
+    This shows the raw tau kinematic distributions across all events.
+    
+    Args:
+        output_dir: Directory to save histograms
+        events: NanoEvents object with LHEPart collection (all events, no selection)
+        
+    Raises:
+        RuntimeError: If histogram creation fails
+    """
+    try:
+        # Get all tau and anti-tau particles from LHEPart
+        if "LHEPart" not in events.fields:
+            logger.warning("⚠ LHEPart not found, skipping raw tau histograms")
+            return
+        
+        pdg_lhe = events.LHEPart.pdgId
+        
+        # Select all tau (15) and anti-tau (-15) particles
+        tau_mask = (pdg_lhe == 15) | (pdg_lhe == -15)
+        taus_all = events.LHEPart[tau_mask]
+        
+        # Flatten to get single array of all tau particles across all events
+        taus_pt = ak.flatten(taus_all.pt)
+        taus_eta = ak.flatten(taus_all.eta)
+        taus_phi = ak.flatten(taus_all.phi)
+        taus_pz = ak.flatten(taus_all.pz)
+        
+        total_taus = len(taus_pt)
+        logger.info(f"Analyzing {total_taus} raw tau particles from all events...")
+        
+        # Create histograms
+        try:
+            # pT distribution
+            counts, bin_edges = compute_histogram_data(taus_pt, bins=100, bin_edge_min=0, bin_edge_max=500)
+            save_png(
+                output_dir,
+                "raw_all_taus_pt",
+                "All Raw Tau Particles: pT Distribution",
+                taus_pt,
+                bin_edges,
+                r"$p_T(\tau)$ [GeV]",
+                "Tau count",
+            )
+            logger.info("✓ Saved raw tau pT histogram")
+        except Exception as e:
+            logger.error(f"Failed to save raw tau pT histogram: {str(e)}")
+        
+        try:
+            # eta distribution
+            counts, bin_edges = compute_histogram_data(taus_eta, bins=100, bin_edge_min=-10, bin_edge_max=10)
+            save_png(
+                output_dir,
+                "raw_all_taus_eta",
+                "All Raw Tau Particles: η Distribution",
+                taus_eta,
+                bin_edges,
+                r"$\eta(\tau)$",
+                "Tau count",
+            )
+            logger.info("✓ Saved raw tau eta histogram")
+        except Exception as e:
+            logger.error(f"Failed to save raw tau eta histogram: {str(e)}")
+        
+        try:
+            # phi distribution
+            counts, bin_edges = compute_histogram_data(taus_phi, bins=100, bin_edge_min=-3.2, bin_edge_max=3.2)
+            save_png(
+                output_dir,
+                "raw_all_taus_phi",
+                "All Raw Tau Particles: φ Distribution",
+                taus_phi,
+                bin_edges,
+                r"$\phi(\tau)$ [rad]",
+                "Tau count",
+            )
+            logger.info("✓ Saved raw tau phi histogram")
+        except Exception as e:
+            logger.error(f"Failed to save raw tau phi histogram: {str(e)}")
+        
+        try:
+            # pz distribution
+            counts, bin_edges = compute_histogram_data(taus_pz, bins=100, bin_edge_min=-500, bin_edge_max=500)
+            save_png(
+                output_dir,
+                "raw_all_taus_pz",
+                "All Raw Tau Particles: pz Distribution",
+                taus_pz,
+                bin_edges,
+                r"$p_z(\tau)$ [GeV]",
+                "Tau count",
+            )
+            logger.info("✓ Saved raw tau pz histogram")
+        except Exception as e:
+            logger.error(f"Failed to save raw tau pz histogram: {str(e)}")
+        
+        logger.info(f"✓ Completed raw tau analysis for {total_taus} particles")
+        
+    except Exception as e:
+        error_msg = f"Error in make_raw_all_tau_histograms: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
 def compute_histogram_data(values, bins , bin_edge_min=None, bin_edge_max=None):
     """
     Compute histogram bin edges and counts from raw values.
@@ -528,19 +637,16 @@ def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
         RuntimeError: If histogram creation or saving fails
     """
     try:
-        n_events = validate_lhe_events(lhe_selected)
+        validate_lhe_events(lhe_selected)
         
         lhe_minus_lv, lhe_plus_lv = build_tau_vectors(
              lhe_selected.LHEPart,
              lhe_selected.LHEPart.pdgId == 15,
-             lhe_selected.LHEPart.pdgId == -15,
-        )
+             lhe_selected.LHEPart.pdgId == -15)
         
-        # Compute di-tau invariant mass for Z' candidate check
-        ditau_mass = (lhe_minus_lv + lhe_plus_lv).mass
         
         # for all pairs (candidates for mother particle / Z')
-        save_lhe_mass_histogram(output_dir, ditau_mass)
+        save_lhe_mass_histogram(output_dir, (lhe_minus_lv + lhe_plus_lv).mass)
         save_lhe_phi_histogram_by_default_method(output_dir, (lhe_minus_lv + lhe_plus_lv).phi)
         save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt)
         save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz)
@@ -552,7 +658,7 @@ def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
         save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
         
         # Check for Z' candidates: analyze invariant mass distribution with visualization
-        check_zprime_candidates(ditau_mass, output_dir=output_dir, mass_threshold_range=(100, 5000))
+        # check_zprime_candidates((lhe_minus_lv + lhe_plus_lv).mass, output_dir=output_dir, mass_threshold_range=(100, 5000))
         
     except ValueError as e:
         logger.error(f"\n{str(e)}")
