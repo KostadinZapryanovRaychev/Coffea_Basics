@@ -3,7 +3,6 @@ import logging
 import awkward as ak
 import matplotlib.pyplot as plt
 import numpy as np
-from coffea.nanoevents.methods import vector
 
 from .root_writer import save_lhe_histograms_root
 from .validation import create_output_directory, validate_lhe_events

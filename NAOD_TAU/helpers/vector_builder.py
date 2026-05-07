@@ -1,5 +1,5 @@
 import awkward as ak
-import vector
+from coffea.nanoevents.methods import vector
 import logging
 
 
