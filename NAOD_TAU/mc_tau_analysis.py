@@ -24,7 +24,7 @@ if __package__ is None or __package__ == "":
 
 
 from NAOD_TAU.helpers.io import HERE, load_events, load_config, iterate_all_enabled_root_files
-from NAOD_TAU.helpers.plotting import make_pair_tau_histograms_lhe, make_raw_tau_histograms
+from NAOD_TAU.helpers.plotting import make_pair_tau_histograms_lhe
 from NAOD_TAU.helpers.selection import load_tau_pairs
 
 
@@ -100,7 +100,6 @@ def analyze_single_file(file_path: Path, tree_name: str, file_entry: dict,
         
         # Step 2: Select tau pairs
         try:
-            lhe_taus, gen_taus, _ = load_tau_pairs(events)
             lhe_selected, gen_selected, _ = load_tau_pairs(events)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
@@ -129,7 +128,6 @@ def analyze_single_file(file_path: Path, tree_name: str, file_entry: dict,
         # Step 3: Generate LHE histograms
         try:
             output_dir = get_output_directory_for_file(base_output_dir, file_entry)
-            make_raw_tau_histograms(output_dir, lhe_taus)
             make_pair_tau_histograms_lhe(output_dir, lhe_selected)
         except ValueError as e:
             logger.error(f"\n{str(e)}")

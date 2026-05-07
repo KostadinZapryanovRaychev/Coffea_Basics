@@ -552,7 +552,7 @@ def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
         save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv)
         
         # Check for Z' candidates: analyze invariant mass distribution with visualization
-        # check_zprime_candidates(ditau_mass, output_dir=output_dir, mass_threshold_range=(100, 5000))
+        check_zprime_candidates(ditau_mass, output_dir=output_dir, mass_threshold_range=(100, 5000))
         
     except ValueError as e:
         logger.error(f"\n{str(e)}")
@@ -560,14 +560,8 @@ def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
     except RuntimeError as e:
         logger.error(f"\n{str(e)}")
         raise RuntimeError(str(e)) from e
-    except ValueError as e:
-        logger.error(f"\n{str(e)}")
-        raise ValueError(str(e)) from e
-    except RuntimeError as e:
-        logger.error(f"\n{str(e)}")
-        raise RuntimeError(str(e)) from e
     except Exception as e:
-        error_msg = f"Unexpected error in make_tau_histogram_lhe: {str(e)}"
+        error_msg = f"Unexpected error in make_pair_tau_histograms_lhe: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
   
