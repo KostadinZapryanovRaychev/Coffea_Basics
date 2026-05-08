@@ -380,6 +380,34 @@ def save_lhe_histogram_etha(output_dir: Path, eta):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
+def save_lhe_delta_phi_pair_histogram(output_dir: Path, delta_phi):
+    """
+    Save delta-phi distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_phi: Delta-phi values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(delta_phi, bins=60, bin_edge_min=-3.2, bin_edge_max=3.2)
+        save_png(
+            output_dir,
+            "lhe_delta_phi",
+            "LHE Taus Pair Delta Phi",
+            delta_phi,
+            bin_edges,
+            r"$\Delta\phi(\tau^{-}\tau^{+})$ [rad]",
+            "Events",
+        )
+        return "lhe_delta_phi", "LHE Taus Pair Delta Phi", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE delta-phi histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+    
+
 def save_lhe_delta_phi_lepton_pair_histogram(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
     """
     Save delta-phi distribution histogram for lepton pairs (tau- vs tau+).
@@ -788,11 +816,11 @@ def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
         combined_vec = lhe_minus_lv + lhe_plus_lv
         combined_rapidity = 0.5 * np.log((combined_vec.energy + combined_vec.pz) / (combined_vec.energy - combined_vec.pz))
         histogram_specs.append(save_lhe_histogram_rapidity(output_dir, combined_rapidity))
-        #TODO to ask what is rapiditys
+        #TODO to ask what is rapidity
         
-        # for lepton pairs (tau- vs tau+)
         histogram_specs.append(save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
         histogram_specs.append(save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
+        histogram_specs.append(save_lhe_delta_phi_pair_histogram(output_dir, lhe_minus_lv.phi - lhe_plus_lv.phi))
         
         # Save all histograms to combined ROOT file
         save_lhe_histograms_root(output_dir, "tau_pair_histograms", histogram_specs)

@@ -7,8 +7,6 @@ logger = logging.getLogger(__name__)
 
 def build_tau_vectors(parts, mask_minus, mask_plus):
 
-    #TODO to recheck very carefully this sum and what it does
-    #TODo to recheck also delta_phi
     """
     Build Lorentz vectors for tau pairs.
     
