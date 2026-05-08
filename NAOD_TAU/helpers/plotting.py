@@ -6,9 +6,10 @@ import numpy as np
 
 from .root_writer import save_lhe_histograms_root
 from .validation import create_output_directory, validate_lhe_events
-from .image_processing import save_png
+from .image_processing import save_png , compute_histogram_data
 from .z_prime_candidate import check_zprime_candidates
 from .vector_builder import build_tau_vectors
+
 
 logger = logging.getLogger(__name__)
 
@@ -154,59 +155,6 @@ def make_all_tau_histograms(output_dir: Path, events):
         
     except Exception as e:
         error_msg = f"Error in make_all_tau_histograms: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
-
-
-def compute_histogram_data(values, bins , bin_edge_min=None, bin_edge_max=None):
-    """
-    Compute histogram bin edges and counts from values.
-    
-    Args:
-        values: Array-like of numeric values
-        bins: Number of bins or bin edges
-        bin_edge_min: Minimum value for bin edges
-        bin_edge_max: Maximum value for bin edges
-
-    Returns:
-        Tuple of (counts, bin_edges)
-        
-    Raises:
-        ValueError: If values array is invalid or empty
-        TypeError: If bins parameter is invalid
-    """
-    try:
-        values = np.asarray(values, dtype=np.float64)
-        
-        if len(values) == 0:
-            raise ValueError("Cannot compute histogram from empty values array")
-        
-        if np.all(np.isnan(values)):
-            raise ValueError("All values are NaN")
-        
-        # Filter out NaN/Inf for valid min/max
-        valid_values = values[np.isfinite(values)]
-        if len(valid_values) == 0:
-            raise ValueError("No valid (finite) values in input array")
-        
-        bin_edges = np.linspace(bin_edge_min, bin_edge_max, int(bins) + 1)
-        counts, _ = np.histogram(values, bins=bin_edges)
-        return counts, bin_edges
-    except (ValueError, TypeError) as e:
-        error_msg = (
-            f"\n[ERROR] Failed to compute histogram data\n"
-            f"  Values shape: {np.asarray(values).shape}\n"
-            f"  Bins: {bins}\n"
-            f"  Details: {str(e)}\n"
-        )
-        logger.error(error_msg)
-        raise ValueError(error_msg) from e
-    except Exception as e:
-        error_msg = (
-            f"\n[ERROR] Unexpected error computing histogram data\n"
-            f"  Exception type: {type(e).__name__}\n"
-            f"  Details: {str(e)}\n"
-        )
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
@@ -465,6 +413,61 @@ def save_lhe_delta_eta_lepton_pair_histogram(output_dir: Path, lhe_minus_lv, lhe
         return "lhe_delta_eta_lepton_pair", "LHE Lepton Pair Delta Eta", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE delta-eta lepton pair histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def save_lhe_pt_vs_delta_phi_lepton_pair_histogram(output_dir: Path, pt, delta_phi_lepton_pair):
+    """
+    Save 2D correlation histogram of pt vs delta_phi for lepton pairs.
+    Visualizes relationship between transverse momentum and angular separation.
+    
+    Args:
+        output_dir: Output directory
+        pt: Pt values array (combined tau- and tau+)
+        delta_phi_lepton_pair: Delta phi values for tau- vs tau+
+    Returns:
+        None (saved as PNG only, not included in ROOT output)
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        # Convert awkward arrays to numpy if needed
+        pt_np = ak.to_numpy(pt) if hasattr(pt, 'to_numpy') else np.asarray(pt)
+        delta_phi_np = ak.to_numpy(delta_phi_lepton_pair) if hasattr(delta_phi_lepton_pair, 'to_numpy') else np.asarray(delta_phi_lepton_pair)
+        
+        # Create 2D histogram
+        counts, x_edges, y_edges = np.histogram2d(
+            pt_np,
+            delta_phi_np,
+            bins=[50, 50],
+            range=[[0, 500], [-3.2, 3.2]]
+        )
+        
+        # Create 2D heatmap plot
+        fig, ax = plt.subplots(figsize=(10, 8))
+        im = ax.imshow(
+            counts.T,
+            origin='lower',
+            extent=[x_edges[0], x_edges[-1], y_edges[0], y_edges[-1]],
+            cmap='YlOrRd',
+            aspect='auto'
+        )
+        
+        ax.set_xlabel(r"$p_T(\tau^-\tau^+)$ [GeV]", fontsize=12)
+        ax.set_ylabel(r"$\Delta\phi(\tau^- - \tau^+)$ [rad]", fontsize=12)
+        ax.set_title("2D Correlation: Pt vs Delta Phi (Lepton Pair)", fontsize=14, fontweight='bold')
+        
+        cbar = fig.colorbar(im, ax=ax, label='Events')
+        
+        # Save plot
+        output_path = output_dir / "lhe_pt_vs_delta_phi_lepton_pair.png"
+        plt.savefig(output_path, dpi=100, bbox_inches='tight')
+        plt.close()
+        
+        logger.info("✓ Saved 2D correlation histogram: pt vs delta_phi_lepton_pair")
+        
+    except Exception as e:
+        error_msg = f"Failed to save pt vs delta_phi correlation histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
     
@@ -821,6 +824,11 @@ def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
         histogram_specs.append(save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
         histogram_specs.append(save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
         histogram_specs.append(save_lhe_delta_phi_pair_histogram(output_dir, lhe_minus_lv.phi - lhe_plus_lv.phi))
+        
+        # 2D correlation: pt vs delta_phi_lepton_pair
+        combined_pt = (lhe_minus_lv + lhe_plus_lv).pt
+        delta_phi_lepton = lhe_minus_lv.phi - lhe_plus_lv.phi
+        save_lhe_pt_vs_delta_phi_lepton_pair_histogram(output_dir, combined_pt, delta_phi_lepton)
         
         # Save all histograms to combined ROOT file
         save_lhe_histograms_root(output_dir, "tau_pair_histograms", histogram_specs)
