@@ -104,6 +104,23 @@ def make_raw_all_tau_histograms(output_dir: Path, events):
             logger.error(f"Failed to save raw tau phi histogram: {str(e)}")
         
         try:
+            #rapidity distribution
+            counts, bin_edges = compute_histogram_data(taus_pz, bins=100, bin_edge_min=-10, bin_edge_max=10)
+            save_png(
+                output_dir,
+                "raw_all_taus_rapidity",
+                "All Raw Tau Particles: Rapidity Distribution",
+                taus_pz,
+                bin_edges,
+                r"$y(\tau)$",
+                "Tau count",
+            )
+            histogram_specs.append(("raw_all_taus_rapidity", "All Raw Tau Particles: Rapidity Distribution", counts, bin_edges))
+            logger.info("✓ Saved raw tau rapidity histogram")
+        except Exception as e:
+            logger.error(f"Failed to save raw tau rapidity histogram: {str(e)}")
+
+        try:
             # pz distribution
             counts, bin_edges = compute_histogram_data(taus_pz, bins=100, bin_edge_min=-500, bin_edge_max=500)
             save_png(
@@ -299,7 +316,35 @@ def save_lhe_histogram_pt(output_dir: Path, pt):
         error_msg = f"Failed to save LHE pt histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e    
-     
+
+def save_lhe_histogram_rapidity(output_dir: Path, lhe_parts):
+    """
+    Save rapidity distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        lhe_parts: LHE particle collection (lhe_selected.LHEPart)
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(lhe_parts.rapidity, bins=2500, bin_edge_min=-10, bin_edge_max=10)
+        save_png(
+            output_dir,
+            "lhe_rapidity",
+            "LHE Taus Rapidity Distribution",
+            lhe_parts.rapidity,
+            bin_edges,
+            r"$y(\tau^{-}\tau^{+})$",
+            "Events",
+        )
+        return "lhe_rapidity", "LHE Taus Rapidity Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE rapidity histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
 def save_lhe_histogram_etha(output_dir: Path, eta):
     """
     Save eta distribution histogram for LHE tau pairs.
@@ -616,6 +661,61 @@ def save_raw_tau_pz_distribution(output_dir: Path, lhe_parts):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
   
+def save_raw_tau_rapidity_distribution(output_dir: Path, lhe_parts):
+    """
+    Plot the raw rapidity distribution directly
+    from the awkward-array particle collection before Lorentz
+    vector construction.
+
+    Args:
+        output_dir: Directory where the histogram will be saved
+        lhe_parts: LHE particle collection (lhe_selected.LHEPart)
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges)
+    Raises:        RuntimeError: If histogram creation fails
+    """ 
+    try:
+        tau_minus = lhe_parts[lhe_parts.pdgId == 15]
+        tau_plus = lhe_parts[lhe_parts.pdgId == -15]
+        
+        # Extract raw rapidity values
+        raw_rapidity_minus = ak.flatten(tau_minus.rapidity)
+        raw_rapidity_plus = ak.flatten(tau_plus.rapidity)
+
+        # Combine both tau species into one distribution
+        raw_rapidity = ak.to_numpy(
+            ak.concatenate([raw_rapidity_minus, raw_rapidity_plus])
+        )
+
+        # Compute histogram
+        counts, bin_edges = compute_histogram_data(
+            raw_rapidity,
+            bins=200,
+            bin_edge_min=-10,
+            bin_edge_max=10
+        )
+
+        # Save histogram image
+        save_png(
+            output_dir,
+            "raw_tau_rapidity",
+            "Raw Tau Rapidity Distribution",
+            raw_rapidity,
+            bin_edges,
+            r"Rapidity $y(\tau)$",
+            "Events",
+        )
+
+        return (
+            "raw_tau_rapidity",
+            "Raw Tau Rapidity Distribution",
+            counts,
+            bin_edges,
+        )
+
+    except Exception as e:
+        error_msg = f"Failed to save raw tau rapidity histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
 
 def make_raw_tau_histograms(output_dir: Path, lhe_taus):
     """
@@ -632,6 +732,7 @@ def make_raw_tau_histograms(output_dir: Path, lhe_taus):
         save_raw_tau_eta_distribution(output_dir, lhe_taus)
         save_raw_tau_phi_distribution(output_dir, lhe_taus)
         save_raw_tau_pz_distribution(output_dir, lhe_taus)
+        save_raw_tau_rapidity_distribution(output_dir, lhe_taus)
     except Exception as e:
         error_msg = f"Unexpected error in make_raw_tau_histograms: {str(e)}"
         logger.error(error_msg)
@@ -657,16 +758,25 @@ def make_pair_tau_histograms_lhe(output_dir: Path, lhe_selected):
              lhe_selected.LHEPart.pdgId == 15,
              lhe_selected.LHEPart.pdgId == -15)
         
+        # Inspect first 5 lhe_plus_lv entries
+        # print(f"\n=== COMBINED LORENTZ VECTORS (first 5) ===")
+        # print(lhe_minus_lv[0])
+        # print(lhe_plus_lv[0])
+        resulted_vector = lhe_minus_lv[0] + lhe_plus_lv[0]
+        print(resulted_vector.rapidity)
+        # print(f"===========================================\n")
+
         # Collect all histogram specs
         histogram_specs = []
         
         # for all pairs (candidates for mother particle / Z')
         histogram_specs.append(save_lhe_mass_histogram(output_dir, (lhe_minus_lv + lhe_plus_lv).mass))
         histogram_specs.append(save_lhe_phi_histogram_by_default_method(output_dir, (lhe_minus_lv + lhe_plus_lv).phi))
-        
+
         histogram_specs.append(save_lhe_histogram_pt(output_dir, (lhe_minus_lv + lhe_plus_lv).pt))
         histogram_specs.append(save_lhe_histogram_pz(output_dir, (lhe_minus_lv + lhe_plus_lv).pz))
         histogram_specs.append(save_lhe_histogram_etha(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
+        histogram_specs.append(save_lhe_histogram_rapidity(output_dir, (lhe_minus_lv + lhe_plus_lv).rapidity))
         
         # for lepton pairs (tau- vs tau+)
         histogram_specs.append(save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
