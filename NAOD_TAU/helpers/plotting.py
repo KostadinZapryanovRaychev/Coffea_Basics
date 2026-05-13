@@ -93,7 +93,146 @@ def get_parent_part_pz_his(output_dir: Path, pz):
         error_msg = f"Failed to save LHE pz histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
+
+def get_delta_phi_ditau_difference_his(output_dir: Path, delta_phi):
+    """
+    Save delta-phi distribution histogram for LHE tau pairs.
     
+    Args:
+        output_dir: Output directory
+        delta_phi: Delta-phi values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """  
+    try:
+        counts , bin_edges = compute_histogram_data(delta_phi, bins=2500 , bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        save_png(
+            output_dir,
+            "lhe_delta_phi",
+            "LHE Di Tau Phi Difference",
+            delta_phi,
+            bin_edges,
+            r"$\Delta\phi(\tau^{-}\tau^{+})$ [rad]",
+            "Events",
+        )
+        return "lhe_delta_phi", "LHE Di Tau Phi Difference", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE delta-phi histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e 
+
+def get_delta_eta_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
+    """
+    Save delta-eta distribution histogram for lepton pairs (tau- vs tau+).
+    
+    Args:
+        output_dir: Output directory
+        lhe_minus_lv: Lorentz vectors for tau-
+        lhe_plus_lv: Lorentz vectors for tau+
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        delta_eta = lhe_minus_lv.eta - lhe_plus_lv.eta
+        counts , bin_edges = compute_histogram_data(delta_eta, bins=1000, bin_edge_min=-7.5, bin_edge_max=7.5)
+        save_png(
+            output_dir,
+            "lhe_delta_eta_ditau_pair",
+            "LHE Di Tau Delta Eta",
+            delta_eta,
+            bin_edges,
+            r"$\Delta\eta(\tau^{-} - \tau^{+})$",
+            "Events",
+        )
+        return "lhe_delta_eta_ditau_pair", "LHE Di Tau Delta Eta", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE delta-eta di-tau pair histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_eta_tau_his(output_dir: Path, eta):
+    """
+    Get eta distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        eta: Eta values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-5, bin_edge_max=5)
+        save_png(
+            output_dir,
+            "lhe_eta_tau",
+            "LHE Tau Eta Distribution",
+            eta,
+            bin_edges,
+            r"$\eta(\tau^{-}\tau^{+})$",
+            "Events",
+        )
+        return "lhe_eta_tau", "LHE Tau Eta Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_eta_anti_tau_his(output_dir: Path, eta):
+    """
+    Get eta distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        eta: Eta values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-5, bin_edge_max=5)
+        save_png(
+            output_dir,
+            "lhe_eta_anti_tau",
+            "LHE Anti-Tau Eta Distribution",
+            eta,
+            bin_edges,
+            r"$\eta(\tau^{-}\tau^{+})$",
+            "Events",
+        )
+        return "lhe_eta_anti_tau", "LHE Anti-Tau Eta Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_eta_his(output_dir: Path, eta):
+    """
+    Get eta distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        eta: Eta values array                       
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-18, bin_edge_max=18)
+        save_png(
+            output_dir,
+            "lhe_eta",
+            "LHE Taus Eta Distribution",
+            eta,
+            bin_edges,
+            r"$\eta(\tau^{-}\tau^{+})$",
+            "Events",
+        )
+        return "lhe_eta", "LHE Taus Eta Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
 
 def save_lhe_histogram_rapidity(output_dir: Path, rapidity_values):
     """
@@ -119,60 +258,6 @@ def save_lhe_histogram_rapidity(output_dir: Path, rapidity_values):
         return "lhe_rapidity", "LHE Taus Rapidity Distribution", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE rapidity histogram: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
-
-def save_lhe_histogram_eta(output_dir: Path, eta):
-    """
-    Save eta distribution histogram for LHE tau pairs.
-    
-    Args:
-        output_dir: Output directory
-        eta: Eta values array
-    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
-    Raises:        RuntimeError: If histogram save fails
-    """
-    try:
-        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-20, bin_edge_max=20)
-        save_png(
-            output_dir,
-            "lhe_eta",
-            "LHE Taus Eta Distribution",
-            eta,
-            bin_edges,
-            r"$\eta(\tau^{-}\tau^{+})$",
-            "Events",
-        )
-        return "lhe_eta", "LHE Taus Eta Distribution", counts, bin_edges
-    except Exception as e:
-        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
-
-def save_lhe_delta_phi_pair_histogram(output_dir: Path, delta_phi):
-    """
-    Save delta-phi distribution histogram for LHE tau pairs.
-    
-    Args:
-        output_dir: Output directory
-        delta_phi: Delta-phi values array
-    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
-    Raises:        RuntimeError: If histogram save fails
-    """
-    try:
-        counts , bin_edges = compute_histogram_data(delta_phi, bins=60, bin_edge_min=-3.2, bin_edge_max=3.2)
-        save_png(
-            output_dir,
-            "lhe_delta_phi",
-            "LHE Taus Pair Delta Phi",
-            delta_phi,
-            bin_edges,
-            r"$\Delta\phi(\tau^{-}\tau^{+})$ [rad]",
-            "Events",
-        )
-        return "lhe_delta_phi", "LHE Taus Pair Delta Phi", counts, bin_edges
-    except Exception as e:
-        error_msg = f"Failed to save LHE delta-phi histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
@@ -203,36 +288,6 @@ def save_lhe_delta_phi_lepton_pair_histogram(output_dir: Path, lhe_minus_lv, lhe
         return "lhe_delta_phi_lepton_pair", "LHE Lepton Pair Delta Phi", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE delta-phi lepton pair histogram: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
-
-def save_lhe_delta_eta_lepton_pair_histogram(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
-    """
-    Save delta-eta distribution histogram for lepton pairs (tau- vs tau+).
-    
-    Args:
-        output_dir: Output directory
-        lhe_minus_lv: Lorentz vectors for tau-
-        lhe_plus_lv: Lorentz vectors for tau+
-    Returns:
-        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
-    Raises:        RuntimeError: If histogram save fails
-    """
-    try:
-        delta_eta = lhe_minus_lv.eta - lhe_plus_lv.eta
-        counts , bin_edges = compute_histogram_data(delta_eta, bins=1000, bin_edge_min=-10, bin_edge_max=10)
-        save_png(
-            output_dir,
-            "lhe_delta_eta_lepton_pair",
-            "LHE Lepton Pair Delta Eta",
-            delta_eta,
-            bin_edges,
-            r"$\Delta\eta(\tau^{-} - \tau^{+})$",
-            "Events",
-        )
-        return "lhe_delta_eta_lepton_pair", "LHE Lepton Pair Delta Eta", counts, bin_edges
-    except Exception as e:
-        error_msg = f"Failed to save LHE delta-eta lepton pair histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 

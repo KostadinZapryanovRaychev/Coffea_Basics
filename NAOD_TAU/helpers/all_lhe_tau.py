@@ -57,7 +57,7 @@ def make_all_tau_histograms(output_dir: Path, events):
         
         try:
             # pT distribution
-            counts, bin_edges = compute_histogram_data(taus_pt, bins=100, bin_edge_min=0, bin_edge_max=500)
+            counts, bin_edges = compute_histogram_data(taus_pt, bins=1000, bin_edge_min=0, bin_edge_max=500)
             save_png(
                 output_dir,
                 "all_taus_pt",
@@ -74,7 +74,7 @@ def make_all_tau_histograms(output_dir: Path, events):
         
         try:
             # eta distribution
-            counts, bin_edges = compute_histogram_data(taus_eta, bins=100, bin_edge_min=-10, bin_edge_max=10)
+            counts, bin_edges = compute_histogram_data(taus_eta, bins=1000, bin_edge_min=-5, bin_edge_max=5)
             save_png(
                 output_dir,
                 "all_taus_eta",
@@ -91,7 +91,7 @@ def make_all_tau_histograms(output_dir: Path, events):
         
         try:
             # phi distribution
-            counts, bin_edges = compute_histogram_data(taus_phi, bins=100, bin_edge_min=-3.2, bin_edge_max=3.2)
+            counts, bin_edges = compute_histogram_data(taus_phi, bins=1000, bin_edge_min=-3.2, bin_edge_max=3.2)
             save_png(
                 output_dir,
                 "all_taus_phi",
@@ -108,7 +108,7 @@ def make_all_tau_histograms(output_dir: Path, events):
         
         try:
             # rapidity distribution
-            counts, bin_edges = compute_histogram_data(taus_rapidity, bins=100, bin_edge_min=-5, bin_edge_max=5)
+            counts, bin_edges = compute_histogram_data(taus_rapidity, bins=1000, bin_edge_min=-5, bin_edge_max=5)
             save_png(
                 output_dir,
                 "all_taus_rapidity",
@@ -125,7 +125,7 @@ def make_all_tau_histograms(output_dir: Path, events):
 
         try:
             # pz distribution
-            counts, bin_edges = compute_histogram_data(taus_pz, bins=100, bin_edge_min=-500, bin_edge_max=500)
+            counts, bin_edges = compute_histogram_data(taus_pz, bins=1000, bin_edge_min=-500, bin_edge_max=500)
             save_png(
                 output_dir,
                 "all_taus_pz",

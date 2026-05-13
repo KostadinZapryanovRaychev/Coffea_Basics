@@ -9,14 +9,11 @@ from .plotting import (
     get_mass_his,
     get_parent_part_pt_his,
     get_parent_part_pz_his,
-
-    save_lhe_phi_histogram_by_default_method,
-    save_lhe_histogram_pz,
-    save_lhe_histogram_eta,
-    save_lhe_histogram_rapidity,
-    save_lhe_delta_phi_lepton_pair_histogram,
-    save_lhe_delta_eta_lepton_pair_histogram,
-    save_lhe_delta_phi_pair_histogram,
+    get_delta_phi_ditau_difference_his,
+    get_delta_eta_ditau_difference_his,
+    get_eta_tau_his,
+    get_eta_anti_tau_his,
+    get_eta_his,
 )
 
 
@@ -55,16 +52,26 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected):
         histogram_specs.append(get_mass_his(output_dir, (lhe_minus_lv + lhe_plus_lv).mass))
         histogram_specs.append(get_parent_part_pt_his(output_dir, (lhe_minus_lv + lhe_plus_lv).pt))
         histogram_specs.append(get_parent_part_pz_his(output_dir, (lhe_minus_lv + lhe_plus_lv).pz))
+        histogram_specs.append(get_eta_tau_his(output_dir, (lhe_plus_lv).eta))
+        histogram_specs.append(get_eta_anti_tau_his(output_dir, (lhe_minus_lv).eta))
 
-        # histogram_specs.append(get_parent_part_phi_his(output_dir, (lhe_minus_lv + lhe_plus_lv).phi))
+        #TODO does this make any sense
+        histogram_specs.append(get_eta_his(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
+
+        #TODO to be validated
+        histogram_specs.append(get_delta_phi_ditau_difference_his(output_dir, (lhe_minus_lv - lhe_plus_lv).phi))
+        histogram_specs.append(get_delta_eta_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv))
+
+
         # histogram_specs.append(save_lhe_histogram_eta(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
+
         # Calculate rapidity from energy and pz: y = 0.5 * ln((E + pz) / (E - pz))
         # combined_vec = lhe_minus_lv + lhe_plus_lv
         # combined_rapidity = 0.5 * np.log((combined_vec.energy + combined_vec.pz) / (combined_vec.energy - combined_vec.pz))
         # histogram_specs.append(save_lhe_histogram_rapidity(output_dir, combined_rapidity))
         #TODO to ask what is rapidity
         # histogram_specs.append(save_lhe_delta_phi_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
-        # histogram_specs.append(save_lhe_delta_eta_lepton_pair_histogram(output_dir, lhe_minus_lv, lhe_plus_lv))
+        # 
         # histogram_specs.append(save_lhe_delta_phi_pair_histogram(output_dir, lhe_minus_lv.phi - lhe_plus_lv.phi))
         
         save_lhe_histograms_root(output_dir, "tau_pair_histograms", histogram_specs)
