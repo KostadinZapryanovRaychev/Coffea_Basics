@@ -31,7 +31,7 @@ with uproot.open(fn) as f:
         library='np'
     )
     
-    print("Raw data keys:", raw_data.keys())
+    print("Initial data keys:", raw_data.keys())
 
 # events = NanoEventsFactory.from_root(
 #     {str(fn): "Events"},
