@@ -287,3 +287,19 @@ def load_events(root_file: Path = None, tree_name: str = "Events", config: dict 
         )
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
+    
+
+def get_output_directory_for_file(base_output_dir: Path, file_entry: dict) -> Path:
+    """
+    Create file-specific output directory name.
+    
+    Args:
+        base_output_dir: Base output directory (typically HERE / "outputs")
+        file_entry: File entry from configuration
+        
+    Returns:
+        File-specific output directory path
+    """
+    file_name = file_entry.get('name', file_entry['path']).replace('.root', '')
+    output_dir = base_output_dir / file_name
+    return output_dir

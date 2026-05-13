@@ -8,7 +8,7 @@ Tau-pair NanoAOD analysis framework.
 
 ```bash
 source setup.sh
-python read_nanoaodsim_analysis.py
+python mc_tau_analysis.py
 ```
 
 **Option B1: Local Python venv** (recommended)
@@ -17,7 +17,7 @@ python read_nanoaodsim_analysis.py
 cd ..  # Go to project root
 bash NAOD_TAU/setup_option_b_venv.sh
 source .venv_local/bin/activate
-python NAOD_TAU/read_nanoaodsim_analysis.py
+python NAOD_TAU/mc_tau_analysis.py
 ```
 
 **Option B2: Conda** (if conda installed)
@@ -26,14 +26,14 @@ python NAOD_TAU/read_nanoaodsim_analysis.py
 cd ..  # Go to project root
 bash NAOD_TAU/setup_option_b_conda.sh
 conda activate naod-tau
-python NAOD_TAU/read_nanoaodsim_analysis.py
+python NAOD_TAU/mc_tau_analysis.py
 ```
 
 👉 **See [SETUP_OPTIONS.md](SETUP_OPTIONS.md) for detailed instructions**
 
 ## Structure
 
-- `read_nanoaodsim_analysis.py` is the entrypoint.
+- `mc_tau_analysis.py` is the entrypoint.
 - `helpers/io.py` loads NanoEvents from the ROOT file.
 - `helpers/selection.py` performs the LHE/Gen tau-pair selection.
 - `helpers/plotting.py` builds the matplotlib PNGs and matching ROOT histograms.

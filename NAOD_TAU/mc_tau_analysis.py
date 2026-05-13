@@ -23,25 +23,12 @@ if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 
-from NAOD_TAU.helpers.io import HERE, load_events, load_config, iterate_all_enabled_root_files
-from NAOD_TAU.helpers.plotting import make_pair_tau_histograms_lhe, make_all_tau_histograms
+from NAOD_TAU.helpers.io import HERE, load_events, load_config, iterate_all_enabled_root_files ,get_output_directory_for_file
 from NAOD_TAU.helpers.selection import load_tau_pairs
 
+from NAOD_TAU.helpers.all_events import make_all_tau_histograms
+from NAOD_TAU.helpers.lhe_ditau_events import make_lhe_ditau_histograms
 
-def get_output_directory_for_file(base_output_dir: Path, file_entry: dict) -> Path:
-    """
-    Create file-specific output directory name.
-    
-    Args:
-        base_output_dir: Base output directory (typically HERE / "outputs")
-        file_entry: File entry from configuration
-        
-    Returns:
-        File-specific output directory path
-    """
-    file_name = file_entry.get('name', file_entry['path']).replace('.root', '')
-    output_dir = base_output_dir / file_name
-    return output_dir
 
 
 def analyze_single_file(file_path: Path, tree_name: str, file_entry: dict, 
@@ -134,7 +121,7 @@ def analyze_single_file(file_path: Path, tree_name: str, file_entry: dict,
             
             # 3b: Pair tau analysis (after tau pair selection)
             ##TODO this is the question are this tau candidates
-            make_pair_tau_histograms_lhe(output_dir, lhe_selected)
+            make_lhe_ditau_histograms(output_dir, lhe_selected)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Output directory validation failed.")
