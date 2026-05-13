@@ -259,8 +259,111 @@ def get_anti_tau_phi_his(output_dir: Path, phi):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
+def get_delta_phi_ditau_difference_his(output_dir: Path, delta_phi):
+    """
+    Save delta-phi distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        delta_phi: Delta-phi values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """  
+    try:
+        counts , bin_edges = compute_histogram_data(delta_phi, bins=60 , bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        save_png(
+            output_dir,
+            "lhe_delta_phi",
+            "LHE Di Tau Phi Difference",
+            delta_phi,
+            bin_edges,
+            r"$\Delta\phi(\tau^{-}\tau^{+})$ [rad]",
+            "Events",
+        )
+        return "lhe_delta_phi", "LHE Di Tau Phi Difference", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE delta-phi histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e 
 
-# TODO till here
+def get_cos_delta_phi_his(output_dir: Path, delta_phi):
+    """
+    Save cos(delta-phi) distribution histogram for LHE tau pairs.
+
+    Args:
+        output_dir: Output directory
+        delta_phi: Delta-phi values array
+
+    Returns:
+        Tuple of (histogram_name, title, counts, bin_edges)
+        for combined ROOT output
+
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        # Compute cos(delta_phi)
+        cos_delta_phi = np.cos(delta_phi)
+
+        # Histogram data
+        counts, bin_edges = compute_histogram_data(
+            cos_delta_phi,
+            bins=100,
+            bin_edge_min=-1,
+            bin_edge_max=1,
+        )
+
+        # Save histogram image
+        save_png(
+            output_dir,
+            "lhe_cos_delta_phi",
+            "LHE Di-Tau Cos(Delta Phi)",
+            cos_delta_phi,
+            bin_edges,
+            r"$\cos(\Delta\phi(\tau^{-}\tau^{+}))$",
+            "Events",
+        )
+
+        return (
+            "lhe_cos_delta_phi",
+            "LHE Di-Tau Cos(Delta Phi)",
+            counts,
+            bin_edges,
+        )
+
+    except Exception as e:
+        error_msg = f"Failed to save LHE cos(delta-phi) histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_delta_r_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
+    """
+    Save delta-R distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        lhe_minus_lv: Lorentz vectors for tau-
+        lhe_plus_lv: Lorentz vectors for tau+
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        delta_r = np.sqrt((lhe_minus_lv.eta - lhe_plus_lv.eta)**2 + (lhe_minus_lv.phi - lhe_plus_lv.phi)**2)
+        counts , bin_edges = compute_histogram_data(delta_r, bins=2500, bin_edge_min=2, bin_edge_max=6)
+        save_png(
+            output_dir,
+            "lhe_delta_r_ditau_pair",
+            "LHE Di Tau Delta R",
+            delta_r,
+            bin_edges,
+            r"$\Delta R(\tau^{-}\tau^{+})$",
+            "Events",
+        )
+        return "lhe_delta_r_ditau_pair", "LHE Di Tau Delta R", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE delta-R di-tau pair histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
 
 
 
@@ -322,32 +425,6 @@ def get_parent_part_pz_his(output_dir: Path, pz):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_delta_phi_ditau_difference_his(output_dir: Path, delta_phi):
-    """
-    Save delta-phi distribution histogram for LHE tau pairs.
-    
-    Args:
-        output_dir: Output directory
-        delta_phi: Delta-phi values array
-    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
-    Raises:        RuntimeError: If histogram save fails
-    """  
-    try:
-        counts , bin_edges = compute_histogram_data(delta_phi, bins=2500 , bin_edge_min=-np.pi, bin_edge_max=np.pi)
-        save_png(
-            output_dir,
-            "lhe_delta_phi",
-            "LHE Di Tau Phi Difference",
-            delta_phi,
-            bin_edges,
-            r"$\Delta\phi(\tau^{-}\tau^{+})$ [rad]",
-            "Events",
-        )
-        return "lhe_delta_phi", "LHE Di Tau Phi Difference", counts, bin_edges
-    except Exception as e:
-        error_msg = f"Failed to save LHE delta-phi histogram: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e 
 
 def get_delta_eta_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
     """

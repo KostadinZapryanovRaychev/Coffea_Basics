@@ -15,6 +15,10 @@ from .plotting import (
     get_anti_tau_eta_his,
     get_tau_phi_his,
     get_anti_tau_phi_his,
+    get_delta_phi_ditau_difference_his,
+    get_delta_eta_ditau_difference_his,
+    get_cos_delta_phi_his,
+    get_delta_r_ditau_difference_his,
 
 )
 
@@ -42,9 +46,6 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected):
              lhe_selected.LHEPart.pdgId == 15,
              lhe_selected.LHEPart.pdgId == -15)
         
-        print(len(lhe_minus_lv))  # Validate that vectors were built successfully
-        print(len(lhe_plus_lv))   # Validate that vectors were built successfully
-
         histogram_specs = []
         histogram_specs.append(get_mass_his(output_dir, (lhe_minus_lv + lhe_plus_lv).mass))
         histogram_specs.append(get_tau_pt_his(output_dir, lhe_minus_lv.pt))
@@ -56,12 +57,16 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected):
         histogram_specs.append(get_tau_phi_his(output_dir, lhe_minus_lv.phi))
         histogram_specs.append(get_anti_tau_phi_his(output_dir, lhe_plus_lv.phi))
 
+        histogram_specs.append(get_delta_phi_ditau_difference_his(output_dir, (lhe_minus_lv.phi - lhe_plus_lv.phi)))
+        histogram_specs.append(get_cos_delta_phi_his(output_dir, (lhe_minus_lv.phi - lhe_plus_lv.phi)))
+        histogram_specs.append(get_delta_eta_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv))
+        histogram_specs.append(get_delta_r_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv))
         #TODO does this make any sense
         # histogram_specs.append(get_eta_his(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
 
         #TODO to be validated
-        # histogram_specs.append(get_delta_phi_ditau_difference_his(output_dir, (lhe_minus_lv - lhe_plus_lv).phi))
-        # histogram_specs.append(get_delta_eta_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv))
+        
+      
         #TODO what is the physical meaning of delta -r and of each histogram
 
         # Calculate rapidity from energy and pz: y = 0.5 * ln((E + pz) / (E - pz))
