@@ -41,8 +41,10 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected):
              lhe_selected.LHEPart,
              lhe_selected.LHEPart.pdgId == 15,
              lhe_selected.LHEPart.pdgId == -15)
+        
+        print(len(lhe_minus_lv))  # Validate that vectors were built successfully
+        print(len(lhe_plus_lv))   # Validate that vectors were built successfully
 
-        # Collect all histogram specs
         histogram_specs = []
         histogram_specs.append(get_mass_his(output_dir, (lhe_minus_lv + lhe_plus_lv).mass))
         histogram_specs.append(get_tau_pt_his(output_dir, lhe_minus_lv.pt))
@@ -72,8 +74,6 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected):
         # histogram_specs.append(save_lhe_delta_phi_pair_histogram(output_dir, lhe_minus_lv.phi - lhe_plus_lv.phi))
         
         save_lhe_histograms_root(output_dir, "tau_pair_histograms", histogram_specs)
-        logger.info(f"✓ Saved combined ROOT file with {len(histogram_specs)} tau pair histograms")
-        
         
     except ValueError as e:
         logger.error(f"\n{str(e)}")
