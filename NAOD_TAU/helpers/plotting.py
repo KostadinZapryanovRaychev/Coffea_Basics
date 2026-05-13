@@ -38,7 +38,235 @@ def get_mass_his(output_dir: Path, mass):
         error_msg = f"Failed to save LHE mass histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
-  
+
+def get_tau_pt_his(output_dir: Path, pt):
+    """
+    Save pt distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        pt: Pt values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=500)
+        save_png(
+            output_dir,
+            "lhe_pt",
+            "LHE Taus Pt Distribution",
+            pt,
+            bin_edges,
+            r"$p_{T}(\tau^{-}\tau^{+})$ [GeV]",
+            "Events",
+        )
+        return "lhe_pt", "LHE Taus Pt Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE pt histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+    
+def get_anti_tau_pt_his(output_dir: Path, pt):
+    """
+    Save pt distribution histogram for LHE anti-tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        pt: Pt values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=500)
+        save_png(
+            output_dir,
+            "lhe_antitau_pt",
+            "LHE Anti-Tau Pt Distribution",
+            pt,
+            bin_edges,
+            r"$p_{T}(\tau^{+})$ [GeV]",
+            "Events",
+        )
+        return "lhe_antitau_pt", "LHE Anti-Tau Pt Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE anti-tau pt histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_tau_pz_his(output_dir: Path, pz):
+    """
+    Save pz distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        pz: Pz values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-2000, bin_edge_max=2000)
+        save_png(
+            output_dir,
+            "lhe_pz",
+            "LHE Taus Pz Distribution",
+            pz,
+            bin_edges,
+            r"$p_{z}(\tau^{-}\tau^{+})$ [GeV]",
+            "Events",
+        )
+        return "lhe_pz", "LHE Taus Pz Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE pz histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_anti_tau_pz_his(output_dir: Path, pz):
+    """
+    Save pz distribution histogram for LHE anti-tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        pz: Pz values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-2000, bin_edge_max=2000)
+        save_png(
+            output_dir,
+            "lhe_antitau_pz",
+            "LHE Anti-Tau Pz Distribution",
+            pz,
+            bin_edges,
+            r"$p_{z}(\tau^{+})$ [GeV]",
+            "Events",
+        )
+        return "lhe_antitau_pz", "LHE Anti-Tau Pz Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE anti-tau pz histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_tau_eta_his(output_dir: Path, eta):
+    """
+    Get eta distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        eta: Eta values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-5, bin_edge_max=5)
+        save_png(
+            output_dir,
+            "lhe_eta_tau",
+            "LHE Tau Eta Distribution",
+            eta,
+            bin_edges,
+            r"$\eta(\tau^{-}\tau^{+})$",
+            "Events",
+        )
+        return "lhe_eta_tau", "LHE Tau Eta Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_anti_tau_eta_his(output_dir: Path, eta):
+    """
+    Get eta distribution histogram for LHE anti-tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        eta: Eta values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-5, bin_edge_max=5)
+        save_png(
+            output_dir,
+            "lhe_eta_anti_tau",
+            "LHE Anti-Tau Eta Distribution",
+            eta,
+            bin_edges,
+            r"$\eta(\tau^{+})$",
+            "Events",
+        )
+        return "lhe_eta_anti_tau", "LHE Anti-Tau Eta Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+    except Exception as e:
+        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_tau_phi_his(output_dir: Path, phi):
+    """
+    Get phi distribution histogram for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        phi: Phi values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(phi, bins=1000, bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        save_png(
+            output_dir,
+            "lhe_phi_tau",
+            "LHE Tau Phi Distribution",
+            phi,
+            bin_edges,
+            r"$\phi(\tau^{-}\tau^{+})$ [rad]",
+            "Events",
+        )
+        return "lhe_phi_tau", "LHE Tau Phi Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE phi histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_anti_tau_phi_his(output_dir: Path, phi):
+    """
+    Get phi distribution histogram for LHE anti-tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        phi: Phi values array
+    Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
+    Raises:        RuntimeError: If histogram save fails
+    """
+    try:
+        counts , bin_edges = compute_histogram_data(phi, bins=1000, bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        save_png(
+            output_dir,
+            "lhe_phi_anti_tau",
+            "LHE Anti-Tau Phi Distribution",
+            phi,
+            bin_edges,
+            r"$\phi(\tau^{+})$ [rad]",
+            "Events",
+        )
+        return "lhe_phi_anti_tau", "LHE Anti-Tau Phi Distribution", counts, bin_edges
+    except Exception as e:
+        error_msg = f"Failed to save LHE anti-tau phi histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+# TODO till here
+
+
+
+
+
+
 def get_parent_part_pt_his(output_dir: Path, pt):
     """
     Save pt distribution histogram for LHE tau pairs.

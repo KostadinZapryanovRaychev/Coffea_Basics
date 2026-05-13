@@ -26,7 +26,6 @@ if __package__ is None or __package__ == "":
 from NAOD_TAU.helpers.io import HERE, load_events, load_config, iterate_all_enabled_root_files ,get_output_directory_for_file
 from NAOD_TAU.helpers.selection import load_tau_pairs
 
-from NAOD_TAU.helpers.all_lhe_tau import make_all_tau_histograms
 from NAOD_TAU.helpers.lhe_ditau_candidates import make_lhe_ditau_histograms
 
 
@@ -115,12 +114,6 @@ def analyze_single_file(file_path: Path, tree_name: str, file_entry: dict,
         # Step 3: Generate histograms
         try:
             output_dir = get_output_directory_for_file(base_output_dir, file_entry)
-            
-            # 3a: Initial tau analysis (ALL taus before selection)
-            make_all_tau_histograms(output_dir, events)
-            
-            # 3b: Pair tau analysis (after tau pair selection)
-            ##TODO this is the question are this tau candidates
             make_lhe_ditau_histograms(output_dir, lhe_selected)
         except ValueError as e:
             logger.error(f"\n{str(e)}")

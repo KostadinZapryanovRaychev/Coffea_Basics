@@ -7,13 +7,15 @@ from .vector_builder import build_tau_vectors
 
 from .plotting import (
     get_mass_his,
-    get_parent_part_pt_his,
-    get_parent_part_pz_his,
-    get_delta_phi_ditau_difference_his,
-    get_delta_eta_ditau_difference_his,
-    get_eta_tau_his,
-    get_eta_anti_tau_his,
-    get_eta_his,
+    get_tau_pt_his,
+    get_anti_tau_pt_his,
+    get_tau_pz_his,
+    get_anti_tau_pz_his,
+    get_tau_eta_his,
+    get_anti_tau_eta_his,
+    get_tau_phi_his,
+    get_anti_tau_phi_his,
+
 )
 
 
@@ -39,31 +41,26 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected):
              lhe_selected.LHEPart,
              lhe_selected.LHEPart.pdgId == 15,
              lhe_selected.LHEPart.pdgId == -15)
-        
-        # Inspect first 5 lhe_plus_lv entries
-        # print(f"\n=== COMBINED LORENTZ VECTORS (first 5) ===")
-        # print(lhe_minus_lv[0])
-        # print(lhe_plus_lv[0])
-        # Lorentz vectors are created successfully
-        # print(f"===========================================\n")
 
         # Collect all histogram specs
         histogram_specs = []
         histogram_specs.append(get_mass_his(output_dir, (lhe_minus_lv + lhe_plus_lv).mass))
-        histogram_specs.append(get_parent_part_pt_his(output_dir, (lhe_minus_lv + lhe_plus_lv).pt))
-        histogram_specs.append(get_parent_part_pz_his(output_dir, (lhe_minus_lv + lhe_plus_lv).pz))
-        histogram_specs.append(get_eta_tau_his(output_dir, (lhe_plus_lv).eta))
-        histogram_specs.append(get_eta_anti_tau_his(output_dir, (lhe_minus_lv).eta))
+        histogram_specs.append(get_tau_pt_his(output_dir, lhe_minus_lv.pt))
+        histogram_specs.append(get_anti_tau_pt_his(output_dir, lhe_plus_lv.pt))
+        histogram_specs.append(get_tau_pz_his(output_dir, lhe_minus_lv.pz))
+        histogram_specs.append(get_anti_tau_pz_his(output_dir, lhe_plus_lv.pz))
+        histogram_specs.append(get_tau_eta_his(output_dir, lhe_minus_lv.eta))
+        histogram_specs.append(get_anti_tau_eta_his(output_dir, lhe_plus_lv.eta))
+        histogram_specs.append(get_tau_phi_his(output_dir, lhe_minus_lv.phi))
+        histogram_specs.append(get_anti_tau_phi_his(output_dir, lhe_plus_lv.phi))
 
         #TODO does this make any sense
-        histogram_specs.append(get_eta_his(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
+        # histogram_specs.append(get_eta_his(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
 
         #TODO to be validated
-        histogram_specs.append(get_delta_phi_ditau_difference_his(output_dir, (lhe_minus_lv - lhe_plus_lv).phi))
-        histogram_specs.append(get_delta_eta_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv))
-
-
-        # histogram_specs.append(save_lhe_histogram_eta(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
+        # histogram_specs.append(get_delta_phi_ditau_difference_his(output_dir, (lhe_minus_lv - lhe_plus_lv).phi))
+        # histogram_specs.append(get_delta_eta_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv))
+        #TODO what is the physical meaning of delta -r and of each histogram
 
         # Calculate rapidity from energy and pz: y = 0.5 * ln((E + pz) / (E - pz))
         # combined_vec = lhe_minus_lv + lhe_plus_lv
