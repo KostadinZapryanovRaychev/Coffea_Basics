@@ -23,7 +23,7 @@ def get_mass_his(output_dir: Path, mass):
         RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(mass, bins=100 , bin_edge_min=0, bin_edge_max=500)
+        counts , bin_edges = compute_histogram_data(mass, bins=2500 , bin_edge_min=0, bin_edge_max=500)
         save_png(
             output_dir,
             "lhe_mass",
@@ -50,7 +50,7 @@ def get_tau_pt_his(output_dir: Path, pt):
     Raises:        RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=500)
+        counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=300)
         save_png(
             output_dir,
             "lhe_pt",
@@ -77,7 +77,7 @@ def get_anti_tau_pt_his(output_dir: Path, pt):
     Raises:        RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=500)
+        counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=300)
         save_png(
             output_dir,
             "lhe_antitau_pt",
@@ -104,7 +104,7 @@ def get_tau_pz_his(output_dir: Path, pz):
     Raises:        RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-2000, bin_edge_max=2000)
+        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-1500, bin_edge_max=1500)
         save_png(
             output_dir,
             "lhe_pz",
@@ -131,7 +131,7 @@ def get_anti_tau_pz_his(output_dir: Path, pz):
     Raises:        RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-2000, bin_edge_max=2000)
+        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-1500, bin_edge_max=1500)
         save_png(
             output_dir,
             "lhe_antitau_pz",
@@ -158,7 +158,7 @@ def get_tau_eta_his(output_dir: Path, eta):
     Raises:        RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-5, bin_edge_max=5)
+        counts , bin_edges = compute_histogram_data(eta, bins=2500, bin_edge_min=-3, bin_edge_max=3)
         save_png(
             output_dir,
             "lhe_eta_tau",
@@ -185,7 +185,7 @@ def get_anti_tau_eta_his(output_dir: Path, eta):
     Raises:        RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(eta, bins=1000, bin_edge_min=-5, bin_edge_max=5)
+        counts , bin_edges = compute_histogram_data(eta, bins=2500, bin_edge_min=-3, bin_edge_max=3)
         save_png(
             output_dir,
             "lhe_eta_anti_tau",
@@ -216,7 +216,7 @@ def get_tau_phi_his(output_dir: Path, phi):
     Raises:        RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(phi, bins=1000, bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        counts , bin_edges = compute_histogram_data(phi, bins=2500, bin_edge_min=-np.pi, bin_edge_max=np.pi)
         save_png(
             output_dir,
             "lhe_phi_tau",
@@ -243,7 +243,7 @@ def get_anti_tau_phi_his(output_dir: Path, phi):
     Raises:        RuntimeError: If histogram save fails
     """
     try:
-        counts , bin_edges = compute_histogram_data(phi, bins=1000, bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        counts , bin_edges = compute_histogram_data(phi, bins=2500, bin_edge_min=-np.pi, bin_edge_max=np.pi)
         save_png(
             output_dir,
             "lhe_phi_anti_tau",
@@ -306,7 +306,7 @@ def get_parent_part_pz_his(output_dir: Path, pz):
     """
     try:
 
-        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-2000, bin_edge_max=2000)
+        counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-1500, bin_edge_max=1500)
         save_png(
             output_dir,
             "lhe_pz",
