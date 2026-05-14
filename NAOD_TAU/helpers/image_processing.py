@@ -91,3 +91,59 @@ def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edge
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
+def save_2d_histogram_png(output_dir: Path, histogram_name: str, title: str, x_values, y_values, 
+                          x_bins: int, y_bins: int, x_min: float, x_max: float, y_min: float, y_max: float,
+                          xlabel: str, ylabel: str):
+    """
+    Save a 2D histogram as a PNG heatmap.
+    
+    Args:
+        output_dir: Directory to save the PNG file
+        histogram_name: Base name for the histogram (without extension)
+        title: Title of the histogram
+        x_values: Array of x-values
+        y_values: Array of y-values
+        x_bins: Number of bins for x-axis
+        y_bins: Number of bins for y-axis
+        x_min: Minimum value for x-axis
+        x_max: Maximum value for x-axis
+        y_min: Minimum value for y-axis
+        y_max: Maximum value for y-axis
+        xlabel: Label for x-axis
+        ylabel: Label for y-axis
+    Raises:
+        RuntimeError: If saving the PNG file fails
+    """
+    try:
+        x_values = np.asarray(x_values, dtype=np.float64)
+        y_values = np.asarray(y_values, dtype=np.float64)
+        
+        if len(x_values) == 0 or len(y_values) == 0:
+            raise ValueError("Cannot create 2D histogram from empty arrays")
+        
+        if len(x_values) != len(y_values):
+            raise ValueError("x_values and y_values must have the same length")
+        
+        plt.figure(figsize=(10, 8))
+        
+        # Create 2D histogram
+        h = plt.hist2d(x_values, y_values, 
+                       bins=[x_bins, y_bins],
+                       range=[[x_min, x_max], [y_min, y_max]],
+                       cmap='YlOrRd', cmin=1)
+        
+        plt.title(title, fontsize=14)
+        plt.xlabel(xlabel, fontsize=12)
+        plt.ylabel(ylabel, fontsize=12)
+        plt.colorbar(h[3], label='Counts')
+        plt.grid(True, linestyle='--', alpha=0.3)
+        
+        png_path = output_dir / f"{histogram_name}.png"
+        plt.savefig(png_path, dpi=100, bbox_inches='tight')
+        plt.close()
+        logger.debug(f"Saved 2D PNG histogram: {png_path}")
+    except Exception as e:
+        error_msg = f"Failed to save 2D PNG histogram '{histogram_name}': {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+

@@ -3,7 +3,7 @@ import logging
 import awkward as ak
 import matplotlib.pyplot as plt
 import numpy as np
-from .image_processing import save_png , compute_histogram_data
+from .image_processing import save_png , compute_histogram_data, save_2d_histogram_png
 
 
 logger = logging.getLogger(__name__)
@@ -563,5 +563,46 @@ def save_lhe_histogram_rapidity(output_dir: Path, rapidity_values):
         return "lhe_rapidity", "LHE Taus Rapidity Distribution", counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE rapidity histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+def get_delta_r_vs_delta_phi_2d_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
+    """
+    Save a 2D histogram of delta_R vs delta_phi for LHE tau pairs.
+    
+    Args:
+        output_dir: Output directory
+        lhe_minus_lv: Lorentz vectors for tau-
+        lhe_plus_lv: Lorentz vectors for tau+
+    Returns:
+        Tuple of (histogram_name, title) for combined ROOT output
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        delta_r = np.sqrt((lhe_minus_lv.eta - lhe_plus_lv.eta)**2 + (lhe_minus_lv.phi - lhe_plus_lv.phi)**2)
+        delta_phi = lhe_minus_lv.phi - lhe_plus_lv.phi
+        
+        # Normalize delta_phi to [-pi, pi] range
+        delta_phi = np.arctan2(np.sin(delta_phi), np.cos(delta_phi))
+        
+        save_2d_histogram_png(
+            output_dir,
+            "lhe_delta_r_vs_delta_phi_2d",
+            "LHE Di-Tau Delta R vs Delta Phi",
+            delta_phi,
+            delta_r,
+            x_bins=10,
+            y_bins=10,
+            x_min=-np.pi,
+            x_max=np.pi,
+            y_min=0,
+            y_max=6,
+            xlabel=r"$\Delta\phi(\tau^{-}\tau^{+})$ [rad]",
+            ylabel=r"$\Delta R(\tau^{-}\tau^{+})$",
+        )
+        return "lhe_delta_r_vs_delta_phi_2d", "LHE Di-Tau Delta R vs Delta Phi"
+    except Exception as e:
+        error_msg = f"Failed to save LHE 2D delta-R vs delta-phi histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e

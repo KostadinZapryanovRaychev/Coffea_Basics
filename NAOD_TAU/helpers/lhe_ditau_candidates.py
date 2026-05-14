@@ -19,6 +19,7 @@ from .plotting import (
     get_delta_eta_ditau_difference_his,
     get_cos_delta_phi_his,
     get_delta_r_ditau_difference_his,
+    get_delta_r_vs_delta_phi_2d_his
 
 )
 
@@ -61,6 +62,7 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected):
         histogram_specs.append(get_cos_delta_phi_his(output_dir, (lhe_minus_lv.phi - lhe_plus_lv.phi)))
         histogram_specs.append(get_delta_eta_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv))
         histogram_specs.append(get_delta_r_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv))
+        histogram_specs.append(get_delta_r_vs_delta_phi_2d_his(output_dir, lhe_minus_lv, lhe_plus_lv))
         #TODO does this make any sense
         # histogram_specs.append(get_eta_his(output_dir, (lhe_minus_lv + lhe_plus_lv).eta))
 
