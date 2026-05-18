@@ -2,7 +2,6 @@ import logging
 
 import awkward as ak
 
-## logger takes the name of file in this case (selection.py)
 logger = logging.getLogger(__name__)
 
 
