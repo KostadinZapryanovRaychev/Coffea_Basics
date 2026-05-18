@@ -200,10 +200,6 @@ def get_anti_tau_eta_his(output_dir: Path, eta):
         error_msg = f"Failed to save LHE eta histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
-    except Exception as e:
-        error_msg = f"Failed to save LHE eta histogram: {str(e)}"
-        logger.error(error_msg)
-        raise RuntimeError(error_msg) from e
 
 def get_tau_phi_his(output_dir: Path, phi):
     """
@@ -404,7 +400,7 @@ def get_delta_r_vs_delta_phi_2d_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv)
         lhe_minus_lv: Lorentz vectors for tau-
         lhe_plus_lv: Lorentz vectors for tau+
     Returns:
-        Tuple of (histogram_name, title) for combined ROOT output
+        None (2D histogram is saved as PNG only, not included in ROOT output)
     Raises:
         RuntimeError: If histogram save fails
     """
@@ -430,7 +426,7 @@ def get_delta_r_vs_delta_phi_2d_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv)
             xlabel=r"$\Delta\phi(\tau^{-}\tau^{+})$ [rad]",
             ylabel=r"$\Delta R(\tau^{-}\tau^{+})$",
         )
-        return "lhe_delta_r_vs_delta_phi_2d", "LHE Di-Tau Delta R vs Delta Phi"
+        return None  # 2D histograms not saved to ROOT
     except Exception as e:
         error_msg = f"Failed to save LHE 2D delta-R vs delta-phi histogram: {str(e)}"
         logger.error(error_msg)

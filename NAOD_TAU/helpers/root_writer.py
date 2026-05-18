@@ -64,6 +64,9 @@ def save_lhe_histograms_root(output_dir: Path, root_stem: str, histogram_specs):
 
     with uproot.recreate(root_path) as root_file:
         for spec in histogram_specs:
+            if spec is None:
+                # Skip 2D histograms that return None
+                continue
             if len(spec) != 4:
                 raise ValueError(f"Invalid histogram spec length: {len(spec)}, expected 4")
             histogram_name, title, counts, bin_edges = spec
