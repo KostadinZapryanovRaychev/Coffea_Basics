@@ -67,10 +67,6 @@ def select_lhe_tau_pairs(events):
         raise RuntimeError(error_msg) from e
 
 
-
-# Main functions 
-
-# Tau pairs
 def load_tau_pairs(events):
     """
     Load tau pairs from LHEPart collections.
@@ -95,16 +91,4 @@ def load_tau_pairs(events):
     lhe_selected = select_lhe_tau_pairs(events)
     return lhe_selected
 
-# All taus
-def load_all_taus(events):
-    """ 
-    Load all tau particles from LHEPart collection.
-    """
-    lhe_taus = None
-    
-    if "LHEPart" in events.fields:
-        pdg_lhe = events.LHEPart.pdgId
-        lhe_taus = events.LHEPart[(pdg_lhe == 15) | (pdg_lhe == -15)]
-    
-    return lhe_taus
 
