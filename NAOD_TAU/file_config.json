@@ -1,8 +1,8 @@
 {
   "root_files": [
     {
-      "name": "nanoaodsim_coffea_1",
-      "path": "nanoaodsim_coffea_1.root",
+      "name": "nanoaodsim_coffea_real_1.root",
+      "path": "nanoaodsim_coffea_real_1.root",
       "tree": "Events",
       "description": "NanoAOD simulation from Coffea",
       "enabled": true
