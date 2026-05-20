@@ -5,14 +5,14 @@
       "path": "nanoaodsim_coffea_1.root",
       "tree": "Events",
       "description": "NanoAOD simulation from Coffea (recommended)",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "nanoaodsim_coffea_real_1",
       "path": "nanoaodsim_coffea_real_1.root",
       "tree": "Events",
       "description": "NanoAOD real data variant 1",
-      "enabled": false
+      "enabled": true
     },
     {
       "name": "nanoaodsim_coffea_real_2",
