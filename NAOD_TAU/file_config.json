@@ -1,12 +1,26 @@
 {
   "root_files": [
     {
-      "name": "nanoaodsim_coffea_real_1.root",
+      "name": "nanoaodsim_coffea_1",
+      "path": "nanoaodsim_coffea_1.root",
+      "tree": "Events",
+      "description": "NanoAOD simulation from Coffea (recommended)",
+      "enabled": false
+    },
+    {
+      "name": "nanoaodsim_coffea_real_1",
       "path": "nanoaodsim_coffea_real_1.root",
       "tree": "Events",
-      "description": "NanoAOD simulation from Coffea",
+      "description": "NanoAOD real data variant 1",
+      "enabled": false
+    },
+    {
+      "name": "nanoaodsim_coffea_real_2",
+      "path": "nanoaodsim_coffea_real_2.root",
+      "tree": "Events",
+      "description": "NanoAOD real data variant 2",
       "enabled": true
     }
   ],
-  "notes": "Paths are relative to the project root directory (parent of NAOD_TAU). Set 'enabled' to true/false to include/exclude files."
+  "notes": "✓ ACTIVE CONFIG - Used by mc_tau_analysis.py. Paths are relative to project root (parent of NAOD_TAU). Set 'enabled': true/false to include/exclude files. Multiple enabled files will be processed in sequence."
 }

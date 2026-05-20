@@ -51,8 +51,9 @@ def build_root_histogram(name: str, title: str, counts, bin_edges):
 
 def save_lhe_histograms_root(output_dir: Path, root_stem: str, histogram_specs):
     """Save multiple 1D histograms into a single ROOT file."""
-    if not output_dir.exists():
-        raise ValueError(f"Output directory does not exist: {output_dir}")
+    # Create output directory if it doesn't exist
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
     if not output_dir.is_dir():
         raise ValueError(f"Output path is not a directory: {output_dir}")
 

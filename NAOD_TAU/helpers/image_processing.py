@@ -76,6 +76,9 @@ def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edge
     Raises:        RuntimeError: If saving the PNG file fails
     """
     try:
+        # Ensure output directory exists
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
         plt.figure(figsize=(8, 6))
         plt.hist(values, bins=bin_edges, histtype='stepfilled', color='blue', alpha=0.7)
         plt.title(title)
@@ -115,6 +118,9 @@ def save_2d_histogram_png(output_dir: Path, histogram_name: str, title: str, x_v
         RuntimeError: If saving the PNG file fails
     """
     try:
+        # Ensure output directory exists
+        output_dir.mkdir(parents=True, exist_ok=True)
+        
         x_values = np.asarray(x_values, dtype=np.float64)
         y_values = np.asarray(y_values, dtype=np.float64)
         
