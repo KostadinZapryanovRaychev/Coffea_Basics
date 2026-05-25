@@ -303,3 +303,88 @@ def get_output_directory_for_file(base_output_dir: Path, file_entry: dict) -> Pa
     file_name = file_entry.get('name', file_entry['path']).replace('.root', '')
     output_dir = base_output_dir / file_name
     return output_dir
+
+
+def load_all_enabled_events(config: dict = None):
+    """
+    Load and concatenate events from all enabled ROOT files.
+    
+    This function loads NanoAOD events from all enabled ROOT files
+    in the configuration and concatenates them into a single events collection.
+    
+    Args:
+        config: Configuration dictionary. If None, loaded from CONFIG_FILE.
+        
+    Returns:
+        Concatenated NanoEvents object containing all events from all enabled files
+        
+    Raises:
+        ValueError: If config is invalid or no enabled files found
+        FileNotFoundError: If any file path doesn't exist
+        RuntimeError: If any file fails to load
+    """
+    import awkward as ak
+    
+    if config is None:
+        config = load_config()
+    
+    enabled_files = get_enabled_root_files(config)
+    total_files = len(enabled_files)
+    
+    logger.info(f"Loading events from {total_files} enabled ROOT file(s)...")
+    
+    all_events = []
+    successfully_loaded = 0
+    
+    for idx, file_entry in enumerate(enabled_files, start=1):
+        file_name = file_entry.get('name', file_entry['path'])
+        try:
+            file_path = get_root_file_path(file_entry)
+            tree_name = file_entry.get('tree', 'Events')
+            
+            logger.info(f"[{idx}/{total_files}] Loading {file_name}...")
+            events = load_events(root_file=file_path, tree_name=tree_name)
+            all_events.append(events)
+            successfully_loaded += 1
+            logger.info(f"  ✓ {file_name}: {len(events)} events loaded")
+            
+        except (FileNotFoundError, ValueError, RuntimeError) as e:
+            logger.error(f"  ⚠ Failed to load {file_name}: {str(e)}")
+            continue
+        except Exception as e:
+            logger.error(f"  ⚠ Unexpected error loading {file_name}: {str(e)}")
+            continue
+    
+    if successfully_loaded == 0:
+        error_msg = (
+            "\n[ERROR] No ROOT files could be loaded successfully.\n"
+            "  Check file paths and ensure they are valid NanoAOD files.\n"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
+    
+    # Concatenate all events
+    try:
+        logger.info(f"Concatenating events from {successfully_loaded} file(s)...")
+        combined_events = ak.concatenate(all_events)
+        total_events = len(combined_events)
+        logger.info(f"✓ Successfully loaded and concatenated {total_events} total events")
+        return combined_events
+    except Exception as e:
+        error_msg = f"\n[ERROR] Failed to concatenate events: {str(e)}\n"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def get_combined_output_directory(base_output_dir: Path) -> Path:
+    """
+    Get output directory for combined analysis.
+    
+    Args:
+        base_output_dir: Base output directory (typically HERE / "outputs")
+        
+    Returns:
+        Combined output directory path
+    """
+    output_dir = base_output_dir / "combined"
+    return output_dir
