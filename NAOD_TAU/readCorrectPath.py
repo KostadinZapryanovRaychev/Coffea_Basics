@@ -18,7 +18,7 @@ if __package__ is None or __package__ == "":
 
 def get_path():
     try:
-        project_path = "/Users/macbookpro/Documents/BAN-Doctor-Degree"
+        project_path = "/eos/user/k/kraychev/NANOAODSIMKOSTADINRAYCHEV"
         path = Path(project_path)
         return path
 
