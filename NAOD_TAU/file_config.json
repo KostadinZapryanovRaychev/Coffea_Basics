@@ -1,26 +1,19 @@
 {
   "root_files": [
     {
-      "name": "nanoaodsim_coffea_1",
-      "path": "nanoaodsim_coffea_1.root",
+      "name": "ZprimeTo2Tau_coffea_1",
+      "path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000/nanoaodsim_coffea_1.root",
       "tree": "Events",
-      "description": "NanoAOD simulation from Coffea (recommended)",
+      "description": "Z' → 2τ M=250 GeV - File 1 from lxplus EOS",
       "enabled": true
     },
     {
-      "name": "nanoaodsim_coffea_real_1",
-      "path": "nanoaodsim_coffea_real_1.root",
+      "name": "ZprimeTo2Tau_coffea_2",
+      "path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000/nanoaodsim_coffea_2.root",
       "tree": "Events",
-      "description": "NanoAOD real data variant 1",
-      "enabled": true
-    },
-    {
-      "name": "nanoaodsim_coffea_real_2",
-      "path": "nanoaodsim_coffea_real_2.root",
-      "tree": "Events",
-      "description": "NanoAOD real data variant 2",
+      "description": "Z' → 2τ M=250 GeV - File 2 from lxplus EOS",
       "enabled": true
     }
   ],
-  "notes": "✓ ACTIVE CONFIG - Used by mc_tau_analysis.py. Paths are relative to project root (parent of NAOD_TAU). Set 'enabled': true/false to include/exclude files. Multiple enabled files will be processed in sequence."
+  "notes": "✓ ACTIVE CONFIG - Remote EOS files from lxplus. Absolute paths to /eos/cms/store/. Used by mc_tau_analysis.py. Set 'enabled': true/false to include/exclude files. Multiple enabled files will be processed in sequence and combined."
 }
