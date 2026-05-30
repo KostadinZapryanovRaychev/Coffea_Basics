@@ -18,7 +18,7 @@ if __package__ is None or __package__ == "":
 
 def get_path():
     try:
-        project_path = "/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/mileva-Run3Summer23_NANOAODv12-872d08b14119d899e991265ae5a4c8bc/USER"
+        project_path = "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000/"
         path = Path(project_path)
         return path
 

@@ -55,3 +55,5 @@ Edit **`NAOD_TAU/file_config.json`** to specify ROOT files to process:
 Histograms saved to `NAOD_TAU/outputs/{file_name}/`:
 
 Methodology: [PhysRevD.111.112004](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.111.112004)
+
+The intput files for analysis https://codimd.web.cern.ch/s/LIHpoNf1g
