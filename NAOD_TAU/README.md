@@ -57,3 +57,6 @@ Histograms saved to `NAOD_TAU/outputs/{file_name}/`:
 Methodology: [PhysRevD.111.112004](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.111.112004)
 
 The intput files for analysis https://codimd.web.cern.ch/s/LIHpoNf1g
+
+1. bash NAOD_TAU/setup_option_b_venv.sh -- setup the requirements read all from setup_option_b_venv.sh
+2. .venv_local/bin/activate ----- activating local venv
