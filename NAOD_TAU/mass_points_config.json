@@ -1,0 +1,89 @@
+{
+  "mass_points": {
+    "250": {
+      "mass_gev": 250,
+      "n_events": 97458,
+      "memory_mb": 137.3,
+      "cross_section_pb": 73.74,
+      "cross_section_err_pb": 0.1838,
+      "equiv_lumi_fb": 13.56,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000",
+      "enabled": true
+    },
+    "500": {
+      "mass_gev": 500,
+      "n_events": 76953,
+      "memory_mb": 119.6,
+      "cross_section_pb": null,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-500_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-500_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "enabled": false,
+      "note": "Update YYYYMMDD_HHMMSS with actual timestamp from lxplus"
+    },
+    "750": {
+      "mass_gev": 750,
+      "n_events": 69122,
+      "memory_mb": 112.8,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-750_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-750_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "enabled": false,
+      "note": "Update YYYYMMDD_HHMMSS with actual timestamp from lxplus"
+    },
+    "1000": {
+      "mass_gev": 1000,
+      "n_events": 66226,
+      "memory_mb": 109.4,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-1000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-1000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "enabled": false,
+      "note": "Update YYYYMMDD_HHMMSS with actual timestamp from lxplus"
+    },
+    "2000": {
+      "mass_gev": 2000,
+      "n_events": 72633,
+      "memory_mb": 111.9,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-2000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-2000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "enabled": false,
+      "note": "Update YYYYMMDD_HHMMSS with actual timestamp from lxplus"
+    },
+    "3000": {
+      "mass_gev": 3000,
+      "n_events": 106950,
+      "memory_mb": 205.7,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-3000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-3000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "enabled": false,
+      "note": "Update YYYYMMDD_HHMMSS with actual timestamp from lxplus"
+    },
+    "4000": {
+      "mass_gev": 4000,
+      "n_events": 85374,
+      "memory_mb": 169.2,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-4000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-4000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "enabled": false,
+      "note": "Update YYYYMMDD_HHMMSS with actual timestamp from lxplus"
+    },
+    "5000": {
+      "mass_gev": 5000,
+      "n_events": 78391,
+      "memory_mb": 157.1,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-5000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-5000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "enabled": false,
+      "note": "Update YYYYMMDD_HHMMSS with actual timestamp from lxplus"
+    },
+    "6000": {
+      "mass_gev": 6000,
+      "n_events": 96554,
+      "memory_mb": 194.8,
+      "eos_base_path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-6000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "xrootd_base": "root://eoscms.cern.ch//store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-6000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/YYYYMMDD_HHMMSS/0000",
+      "enabled": false,
+      "note": "Update YYYYMMDD_HHMMSS with actual timestamp from lxplus"
+    }
+  },
+  "notes": "Mass-point aware configuration for Z' → 2τ analysis. M250 verified working with real EOS path. Other mass points need YYYYMMDD_HHMMSS timestamps updated. Run discover_mass_points.py on lxplus to auto-detect all paths."
+}
