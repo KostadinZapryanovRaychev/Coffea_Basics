@@ -60,3 +60,4 @@ The intput files for analysis https://codimd.web.cern.ch/s/LIHpoNf1g
 
 1. bash NAOD_TAU/setup_option_b_venv.sh -- setup the requirements read all from setup_option_b_venv.sh
 2. .venv_local/bin/activate ----- activating local venv
+3. python NAOD_TAU/mc_tau_analysis.py --- run the analysis of files inside file_config.json
