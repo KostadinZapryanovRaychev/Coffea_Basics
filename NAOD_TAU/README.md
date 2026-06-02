@@ -69,7 +69,7 @@ drwxr-xr-x. 2 mileva zh 4096 May 3 2025 ..
 
 over there paths and their content:
 
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-500_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_100139/0000. - nanoaodsim_coffea_1.root
+/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-500_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_100139/0000 - nanoaodsim_coffea_1.root
 
 /eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-750_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_102612/0000 - nanoaodsim_coffea_1.root
 
