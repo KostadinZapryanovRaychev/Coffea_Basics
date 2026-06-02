@@ -8,13 +8,14 @@ from .image_processing import save_png , compute_histogram_data, save_2d_histogr
 
 logger = logging.getLogger(__name__)
 
-def get_mass_his(output_dir: Path, mass):
+def get_mass_his(output_dir: Path, mass, mass_point: str = "unknown"):
     """
     Save invariant mass distribution histogram for LHE tau pairs.
     
     Args:
         output_dir: Output directory
         mass: Mass values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
         
     Returns:
         Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
@@ -24,271 +25,291 @@ def get_mass_his(output_dir: Path, mass):
     """
     try:
         counts , bin_edges = compute_histogram_data(mass, bins=2500 , bin_edge_min=0, bin_edge_max=500)
+        title = f"LHE Taus Pair Invariant Mass (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_mass",
-            "LHE Taus Pair Invariant Mass",
+            title,
             mass,
             bin_edges,
             r"$m(\tau^{-}\tau^{+})$ [GeV]",
             "Events",
         )
-        return "lhe_mass", "LHE Taus Pair Invariant Mass", counts, bin_edges
+        return "lhe_mass", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE mass histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_tau_pt_his(output_dir: Path, pt):
+def get_tau_pt_his(output_dir: Path, pt, mass_point: str = "unknown"):
     """
     Save pt distribution histogram for LHE tau pairs.
     
     Args:
         output_dir: Output directory
         pt: Pt values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=300)
+        title = f"LHE Tau Pt Distribution (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_pt",
-            "LHE Taus Pt Distribution",
+            title,
             pt,
             bin_edges,
             r"$p_{T}(\tau^{-}\tau^{+})$ [GeV]",
             "Events",
         )
-        return "lhe_pt", "LHE Taus Pt Distribution", counts, bin_edges
+        return "lhe_pt", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE pt histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
     
-def get_anti_tau_pt_his(output_dir: Path, pt):
+def get_anti_tau_pt_his(output_dir: Path, pt, mass_point: str = "unknown"):
     """
     Save pt distribution histogram for LHE anti-tau pairs.
     
     Args:
         output_dir: Output directory
         pt: Pt values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         counts , bin_edges = compute_histogram_data(pt, bins=2500, bin_edge_min=0, bin_edge_max=300)
+        title = f"LHE Anti-Tau Pt Distribution (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_antitau_pt",
-            "LHE Anti-Tau Pt Distribution",
+            title,
             pt,
             bin_edges,
             r"$p_{T}(\tau^{+})$ [GeV]",
             "Events",
         )
-        return "lhe_antitau_pt", "LHE Anti-Tau Pt Distribution", counts, bin_edges
+        return "lhe_antitau_pt", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE anti-tau pt histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_tau_pz_his(output_dir: Path, pz):
+def get_tau_pz_his(output_dir: Path, pz, mass_point: str = "unknown"):
     """
     Save pz distribution histogram for LHE tau pairs.
     
     Args:
         output_dir: Output directory
         pz: Pz values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-1500, bin_edge_max=1500)
+        title = f"LHE Taus Pz Distribution (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_pz",
-            "LHE Taus Pz Distribution",
+            title,
             pz,
             bin_edges,
             r"$p_{z}(\tau^{-}\tau^{+})$ [GeV]",
             "Events",
         )
-        return "lhe_pz", "LHE Taus Pz Distribution", counts, bin_edges
+        return "lhe_pz", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE pz histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_anti_tau_pz_his(output_dir: Path, pz):
+def get_anti_tau_pz_his(output_dir: Path, pz, mass_point: str = "unknown"):
     """
     Save pz distribution histogram for LHE anti-tau pairs.
     
     Args:
         output_dir: Output directory
         pz: Pz values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         counts , bin_edges = compute_histogram_data(pz, bins=2500, bin_edge_min=-1500, bin_edge_max=1500)
+        title = f"LHE Anti-Tau Pz Distribution (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_antitau_pz",
-            "LHE Anti-Tau Pz Distribution",
+            title,
             pz,
             bin_edges,
             r"$p_{z}(\tau^{+})$ [GeV]",
             "Events",
         )
-        return "lhe_antitau_pz", "LHE Anti-Tau Pz Distribution", counts, bin_edges
+        return "lhe_antitau_pz", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE anti-tau pz histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_tau_eta_his(output_dir: Path, eta):
+def get_tau_eta_his(output_dir: Path, eta, mass_point: str = "unknown"):
     """
     Get eta distribution histogram for LHE tau pairs.
     
     Args:
         output_dir: Output directory
         eta: Eta values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         counts , bin_edges = compute_histogram_data(eta, bins=2500, bin_edge_min=-3, bin_edge_max=3)
+        title = f"LHE Tau Eta Distribution (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_eta_tau",
-            "LHE Tau Eta Distribution",
+            title,
             eta,
             bin_edges,
             r"$\eta(\tau^{-}\tau^{+})$",
             "Events",
         )
-        return "lhe_eta_tau", "LHE Tau Eta Distribution", counts, bin_edges
+        return "lhe_eta_tau", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE eta histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_anti_tau_eta_his(output_dir: Path, eta):
+def get_anti_tau_eta_his(output_dir: Path, eta, mass_point: str = "unknown"):
     """
     Get eta distribution histogram for LHE anti-tau pairs.
     
     Args:
         output_dir: Output directory
         eta: Eta values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         counts , bin_edges = compute_histogram_data(eta, bins=2500, bin_edge_min=-3, bin_edge_max=3)
+        title = f"LHE Anti-Tau Eta Distribution (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_eta_anti_tau",
-            "LHE Anti-Tau Eta Distribution",
+            title,
             eta,
             bin_edges,
             r"$\eta(\tau^{+})$",
             "Events",
         )
-        return "lhe_eta_anti_tau", "LHE Anti-Tau Eta Distribution", counts, bin_edges
+        return "lhe_eta_anti_tau", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE eta histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_tau_phi_his(output_dir: Path, phi):
+def get_tau_phi_his(output_dir: Path, phi, mass_point: str = "unknown"):
     """
     Get phi distribution histogram for LHE tau pairs.
     
     Args:
         output_dir: Output directory
         phi: Phi values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         counts , bin_edges = compute_histogram_data(phi, bins=2500, bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        title = f"LHE Tau Phi Distribution (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_phi_tau",
-            "LHE Tau Phi Distribution",
+            title,
             phi,
             bin_edges,
             r"$\phi(\tau^{-}\tau^{+})$ [rad]",
             "Events",
         )
-        return "lhe_phi_tau", "LHE Tau Phi Distribution", counts, bin_edges
+        return "lhe_phi_tau", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE phi histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_anti_tau_phi_his(output_dir: Path, phi):
+def get_anti_tau_phi_his(output_dir: Path, phi, mass_point: str = "unknown"):
     """
     Get phi distribution histogram for LHE anti-tau pairs.
     
     Args:
         output_dir: Output directory
         phi: Phi values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         counts , bin_edges = compute_histogram_data(phi, bins=2500, bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        title = f"LHE Anti-Tau Phi Distribution (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_phi_anti_tau",
-            "LHE Anti-Tau Phi Distribution",
+            title,
             phi,
             bin_edges,
             r"$\phi(\tau^{+})$ [rad]",
             "Events",
         )
-        return "lhe_phi_anti_tau", "LHE Anti-Tau Phi Distribution", counts, bin_edges
+        return "lhe_phi_anti_tau", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE anti-tau phi histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_delta_phi_ditau_difference_his(output_dir: Path, delta_phi):
+def get_delta_phi_ditau_difference_his(output_dir: Path, delta_phi, mass_point: str = "unknown"):
     """
     Save delta-phi distribution histogram for LHE tau pairs.
     
     Args:
         output_dir: Output directory
         delta_phi: Delta-phi values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """  
     try:
         counts , bin_edges = compute_histogram_data(delta_phi, bins=60 , bin_edge_min=-np.pi, bin_edge_max=np.pi)
+        title = f"LHE Di Tau Phi Difference (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_delta_phi",
-            "LHE Di Tau Phi Difference",
+            title,
             delta_phi,
             bin_edges,
             r"$\Delta\phi(\tau^{-}\tau^{+})$ [rad]",
             "Events",
         )
-        return "lhe_delta_phi", "LHE Di Tau Phi Difference", counts, bin_edges
+        return "lhe_delta_phi", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE delta-phi histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e 
 
-def get_cos_delta_phi_his(output_dir: Path, delta_phi):
+def get_cos_delta_phi_his(output_dir: Path, delta_phi, mass_point: str = "unknown"):
     """
     Save cos(delta-phi) distribution histogram for LHE tau pairs.
 
     Args:
         output_dir: Output directory
         delta_phi: Delta-phi values array
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
 
     Returns:
         Tuple of (histogram_name, title, counts, bin_edges)
@@ -310,10 +331,11 @@ def get_cos_delta_phi_his(output_dir: Path, delta_phi):
         )
 
         # Save histogram image
+        title = f"LHE Di-Tau Cos(Delta Phi) (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_cos_delta_phi",
-            "LHE Di-Tau Cos(Delta Phi)",
+            title,
             cos_delta_phi,
             bin_edges,
             r"$\cos(\Delta\phi(\tau^{-}\tau^{+}))$",
@@ -322,7 +344,7 @@ def get_cos_delta_phi_his(output_dir: Path, delta_phi):
 
         return (
             "lhe_cos_delta_phi",
-            "LHE Di-Tau Cos(Delta Phi)",
+            title,
             counts,
             bin_edges,
         )
@@ -332,7 +354,7 @@ def get_cos_delta_phi_his(output_dir: Path, delta_phi):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_delta_r_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
+def get_delta_r_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv, mass_point: str = "unknown"):
     """
     Save delta-R distribution histogram for LHE tau pairs.
     
@@ -340,28 +362,30 @@ def get_delta_r_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv
         output_dir: Output directory
         lhe_minus_lv: Lorentz vectors for tau-
         lhe_plus_lv: Lorentz vectors for tau+
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:        Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
     """
     try:
         delta_r = np.sqrt((lhe_minus_lv.eta - lhe_plus_lv.eta)**2 + (lhe_minus_lv.phi - lhe_plus_lv.phi)**2)
         counts , bin_edges = compute_histogram_data(delta_r, bins=2500, bin_edge_min=2, bin_edge_max=6)
+        title = f"LHE Di Tau Delta R (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_delta_r_ditau_pair",
-            "LHE Di Tau Delta R",
+            title,
             delta_r,
             bin_edges,
             r"$\Delta R(\tau^{-}\tau^{+})$",
             "Events",
         )
-        return "lhe_delta_r_ditau_pair", "LHE Di Tau Delta R", counts, bin_edges
+        return "lhe_delta_r_ditau_pair", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE delta-R di-tau pair histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_delta_eta_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
+def get_delta_eta_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv, mass_point: str = "unknown"):
     """
     Save delta-eta distribution histogram for lepton pairs (tau- vs tau+).
     
@@ -369,6 +393,7 @@ def get_delta_eta_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_
         output_dir: Output directory
         lhe_minus_lv: Lorentz vectors for tau-
         lhe_plus_lv: Lorentz vectors for tau+
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:
         Tuple of (histogram_name, title, counts, bin_edges) for combined ROOT output
     Raises:        RuntimeError: If histogram save fails
@@ -376,22 +401,23 @@ def get_delta_eta_ditau_difference_his(output_dir: Path, lhe_minus_lv, lhe_plus_
     try:
         delta_eta = lhe_minus_lv.eta - lhe_plus_lv.eta
         counts , bin_edges = compute_histogram_data(delta_eta, bins=1000, bin_edge_min=-7.5, bin_edge_max=7.5)
+        title = f"LHE Di Tau Delta Eta (M={mass_point} GeV)"
         save_png(
             output_dir,
             "lhe_delta_eta_ditau_pair",
-            "LHE Di Tau Delta Eta",
+            title,
             delta_eta,
             bin_edges,
             r"$\Delta\eta(\tau^{-} - \tau^{+})$",
             "Events",
         )
-        return "lhe_delta_eta_ditau_pair", "LHE Di Tau Delta Eta", counts, bin_edges
+        return "lhe_delta_eta_ditau_pair", title, counts, bin_edges
     except Exception as e:
         error_msg = f"Failed to save LHE delta-eta di-tau pair histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def get_delta_r_vs_delta_phi_2d_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv):
+def get_delta_r_vs_delta_phi_2d_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv, mass_point: str = "unknown"):
     """
     Save a 2D histogram of delta_R vs delta_phi for LHE tau pairs.
     
@@ -399,6 +425,7 @@ def get_delta_r_vs_delta_phi_2d_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv)
         output_dir: Output directory
         lhe_minus_lv: Lorentz vectors for tau-
         lhe_plus_lv: Lorentz vectors for tau+
+        mass_point: Mass point string (e.g., "500", "750") for histogram title
     Returns:
         None (2D histogram is saved as PNG only, not included in ROOT output)
     Raises:
@@ -411,10 +438,11 @@ def get_delta_r_vs_delta_phi_2d_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv)
         # Normalize delta_phi to [-pi, pi] range
         delta_phi = np.arctan2(np.sin(delta_phi), np.cos(delta_phi))
         
+        title = f"LHE Di-Tau Delta R vs Delta Phi (M={mass_point} GeV)"
         save_2d_histogram_png(
             output_dir,
             "lhe_delta_r_vs_delta_phi_2d",
-            "LHE Di-Tau Delta R vs Delta Phi",
+            title,
             delta_phi,
             delta_r,
             x_bins=10,

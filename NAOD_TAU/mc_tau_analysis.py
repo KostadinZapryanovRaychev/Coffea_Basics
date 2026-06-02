@@ -26,7 +26,8 @@ from NAOD_TAU.helpers.io import (
     HERE, 
     load_config, 
     load_all_enabled_events,
-    get_combined_output_directory
+    get_combined_output_directory,
+    extract_mass_point
 )
 from NAOD_TAU.helpers.selection import load_tau_pairs
 from NAOD_TAU.helpers.lhe_ditau_candidates import make_lhe_ditau_histograms
@@ -37,7 +38,7 @@ from NAOD_TAU.helpers.mass_points import (
 )
 
 
-def analyze_combined_files(base_output_dir: Path, config: dict) -> bool:
+def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str = "unknown") -> bool:
     """
     Perform combined tau-pair analysis on all enabled ROOT files.
     
@@ -50,6 +51,7 @@ def analyze_combined_files(base_output_dir: Path, config: dict) -> bool:
     Args:
         base_output_dir: Base output directory
         config: Configuration dictionary
+        mass_point: Mass point string (e.g., "500", "750") for histogram titles
         
     Returns:
         True if analysis succeeded, False otherwise
@@ -104,8 +106,8 @@ def analyze_combined_files(base_output_dir: Path, config: dict) -> bool:
         # Step 3: Generate histograms from combined data
         try:
             output_dir = get_combined_output_directory(base_output_dir)
-            logger.debug(f"Generating histograms for combined data...")
-            make_lhe_ditau_histograms(output_dir, lhe_selected)
+            logger.debug(f"Generating histograms for combined data (M={mass_point} GeV)...")
+            make_lhe_ditau_histograms(output_dir, lhe_selected, mass_point)
             logger.info(f"✓ Histograms saved to: {output_dir}")
         except ValueError as e:
             logger.error(f"\n{str(e)}")
@@ -259,10 +261,16 @@ def main():
             base_output_dir = HERE / "outputs" / f"M{mass_point}"
         else:
             base_output_dir = HERE / "outputs"
+            # Extract mass point from first enabled file's path
+            enabled_files = config.get('root_files', [])
+            if enabled_files and enabled_files[0].get('enabled', True):
+                mass_point = extract_mass_point(enabled_files[0].get('path', ''))
+            else:
+                mass_point = "unknown"
         
         # Perform combined analysis
         try:
-            success = analyze_combined_files(base_output_dir, config)
+            success = analyze_combined_files(base_output_dir, config, mass_point)
             
             # Summary
             logger.info("\n" + "=" * 60)

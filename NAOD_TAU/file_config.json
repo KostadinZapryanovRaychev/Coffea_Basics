@@ -6,13 +6,6 @@
       "tree": "Events",
       "description": "Z' → 2τ M=500 GeV - File 1 from lxplus EOS",
       "enabled": true
-    },
-    {
-      "name": "ZprimeTo2Tau_coffea_2",
-      "path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000/nanoaodsim_coffea_2.root",
-      "tree": "Events",
-      "description": "Z' → 2τ M=250 GeV - File 2 from lxplus EOS",
-      "enabled": false
     }
   ],
   "notes": "✓ ACTIVE CONFIG - Remote EOS files from lxplus. Absolute paths to /eos/cms/store/. Used by mc_tau_analysis.py. Set 'enabled': true/false to include/exclude files. Multiple enabled files will be processed in sequence and combined."

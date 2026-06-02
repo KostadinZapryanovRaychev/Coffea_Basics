@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import logging
+import re
 
 from coffea.nanoevents import NanoAODSchema, NanoEventsFactory
 
@@ -11,6 +12,37 @@ NanoAODSchema.warn_missing_crossrefs = False
 HERE = Path(__file__).resolve().parents[1]
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_FILE = HERE / "file_config.json"
+
+
+def extract_mass_point(file_path_str: str) -> str:
+    """
+    Extract mass point (M-XXX) from file path.
+    
+    Extracts mass values like "500", "750", "1000" etc. from Z' paths
+    containing patterns like 'ZprimeTo2Tau-2Jets_M-500_TuneCP5_...'
+    
+    Args:
+        file_path_str: File path string or name from configuration
+        
+    Returns:
+        Mass value as string (e.g., "500", "750", "1000")
+        Returns "unknown" if mass point cannot be extracted
+        
+    Examples:
+        >>> extract_mass_point("ZprimeTo2Tau-2Jets_M-500_TuneCP5_...")
+        "500"
+        >>> extract_mass_point("/path/to/ZprimeTo2Tau-2Jets_M-1000_...")
+        "1000"
+    """
+    try:
+        # Pattern to match M-XXXX or M-XXXXX in file path
+        match = re.search(r'M-(\d+)', file_path_str)
+        if match:
+            return match.group(1)
+        return "unknown"
+    except Exception as e:
+        logger.warning(f"Failed to extract mass point from {file_path_str}: {str(e)}")
+        return "unknown"
 
 
 def load_config(config_path: Path = CONFIG_FILE):
