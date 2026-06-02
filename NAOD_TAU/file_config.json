@@ -2,9 +2,9 @@
   "root_files": [
     {
       "name": "ZprimeTo2Tau_coffea_1",
-      "path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-3000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_124833/0000/nanoaodsim_coffea_1.root",
+      "path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-4000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_160008/0000/nanoaodsim_coffea_1.root",
       "tree": "Events",
-      "description": "Z' → 2τ M=3000 GeV - File 1 from lxplus EOS",
+      "description": "Z' → 2τ M=4000 GeV - File 1 from lxplus EOS",
       "enabled": true
     }
   ],
