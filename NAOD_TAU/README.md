@@ -67,7 +67,6 @@ total 8
 drwxr-xr-x. 2 mileva zh 4096 Jun 5 2025 .
 drwxr-xr-x. 2 mileva zh 4096 May 3 2025 ..
 
-no one there
-we will continue to look over there
+over there
 
-/eos/cms/store/user/mileva/bsm3g/GStest/
+/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-500_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_100139/0000
