@@ -50,41 +50,40 @@ Edit **`NAOD_TAU/file_config.json`** to specify ROOT files to process:
 
 **Fields:** `name` (output directory), `path` (file path, relative to project root), `tree` (ROOT tree name), `enabled` (process or skip)
 
+## Batch Processing Multiple Mass Points
+
+To process all 9 mass points (250 GeV to 6000 GeV) with organized outputs:
+
+```bash
+# Activate environment first
+source .venv_local/bin/activate
+
+# Option 1: Use pre-configured batch file
+cp NAOD_TAU/file_config_batch_all_mass_points.json NAOD_TAU/file_config.json
+
+# Option 2: Generate configuration automatically
+python NAOD_TAU/generate_batch_config.py
+
+# Run batch analysis (processes each mass point sequentially)
+python NAOD_TAU/batch_runner.py
+
+# Compare results across all mass points
+python NAOD_TAU/batch_compare_results.py --all
+```
+
+Results will be organized in:
+
+```
+outputs/M-250/   → histograms for M-250 GeV
+outputs/M-500/   → histograms for M-500 GeV
+outputs/M-750/   → histograms for M-750 GeV
+... (and so on for all mass points)
+```
+
+See [BATCH_PROCESSING.md](BATCH_PROCESSING.md) for detailed batch workflow documentation.
+
 ## Output
 
 Histograms saved to `NAOD_TAU/outputs/{file_name}/`:
 
 Methodology: [PhysRevD.111.112004](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.111.112004)
-
-The intput files for analysis https://codimd.web.cern.ch/s/LIHpoNf1g
-
-1. bash NAOD_TAU/setup_option_b_venv.sh -- setup the requirements read all from setup_option_b_venv.sh
-2. .venv_local/bin/activate ----- activating local venv
-3. python NAOD_TAU/mc_tau_analysis.py --- run the analysis of files inside file_config.json
-
-ls -la /eos/cms/store/user/mileva/bsm3g/GStest/ZprimeTo2Tau-2Jets_M-750_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_GS/250503_120139/0000
-total 8
-drwxr-xr-x. 2 mileva zh 4096 Jun 5 2025 .
-drwxr-xr-x. 2 mileva zh 4096 May 3 2025 ..
-
-over there paths and their content:
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-500_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_100139/0000/nanoaodsim_coffea_1.root
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-750_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_102612/0000/nanoaodsim_coffea_1.root
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-1000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_104735/0000/nanoaodsim_coffea_1.root
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-2000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_111643/0000/nanoaodsim_coffea_1.root
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-3000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_124833/0000 - nanoaodsim_coffea_1.root
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-4000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_160008/0000/nanoaodsim_coffea_1.root
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-5000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_130557/0000/nanoaodsim_coffea_1.root
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-6000_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250725_100712/0000/nanoaodsim_coffea_1.root
-
-/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000/nanoaodsim_coffea_1.root
-
-/Users/macbookpro/nanoaodsim_coffea_1.root
