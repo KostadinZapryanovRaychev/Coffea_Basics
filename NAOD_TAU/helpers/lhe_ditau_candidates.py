@@ -48,22 +48,28 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected, mass_point: str = 
              lhe_selected.LHEPart.pdgId == 15,
              lhe_selected.LHEPart.pdgId == -15)
         
+        # Calculate statistics for plots
+        num_events = len(lhe_selected)
+        num_tau_minus = len(lhe_minus_lv)
+        num_tau_plus = len(lhe_plus_lv)
+        num_tau_pairs = min(num_tau_minus, num_tau_plus)
+        
         histogram_specs = []
-        histogram_specs.append(get_mass_his(output_dir, (lhe_minus_lv + lhe_plus_lv).mass, mass_point))
-        histogram_specs.append(get_tau_pt_his(output_dir, lhe_minus_lv.pt, mass_point))
-        histogram_specs.append(get_anti_tau_pt_his(output_dir, lhe_plus_lv.pt, mass_point))
-        histogram_specs.append(get_tau_pz_his(output_dir, lhe_minus_lv.pz, mass_point))
-        histogram_specs.append(get_anti_tau_pz_his(output_dir, lhe_plus_lv.pz, mass_point))
-        histogram_specs.append(get_tau_eta_his(output_dir, lhe_minus_lv.eta, mass_point))
-        histogram_specs.append(get_anti_tau_eta_his(output_dir, lhe_plus_lv.eta, mass_point))
-        histogram_specs.append(get_tau_phi_his(output_dir, lhe_minus_lv.phi, mass_point))
-        histogram_specs.append(get_anti_tau_phi_his(output_dir, lhe_plus_lv.phi, mass_point))
+        histogram_specs.append(get_mass_his(output_dir, (lhe_minus_lv + lhe_plus_lv).mass, mass_point, num_events=num_events, num_particles=num_tau_pairs))
+        histogram_specs.append(get_tau_pt_his(output_dir, lhe_minus_lv.pt, mass_point, num_events=num_events, num_particles=num_tau_minus))
+        histogram_specs.append(get_anti_tau_pt_his(output_dir, lhe_plus_lv.pt, mass_point, num_events=num_events, num_particles=num_tau_plus))
+        histogram_specs.append(get_tau_pz_his(output_dir, lhe_minus_lv.pz, mass_point, num_events=num_events, num_particles=num_tau_minus))
+        histogram_specs.append(get_anti_tau_pz_his(output_dir, lhe_plus_lv.pz, mass_point, num_events=num_events, num_particles=num_tau_plus))
+        histogram_specs.append(get_tau_eta_his(output_dir, lhe_minus_lv.eta, mass_point, num_events=num_events, num_particles=num_tau_minus))
+        histogram_specs.append(get_anti_tau_eta_his(output_dir, lhe_plus_lv.eta, mass_point, num_events=num_events, num_particles=num_tau_plus))
+        histogram_specs.append(get_tau_phi_his(output_dir, lhe_minus_lv.phi, mass_point, num_events=num_events, num_particles=num_tau_minus))
+        histogram_specs.append(get_anti_tau_phi_his(output_dir, lhe_plus_lv.phi, mass_point, num_events=num_events, num_particles=num_tau_plus))
 
-        histogram_specs.append(get_delta_phi_ditau_difference_his(output_dir, (lhe_minus_lv.phi - lhe_plus_lv.phi), mass_point))
-        histogram_specs.append(get_cos_delta_phi_his(output_dir, (lhe_minus_lv.phi - lhe_plus_lv.phi), mass_point))
-        histogram_specs.append(get_delta_eta_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv, mass_point))
-        histogram_specs.append(get_delta_r_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv, mass_point))
-        histogram_specs.append(get_delta_r_vs_delta_phi_2d_his(output_dir, lhe_minus_lv, lhe_plus_lv, mass_point))
+        histogram_specs.append(get_delta_phi_ditau_difference_his(output_dir, (lhe_minus_lv.phi - lhe_plus_lv.phi), mass_point, num_events=num_events, num_particles=num_tau_pairs))
+        histogram_specs.append(get_cos_delta_phi_his(output_dir, (lhe_minus_lv.phi - lhe_plus_lv.phi), mass_point, num_events=num_events, num_particles=num_tau_pairs))
+        histogram_specs.append(get_delta_eta_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv, mass_point, num_events=num_events, num_particles=num_tau_pairs))
+        histogram_specs.append(get_delta_r_ditau_difference_his(output_dir, lhe_minus_lv, lhe_plus_lv, mass_point, num_events=num_events, num_particles=num_tau_pairs))
+        histogram_specs.append(get_delta_r_vs_delta_phi_2d_his(output_dir, lhe_minus_lv, lhe_plus_lv, mass_point, num_events=num_events, num_particles=num_tau_pairs))
         
         save_lhe_histograms_root(output_dir, "tau_pair_histograms", histogram_specs)
         

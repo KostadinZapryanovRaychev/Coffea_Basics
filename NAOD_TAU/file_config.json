@@ -2,7 +2,7 @@
   "root_files": [
     {
       "name": "ZprimeTo2Tau_coffea_1",
-      "path": "/eos/cms/store/group/phys_tau/NAOD_TAU/ZprimeTo2Tau_M-250_TuneCP5_13TeV-pythia8/RunIISummer20UL18NanoAODv9-PU2018_0LHE_106X_upgrade2018_realistic_v15-v1/230601_120644/0000/nano_mc_1.root",
+      "path": "/Users/macbookpro/nanoaodsim_coffea_1.root",
       "tree": "Events",
       "description": "Z' → 2τ M=250 GeV - File 1 from lxplus EOS",
       "enabled": true
