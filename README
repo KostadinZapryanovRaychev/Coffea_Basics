@@ -1,5 +1,0 @@
-#run source setup.sh
-it will set up the correct python libraries available in global env in lxplus
-
-        # In the begining of the process --- > The process is generated from MadGraph5 and it genrated the following pp ---> Z (some zeth prime) ---> tau+ tau- and for instance it ganarated some output saved in file.lhe
-        # After that we gave this output to Pythia8 for hadronization and it generated the output  z decays.

@@ -61,9 +61,9 @@ def compute_histogram_data(values, bins , bin_edge_min=None, bin_edge_max=None):
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
-def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edges, xlabel: str, ylabel: str):
+def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edges, xlabel: str, ylabel: str, num_events: int = None, num_particles: int = None):
     """
-    Save a histogram as a PNG file.
+    Save a histogram as a PNG file with optional statistics.
     
     Args:
         output_dir: Directory to save the PNG file
@@ -73,20 +73,44 @@ def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edge
         bin_edges: Edges of the histogram bins
         xlabel: Label for x-axis
         ylabel: Label for y-axis
+        num_events: Number of events analyzed (optional)
+        num_particles: Number of particles analyzed (optional)
     Raises:        RuntimeError: If saving the PNG file fails
     """
     try:
         # Ensure output directory exists
         output_dir.mkdir(parents=True, exist_ok=True)
         
-        plt.figure(figsize=(8, 6))
-        plt.hist(values, bins=bin_edges, histtype='stepfilled', color='blue', alpha=0.7)
-        plt.title(title)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        plt.grid(True, linestyle='--', alpha=0.5)
+        # Count actual particles from values array
+        values_array = np.asarray(values)
+        actual_particles = len(values_array[np.isfinite(values_array)])
+        
+        fig, ax = plt.subplots(figsize=(11, 8))
+        ax.hist(values, bins=bin_edges, histtype='stepfilled', color='blue', alpha=0.7, edgecolor='darkblue', linewidth=1.5)
+        ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
+        ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
+        ax.set_ylabel(ylabel, fontsize=12, fontweight='bold')
+        ax.grid(True, linestyle='--', alpha=0.5)
+        
+        # Build statistics text
+        stats_text = ""
+        if num_events is not None:
+            stats_text += f"Events analyzed: {num_events:,}\n"
+        if num_particles is not None:
+            stats_text += f"Particles analyzed: {num_particles:,}\n"
+        stats_text += f"Particles in histogram: {actual_particles:,}"
+        
+        # Add statistics text box with better positioning
+        if stats_text:
+            ax.text(0.98, 0.97, stats_text, transform=ax.transAxes,
+                    fontsize=11, verticalalignment='top', horizontalalignment='right',
+                    bbox=dict(boxstyle='round,pad=0.7', facecolor='wheat', edgecolor='black', linewidth=1.5, alpha=0.9))
+        
+        # Add extra padding to prevent text cutoff
+        plt.tight_layout(pad=0.5)
+        
         png_path = output_dir / f"{histogram_name}.png"
-        plt.savefig(png_path)
+        plt.savefig(png_path, dpi=100, bbox_inches='tight', pad_inches=0.3)
         plt.close()
         logger.debug(f"Saved PNG histogram: {png_path}")
     except Exception as e:
@@ -96,9 +120,9 @@ def save_png(output_dir: Path, histogram_name: str, title: str, values, bin_edge
 
 def save_2d_histogram_png(output_dir: Path, histogram_name: str, title: str, x_values, y_values, 
                           x_bins: int, y_bins: int, x_min: float, x_max: float, y_min: float, y_max: float,
-                          xlabel: str, ylabel: str):
+                          xlabel: str, ylabel: str, num_events: int = None, num_particles: int = None):
     """
-    Save a 2D histogram as a PNG heatmap.
+    Save a 2D histogram as a PNG heatmap with optional statistics.
     
     Args:
         output_dir: Directory to save the PNG file
@@ -114,6 +138,8 @@ def save_2d_histogram_png(output_dir: Path, histogram_name: str, title: str, x_v
         y_max: Maximum value for y-axis
         xlabel: Label for x-axis
         ylabel: Label for y-axis
+        num_events: Number of events analyzed (optional)
+        num_particles: Number of particles analyzed (optional)
     Raises:
         RuntimeError: If saving the PNG file fails
     """
@@ -130,22 +156,44 @@ def save_2d_histogram_png(output_dir: Path, histogram_name: str, title: str, x_v
         if len(x_values) != len(y_values):
             raise ValueError("x_values and y_values must have the same length")
         
-        plt.figure(figsize=(10, 8))
+        # Count actual particles (both dimensions must be finite)
+        valid_mask = np.isfinite(x_values) & np.isfinite(y_values)
+        actual_particles = np.sum(valid_mask)
+        
+        fig, ax = plt.subplots(figsize=(12, 10))
         
         # Create 2D histogram
-        h = plt.hist2d(x_values, y_values, 
-                       bins=[x_bins, y_bins],
-                       range=[[x_min, x_max], [y_min, y_max]],
-                       cmap='YlOrRd', cmin=1)
+        h = ax.hist2d(x_values, y_values, 
+                      bins=[x_bins, y_bins],
+                      range=[[x_min, x_max], [y_min, y_max]],
+                      cmap='YlOrRd', cmin=1)
         
-        plt.title(title, fontsize=14)
-        plt.xlabel(xlabel, fontsize=12)
-        plt.ylabel(ylabel, fontsize=12)
-        plt.colorbar(h[3], label='Counts')
-        plt.grid(True, linestyle='--', alpha=0.3)
+        ax.set_title(title, fontsize=14, fontweight='bold', pad=20)
+        ax.set_xlabel(xlabel, fontsize=12, fontweight='bold')
+        ax.set_ylabel(ylabel, fontsize=12, fontweight='bold')
+        cbar = plt.colorbar(h[3], ax=ax, label='Counts')
+        cbar.ax.tick_params(labelsize=10)
+        ax.grid(True, linestyle='--', alpha=0.3)
+        
+        # Build statistics text
+        stats_text = ""
+        if num_events is not None:
+            stats_text += f"Events analyzed: {num_events:,}\n"
+        if num_particles is not None:
+            stats_text += f"Particles analyzed: {num_particles:,}\n"
+        stats_text += f"Data points in histogram: {int(actual_particles):,}"
+        
+        # Add statistics text box with better positioning
+        if stats_text:
+            ax.text(0.02, 0.98, stats_text, transform=ax.transAxes,
+                    fontsize=11, verticalalignment='top', horizontalalignment='left',
+                    bbox=dict(boxstyle='round,pad=0.7', facecolor='wheat', edgecolor='black', linewidth=1.5, alpha=0.9))
+        
+        # Add extra padding
+        plt.tight_layout(pad=0.5)
         
         png_path = output_dir / f"{histogram_name}.png"
-        plt.savefig(png_path, dpi=100, bbox_inches='tight')
+        plt.savefig(png_path, dpi=100, bbox_inches='tight', pad_inches=0.3)
         plt.close()
         logger.debug(f"Saved 2D PNG histogram: {png_path}")
     except Exception as e:

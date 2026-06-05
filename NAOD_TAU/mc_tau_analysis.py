@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """NAOD_TAU tau-pair analysis entrypoint with combined data from all ROOT files."""
 
+"""Orchestrator file"""
+
 from pathlib import Path
 import sys
 import logging
+import argparse
 
-# Setup logging
 logging.basicConfig(
-    level=logging.WARNING,  # Default level: show WARNING and above
+    level=logging.WARNING,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
@@ -25,13 +27,14 @@ from NAOD_TAU.helpers.io import (
     HERE, 
     load_config, 
     load_all_enabled_events,
-    get_combined_output_directory
+    get_combined_output_directory,
+    extract_mass_point
 )
 from NAOD_TAU.helpers.selection import load_tau_pairs
 from NAOD_TAU.helpers.lhe_ditau_candidates import make_lhe_ditau_histograms
 
 
-def analyze_combined_files(base_output_dir: Path, config: dict) -> bool:
+def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str = "unknown") -> bool:
     """
     Perform combined tau-pair analysis on all enabled ROOT files.
     
@@ -44,6 +47,7 @@ def analyze_combined_files(base_output_dir: Path, config: dict) -> bool:
     Args:
         base_output_dir: Base output directory
         config: Configuration dictionary
+        mass_point: Mass point string (e.g., "500", "750") for histogram titles
         
     Returns:
         True if analysis succeeded, False otherwise
@@ -55,7 +59,6 @@ def analyze_combined_files(base_output_dir: Path, config: dict) -> bool:
     try:
         # Step 1: Load all enabled events
         try:
-            logger.debug("Loading events from all enabled ROOT files...")
             combined_events = load_all_enabled_events(config)
         except RuntimeError as e:
             logger.error(f"\n{str(e)}")
@@ -71,7 +74,6 @@ def analyze_combined_files(base_output_dir: Path, config: dict) -> bool:
         
         # Step 2: Select tau pairs from combined events
         try:
-            logger.debug("Selecting tau pairs from combined events...")
             lhe_selected = load_tau_pairs(combined_events)
             n_selected = len(lhe_selected)
             logger.info(f"✓ Selected {n_selected} events with tau pairs from combined data")
@@ -98,9 +100,8 @@ def analyze_combined_files(base_output_dir: Path, config: dict) -> bool:
         # Step 3: Generate histograms from combined data
         try:
             output_dir = get_combined_output_directory(base_output_dir)
-            logger.debug(f"Generating histograms for combined data...")
-            make_lhe_ditau_histograms(output_dir, lhe_selected)
-            logger.info(f"✓ Histograms saved to: {output_dir}")
+            logger.debug(f"Generating histograms for combined data (M={mass_point} GeV)...")
+            make_lhe_ditau_histograms(output_dir, lhe_selected, mass_point)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Output directory validation failed.")
@@ -133,27 +134,74 @@ def main():
     """
     Execute tau-pair analysis with combined data from all enabled files.
     
+    Mass point is automatically extracted from ROOT file paths in file_config.json.
+    Optional --mass-point argument can organize output by mass point directory.
+    
+    Usage:
+        python mc_tau_analysis.py                # Auto-detect mass point from config
+        python mc_tau_analysis.py --mass-point 500  # Organize output in outputs/M500/
+    
     Workflow:
     1. Load configuration from file_config.json
     2. Load events from all enabled ROOT files
     3. Concatenate all events
     4. Filter events with valid tau pairs
-    5. Generate combined histograms (PNG and ROOT formats)
+    5. Extract mass point from file paths (or use --mass-point if provided)
+    6. Generate combined histograms (PNG and ROOT formats)
     
     Output structure:
     outputs/
-      combined/
-        *.png, *.root  (combined histograms from all files)
+      combined/          (if no --mass-point specified)
+        *.png, *.root
+      M500/              (if --mass-point 500)
+        combined/
+          *.png, *.root
     
     Raises:
         SystemExit: On fatal configuration errors (exit code 1)
     """
+    parser = argparse.ArgumentParser(
+        description="Z' → 2τ tau-pair analysis across mass points (M250-M6000)",
+        epilog="Examples:\n"
+               "  python mc_tau_analysis.py --mass-point 250\n"
+               "  python mc_tau_analysis.py --mass-point M500\n"
+               "  python mc_tau_analysis.py  # Default: uses file_config.json\n"
+               "  python mc_tau_analysis.py --list  # Show available mass points",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    
+    parser.add_argument(
+        '--mass-point',
+        type=str,
+        dest='mass_point',
+        help='Mass point identifier for output organization (e.g., 500, 750)',
+        default=None
+    )
+    
+    args = parser.parse_args()
+    
+    if args.mass_point:
+        # Validate mass point is numeric
+        try:
+            mass_point_value = args.mass_point.lstrip('M').lstrip('m')
+            int(mass_point_value)  # Validate it's a number
+        except ValueError:
+            logger.error(f"Invalid mass point: {args.mass_point}. Must be numeric (e.g., 500, 750)")
+            sys.exit(1)
+        
+        mass_point = mass_point_value
+        base_output_dir = HERE / "outputs" / f"M{mass_point}"
+        logger.info(f"\n{'='*60}")
+        logger.info(f"MASS POINT ANALYSIS: M{mass_point}")
+        logger.info(f"{'='*60}")
+    else:
+        base_output_dir = None
+        mass_point = None
+    
     try:
-        # Load configuration
         try:
             logger.info("Loading file configuration...")
             config = load_config()
-            logger.info(f"✓ Configuration loaded")
         except (FileNotFoundError, ValueError) as e:
             logger.error(f"\n{str(e)}")
             logger.error("Cannot proceed without valid configuration.")
@@ -166,12 +214,19 @@ def main():
             )
             sys.exit(1)
         
-        # Base output directory
-        base_output_dir = HERE / "outputs"
+        # Base output directory and mass point extraction
+        if base_output_dir is None:
+            base_output_dir = HERE / "outputs"
+            # Extract mass point from first enabled file's path
+            enabled_files = config.get('root_files', [])
+            if enabled_files and enabled_files[0].get('enabled', True):
+                mass_point = extract_mass_point(enabled_files[0].get('path', ''))
+            else:
+                mass_point = "unknown"
         
         # Perform combined analysis
         try:
-            success = analyze_combined_files(base_output_dir, config)
+            success = analyze_combined_files(base_output_dir, config, mass_point)
             
             # Summary
             logger.info("\n" + "=" * 60)
@@ -179,7 +234,10 @@ def main():
             logger.info("=" * 60)
             
             if success:
-                logger.info("✓ COMBINED ANALYSIS COMPLETED SUCCESSFULLY")
+                if mass_point != "unknown":
+                    logger.info(f"✓ M{mass_point} ANALYSIS COMPLETED SUCCESSFULLY")
+                else:
+                    logger.info("✓ ANALYSIS COMPLETED SUCCESSFULLY")
                 logger.info(f"  Output directory: {base_output_dir / 'combined'}")
             else:
                 logger.error("✗ COMBINED ANALYSIS FAILED")
