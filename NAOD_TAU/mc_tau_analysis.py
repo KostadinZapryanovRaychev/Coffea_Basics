@@ -37,7 +37,6 @@ from NAOD_TAU.helpers.tau_collections import (
     get_deep_taus,
     get_tresholded_deep_taus,
     deep_taus_tresholds,
-
 )
 
 from NAOD_TAU.helpers.plotting import get_tau_multiplicity_histogram
