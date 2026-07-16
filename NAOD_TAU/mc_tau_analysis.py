@@ -32,6 +32,7 @@ from NAOD_TAU.helpers.io import (
 )
 from NAOD_TAU.helpers.selection import load_tau_pairs
 from NAOD_TAU.helpers.lhe_ditau_candidates import make_lhe_ditau_histograms
+from NAOD_TAU.helpers.gen_particles import load_gen_tau_pairs, make_gen_ditau_histograms
 
 
 def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str = "unknown") -> bool:
@@ -130,6 +131,83 @@ def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str 
         return False
 
 
+def analyze_combined_genpart_files(base_output_dir: Path, config: dict, mass_point: str = "unknown") -> bool:
+    """Perform combined generator-particle tau-pair analysis on all enabled ROOT files."""
+    logger.info("=" * 60)
+    logger.info("COMBINED GENPART ANALYSIS MODE - MERGING ALL ROOT FILES")
+    logger.info("=" * 60)
+
+    try:
+        try:
+            combined_events = load_all_enabled_events(config)
+        except RuntimeError as e:
+            logger.error(f"\n{str(e)}")
+            logger.error("Failed to load events from all files.")
+            return False
+        except Exception as e:
+            logger.error(
+                f"\n[ERROR] Unexpected error loading combined events\n"
+                f"  Exception type: {type(e).__name__}\n"
+                f"  Details: {str(e)}\n"
+            )
+            return False
+
+        try:
+            gen_selected = load_gen_tau_pairs(combined_events)
+            n_selected = len(gen_selected)
+            logger.info(f"✓ Selected {n_selected} events with GenPart tau pairs from combined data")
+        except ValueError as e:
+            logger.error(f"\n{str(e)}")
+            logger.error("Event selection failed. Check combined data integrity.")
+            return False
+        except AttributeError as e:
+            logger.error(f"\n{str(e)}")
+            logger.error("Required GenPart collection missing from ROOT files.")
+            return False
+        except RuntimeError as e:
+            logger.error(f"\n{str(e)}")
+            logger.error("Data processing failed during GenPart selection.")
+            return False
+        except Exception as e:
+            logger.error(
+                f"\n[ERROR] Unexpected error during GenPart selection\n"
+                f"  Exception type: {type(e).__name__}\n"
+                f"  Details: {str(e)}\n"
+            )
+            return False
+
+        try:
+            output_dir = get_combined_output_directory(base_output_dir)
+            logger.debug(f"Generating GenPart histograms for combined data (M={mass_point} GeV)...")
+            make_gen_ditau_histograms(output_dir, gen_selected, mass_point)
+        except ValueError as e:
+            logger.error(f"\n{str(e)}")
+            logger.error("Output directory validation failed.")
+            return False
+        except RuntimeError as e:
+            logger.error(f"\n{str(e)}")
+            logger.error("GenPart histogram generation failed. Check data quality.")
+            return False
+        except Exception as e:
+            logger.error(
+                f"\n[ERROR] Unexpected error during GenPart histogram generation\n"
+                f"  Exception type: {type(e).__name__}\n"
+                f"  Details: {str(e)}\n"
+            )
+            return False
+
+        logger.info("✓ Successfully completed combined GenPart analysis")
+        return True
+
+    except Exception as e:
+        logger.error(
+            f"\n[ERROR] Unexpected error in combined GenPart analysis\n"
+            f"  Exception type: {type(e).__name__}\n"
+            f"  Details: {str(e)}\n"
+        )
+        return False
+
+
 def main():
     """
     Execute tau-pair analysis with combined data from all enabled files.
@@ -176,6 +254,12 @@ def main():
         dest='mass_point',
         help='Mass point identifier for output organization (e.g., 500, 750)',
         default=None
+    )
+
+    parser.add_argument(
+        '--genpart',
+        action='store_true',
+        help='Use GenPart tau selection and GenPart histograms instead of LHEPart',
     )
     
     args = parser.parse_args()
@@ -226,7 +310,10 @@ def main():
         
         # Perform combined analysis
         try:
-            success = analyze_combined_files(base_output_dir, config, mass_point)
+            if args.genpart:
+                success = analyze_combined_genpart_files(base_output_dir, config, mass_point)
+            else:
+                success = analyze_combined_files(base_output_dir, config, mass_point)
             
             # Summary
             logger.info("\n" + "=" * 60)
