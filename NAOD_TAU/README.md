@@ -1,5 +1,9 @@
 ## Quick Setup
 
+Project available on
+
+/eos/user/k/kraychev/Coffea_Basics
+
 ```bash
 cd ..
 bash NAOD_TAU/setup_option_b_venv.sh
