@@ -30,12 +30,19 @@ from NAOD_TAU.helpers.io import (
     get_combined_output_directory,
     extract_mass_point
 )
-from NAOD_TAU.helpers.selection import load_tau_pairs , load_taus
+from NAOD_TAU.helpers.selection import load_tau_pairs, load_taus,select_deep_tau_vse
 from NAOD_TAU.helpers.lhe_ditau_candidates import make_lhe_ditau_histograms, make_tau_collection_histograms
 from NAOD_TAU.helpers.gen_particles import load_gen_tau_pairs, make_gen_ditau_histograms
-from NAOD_TAU.helpers.tau_collections.reader import get_tau_collection, get_deep_taus, get_tresholded_deep_taus
+from NAOD_TAU.helpers.tau_collections import (
+    get_deep_taus,
+    get_tresholded_deep_taus,
+    deep_taus_tresholds,
 
+)
 
+from NAOD_TAU.helpers.plotting import get_tau_multiplicity_histogram
+
+from NAOD_TAU.helpers.separate import  get_number_of_taus_per_event
 
 def get_good_deep_taus(events, threshold=1):
     """Select good DeepTau taus based on a threshold."""
@@ -73,6 +80,8 @@ def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str 
         # Step 1: Load all enabled events
         try:
             combined_events = load_all_enabled_events(config)
+            taus_per_event = get_number_of_taus_per_event(combined_events)
+            
         except RuntimeError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Failed to load events from all files.")
@@ -87,9 +96,11 @@ def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str 
         
         # Step 2: Select tau pairs from combined events
         try:
-            lhe_selected = load_tau_pairs(combined_events)
-            n_selected = len(lhe_selected)
-            logger.info(f"✓ Selected {n_selected} events with tau pairs from combined data")
+            # lhe_selected = load_tau_pairs(combined_events)
+            # n_selected = len(lhe_selected)
+            # logger.info(f"✓ Selected {n_selected} events with tau pairs from combined data")
+            # select_deep_tau_vse(combined_events, working_point=deep_taus_tresholds["VVVLoose"])
+            print("Selecting good DeepTau taus from combined events...")
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Event selection failed. Check combined data integrity.")
@@ -114,8 +125,8 @@ def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str 
         try:
             output_dir = get_combined_output_directory(base_output_dir)
             logger.debug(f"Generating histograms for combined data (M={mass_point} GeV)...")
-            good_deep_taus = get_good_deep_taus(combined_events)
-            # make_lhe_ditau_histograms(output_dir, good_deep_taus, mass_point)
+            # make_lhe_ditau_histograms(output_dir, lhe_selected, mass_point)
+            get_tau_multiplicity_histogram(output_dir, taus_per_event)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Output directory validation failed.")
@@ -166,9 +177,10 @@ def analyze_combined_genpart_files(base_output_dir: Path, config: dict, mass_poi
             return False
 
         try:
-            gen_selected = load_gen_tau_pairs(combined_events)
-            n_selected = len(gen_selected)
-            logger.info(f"✓ Selected {n_selected} events with GenPart tau pairs from combined data")
+            # gen_selected = load_gen_tau_pairs(combined_events)
+            # n_selected = len(gen_selected)
+            # logger.info(f"✓ Selected {n_selected} events with GenPart tau pairs from combined data")
+            print("Selecting good DeepTau taus from combined GenPart events...")
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Event selection failed. Check combined data integrity.")
@@ -192,7 +204,7 @@ def analyze_combined_genpart_files(base_output_dir: Path, config: dict, mass_poi
         try:
             output_dir = get_combined_output_directory(base_output_dir)
             logger.debug(f"Generating GenPart histograms for combined data (M={mass_point} GeV)...")
-            make_gen_ditau_histograms(output_dir, gen_selected, mass_point)
+            # make_gen_ditau_histograms(output_dir, gen_selected, mass_point)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Output directory validation failed.")

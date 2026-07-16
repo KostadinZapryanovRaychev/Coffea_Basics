@@ -2,7 +2,6 @@ import logging
 
 import awkward as ak
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -31,7 +30,9 @@ def get_deep_taus(taus):
 
    """Return the DeepTau collection after validating that it exists."""
    deepTauVSe = taus.idDeepTau2018v2p5VSe
-
+   first_ten_deepTauVSe = deepTauVSe[:10]
+   #    for i, value in enumerate(first_ten_deepTauVSe):
+   #        print(f"DeepTauVSe[{i}] = {value.tolist()}")
    return deepTauVSe
 
 def get_tresholded_deep_taus(deepTauVSe,taus, threshold=1):
@@ -42,7 +43,7 @@ def get_tresholded_deep_taus(deepTauVSe,taus, threshold=1):
     n_good_deep_taus = ak.sum(good_deep_taus_mask)
     if n_good_deep_taus == 0:
         logger.warning("⚠ Warning: No events passed DeepTau selection!")
-
+    
     return good_deep_taus
 
 
