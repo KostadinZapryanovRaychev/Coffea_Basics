@@ -30,9 +30,21 @@ from NAOD_TAU.helpers.io import (
     get_combined_output_directory,
     extract_mass_point
 )
-from NAOD_TAU.helpers.selection import load_tau_pairs
-from NAOD_TAU.helpers.lhe_ditau_candidates import make_lhe_ditau_histograms
+from NAOD_TAU.helpers.selection import load_tau_pairs , load_taus
+from NAOD_TAU.helpers.lhe_ditau_candidates import make_lhe_ditau_histograms, make_tau_collection_histograms
 from NAOD_TAU.helpers.gen_particles import load_gen_tau_pairs, make_gen_ditau_histograms
+from NAOD_TAU.helpers.tau_collections.reader import get_tau_collection, get_deep_taus, get_tresholded_deep_taus
+
+
+
+def get_good_deep_taus(events, threshold=1):
+    """Select good DeepTau taus based on a threshold."""
+    
+    print(f"Selecting good DeepTau taus with threshold: {threshold}")
+    taus = load_taus(events)
+    deepTauVSe = get_deep_taus(taus)
+    good_deep_taus = get_tresholded_deep_taus(deepTauVSe, taus, threshold)
+    return good_deep_taus
 
 
 def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str = "unknown") -> bool:
@@ -102,7 +114,8 @@ def analyze_combined_files(base_output_dir: Path, config: dict, mass_point: str 
         try:
             output_dir = get_combined_output_directory(base_output_dir)
             logger.debug(f"Generating histograms for combined data (M={mass_point} GeV)...")
-            make_lhe_ditau_histograms(output_dir, lhe_selected, mass_point)
+            good_deep_taus = get_good_deep_taus(combined_events)
+            # make_lhe_ditau_histograms(output_dir, good_deep_taus, mass_point)
         except ValueError as e:
             logger.error(f"\n{str(e)}")
             logger.error("Output directory validation failed.")

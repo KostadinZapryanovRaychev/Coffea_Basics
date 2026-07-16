@@ -5,6 +5,53 @@ import awkward as ak
 logger = logging.getLogger(__name__)
 
 
+
+def load_taus(events):
+    """
+    LOAD ALL RECONSTRUCTED TAUS (RECO LEVEL)
+
+    Loads the full Tau collection from NanoEvents.
+    No selection is applied.
+
+    Args:
+        events: NanoEvents object with Tau collection
+
+    Returns:
+        events.Tau
+
+    Raises:
+        AttributeError: If Tau collection is missing
+        RuntimeError: If loading fails
+    """
+
+    # Validate Tau exists
+    if "Tau" not in events.fields:
+        available = list(events.fields)
+        error_msg = (
+            f"\n[ERROR] Tau collection not found. Available: {available}\n"
+            f"Ensure ROOT file contains Tau objects.\n"
+        )
+        logger.error(error_msg)
+        raise AttributeError(error_msg)
+
+    try:
+        taus = events.Tau
+
+        logger.info(
+            f"Loaded Tau collection with {len(taus)} events"
+        )
+
+        return taus
+
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Loading Tau collection failed.\n"
+            f"  Exception: {type(e).__name__}: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
 def select_lhe_tau_pairs(events):
     """
     SELECT LHE TAU PAIRS (LAYER 1: PARTON LEVEL)

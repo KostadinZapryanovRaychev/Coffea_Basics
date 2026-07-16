@@ -83,4 +83,36 @@ def make_lhe_ditau_histograms(output_dir: Path, lhe_selected, mass_point: str = 
         error_msg = f"Unexpected error in make_pair_tau_histograms_lhe: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
+    
+
+def make_tau_collection_histograms(output_dir: Path, tau_selected, mass_point: str = "unknown"):
+    """
+    Create and save histograms for selected tau collections.
+    Saves all histograms to a single combined ROOT file.
+    
+    Args:
+        output_dir: Directory to save histograms
+        tau_selected: NanoEvents with selected tau collections
+        mass_point: Mass point string (e.g., "500", "750") for histogram titles
+    Raises:
+        ValueError: If tau selection is invalid
+        RuntimeError: If histogram creation or saving fails
+    """
+    try:
+        taus = validate_lhe_events(tau_selected)
+        
+        # Additional histogram creation logic can be added here
+        num_events = len(taus)
+        print(f"Number of events in tau collection: {num_events}")
+        
+    except ValueError as e:
+        logger.error(f"\n{str(e)}")
+        raise ValueError(str(e)) from e
+    except RuntimeError as e:
+        logger.error(f"\n{str(e)}")
+        raise RuntimeError(str(e)) from e
+    except Exception as e:
+        error_msg = f"Unexpected error in make_tau_collection_histograms: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
   
