@@ -14,3 +14,4 @@ nanoaodsim_coffea_1.root
 .venv_local/
 Documentation.rtf
 Documentation copy.rtf
+/WITHROOT/output_log.txt
