@@ -114,3 +114,5 @@ void printBoolHLT_HT350OnlyTrue(TTree *tree, Long64_t maxEvents)
     std::cout << "Done! Found " << passCount << " passing events. Saved results to 'HLT_HT350_passed_events.txt'." << std::endl;
     tree->SetBranchStatus("*", 1);
 }
+
+// Additional functions can be added here as needed. !!!!!!!!!!!!!!!! TODO: Implement more helper functions for other branches or analyses.
