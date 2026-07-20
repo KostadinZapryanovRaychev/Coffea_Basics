@@ -9,7 +9,7 @@ int main()
 
     // printEventTree(Events);
     Long64_t nEntries = getEntries(Events);
-    printBoolBranch(Events, "HLT_HT350", nEntries);
+    printBoolHLT_HT350OnlyTrue(Events, nEntries);
 
     return 0;
 }
