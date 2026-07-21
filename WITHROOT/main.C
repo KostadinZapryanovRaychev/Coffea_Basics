@@ -4,46 +4,35 @@
 #include "helpers.h"
 #include "BranchReader.C"
 #include "BranchReader.h"
-
-#include <fstream>
-#include <iostream>
+#include "ColumnPrinter.C"
+#include "ColumnPrinter.h"
 
 int main()
 {
+    // Open the NanoAOD file and grab the "Events" TTree.
     TTree *Events = getEventsTree("../nanoaodsim_coffea_1.root");
 
+    // BranchReader only manages which branches are active on the tree
+    // (disables everything, then re-enables the ones we pass in).
     BranchReader reader(Events);
     reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "MET_pt"});
 
-    Int_t nTau = 0;
-    Float_t Tau_pt[32];
-    Float_t Tau_eta[32];
-    Float_t MET_pt = 0.0;
+    // ColumnPrinter only knows how to read/print branch values it is
+    // told about — it has no hardcoded branch names, array sizes, event
+    // counts or output paths; all of that is passed in below.
+    ColumnPrinter printer(Events);
 
-    Events->SetBranchAddress("nTau", &nTau);
-    Events->SetBranchAddress("Tau_pt", Tau_pt);
-    Events->SetBranchAddress("Tau_eta", Tau_eta);
-    Events->SetBranchAddress("MET_pt", &MET_pt);
+    // Example 1: print a single branch ("MET_pt") for the first 10
+    // events into its own output file.
+    printer.printSingleBranch("MET_pt", 10, "met_pt_column.txt");
 
-    Long64_t nEntries = reader.getEntries();
-    Long64_t maxEvents = std::min<Long64_t>(10, nEntries);
-
-    std::ofstream outFile("class_based_columns.txt");
-    outFile << "Event | nTau | MET [GeV] | Taus (pT [GeV], eta)" << std::endl;
-
-    for (Long64_t i = 0; i < maxEvents; ++i)
-    {
-        Events->GetEntry(i);
-        outFile << "Event " << i << " | nTau=" << nTau << " | MET=" << MET_pt << " GeV | ";
-        for (UInt_t t = 0; t < nTau; ++t)
-        {
-            outFile << "[Tau #" << t << " pT: " << Tau_pt[t] << ", eta: " << Tau_eta[t] << "] ";
-        }
-        outFile << std::endl;
-    }
-    outFile.close();
-
-    std::cout << "Saved " << maxEvents << " events to class_based_columns.txt" << std::endl;
+    // Example 2: print a "counted array" group of branches — the tau
+    // count, the two per-tau arrays, and MET_pt as an extra scalar —
+    // for the first 10 events. 32 is the NanoAOD array capacity for
+    // Tau_pt/Tau_eta in this file, passed explicitly rather than
+    // hardcoded inside ColumnPrinter.
+    printer.printCountedArrayBranches("nTau", "Tau_pt", "Tau_eta", "MET_pt",
+                                      32, 10, "tau_kinematics_columns.txt");
 
     return 0;
 }
