@@ -116,3 +116,97 @@ void printBoolHLT_HT350OnlyTrue(TTree *tree, Long64_t maxEvents)
 }
 
 // Additional functions can be added here as needed. !!!!!!!!!!!!!!!! TODO: Implement more helper functions for other branches or analyses.
+
+void createOutputsFolder()
+{
+    if (mkdir("outputs", 0777) == 0)
+    {
+        std::cout << "Created outputs directory." << std::endl;
+    }
+    else if (errno == EEXIST)
+    {
+        std::cout << "Outputs directory already exists." << std::endl;
+    }
+    else
+    {
+        std::cerr << "Failed to create outputs directory: "
+                  << std::strerror(errno)
+                  << std::endl;
+    }
+}
+
+void inspectTauKinematics(TTree *tree, Long64_t maxEvents)
+{
+    if (!tree)
+    {
+        std::cerr << "Error: Null TTree pointer provided." << std::endl;
+        return;
+    }
+
+    // 1. Declare variables to hold branch data
+    UInt_t nTau = 0;
+    Float_t Tau_pt[32];
+    Float_t Tau_eta[32];
+    Float_t MET_pt = 0.0;
+
+    // 2. Selectively enable ONLY the required branches for fast reading
+
+    // disable reading all branches to speed up the process
+    tree->SetBranchStatus("*", 0);
+
+    tree->SetBranchStatus("nTau", 1);
+    tree->SetBranchStatus("Tau_pt", 1);
+    tree->SetBranchStatus("Tau_eta", 1);
+    tree->SetBranchStatus("MET_pt", 1);
+
+    // 3. Bind local C++ variables to ROOT tree branches
+    tree->SetBranchAddress("nTau", &nTau);
+    tree->SetBranchAddress("Tau_pt", Tau_pt);
+    tree->SetBranchAddress("Tau_eta", Tau_eta);
+    tree->SetBranchAddress("MET_pt", &MET_pt);
+
+    // 4. Ensure 'outputs/' directory exists and open file
+    createOutputsFolder();
+    std::string outputPath = "outputs/Tau_Kinematics_Inspection.txt";
+    std::ofstream outFile(outputPath);
+
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error: Could not open " << outputPath << " for writing!" << std::endl;
+        tree->SetBranchStatus("*", 1);
+        return;
+    }
+
+    // 5. Determine event loop limits
+    Long64_t nEntries = tree->GetEntries();
+    Long64_t limit = (maxEvents > 0) ? std::min(maxEvents, nEntries) : nEntries;
+
+    outFile << "=== Tau Kinematics & Missing Energy (MET) Inspection ===" << std::endl;
+    outFile << "Event | nTau | MET [GeV] | Taus (pT [GeV], eta)" << std::endl;
+    outFile << "------------------------------------------------------------------" << std::endl;
+
+    // 6. Main Event Loop
+    for (Long64_t i = 0; i < limit; ++i)
+    {
+        tree->GetEntry(i);
+
+        // Skip events with no taus to keep log clean
+        if (nTau == 0)
+            continue;
+
+        outFile << "Event " << i << " | nTau=" << nTau << " | MET=" << MET_pt << " GeV | ";
+
+        // Loop over individual tau objects inside the event array
+        for (UInt_t t = 0; t < nTau; ++t)
+        {
+            outFile << "[Tau #" << t << " pT: " << Tau_pt[t] << ", eta: " << Tau_eta[t] << "] ";
+        }
+        outFile << std::endl;
+    }
+
+    outFile.close();
+    std::cout << "Successfully written Tau data to: " << outputPath << std::endl;
+
+    // 7. Reset branch status back to default
+    tree->SetBranchStatus("*", 1);
+}
