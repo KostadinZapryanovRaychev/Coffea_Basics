@@ -53,7 +53,7 @@ def process_mass_point(file_entry: Dict, mass_point: str) -> bool:
             get_output_directory_for_file,
             extract_mass_point
         )
-        from NAOD_TAU.helpers.selection import load_tau_pairs
+        from NAOD_TAU.helpers.selection import load_tau_pairs , select_deep_tau_vse
         from NAOD_TAU.helpers.lhe_ditau_candidates import make_lhe_ditau_histograms
         
         logger.info("=" * 70)

@@ -201,3 +201,72 @@ def save_2d_histogram_png(output_dir: Path, histogram_name: str, title: str, x_v
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
 
+
+
+def save_tau_multiplicity_histogram(
+    output_dir: Path,
+    tau_info: dict,
+    mass_point: str = "unknown",
+    num_events: int = None,
+):
+    """
+    Save histogram of number of reconstructed taus per event.
+
+    Args:
+        output_dir: Directory where PNG is saved.
+        tau_info: Dictionary returned by get_number_of_taus_per_event().
+                  Expected key: "n_taus_per_event"
+        mass_point: Mass point label.
+        num_events: Number of analyzed events.
+
+    Returns:
+        None
+    """
+
+    try:
+        n_taus_values = tau_info.get("n_taus_per_event", tau_info.get("n_taus"))
+        if n_taus_values is None:
+            raise KeyError("n_taus_per_event")
+
+        n_taus = np.asarray(n_taus_values, dtype=np.float64)
+
+        if len(n_taus) == 0:
+            raise ValueError("No tau multiplicity values found")
+
+        # Create integer-centered bins:
+        # Example:
+        # 0 taus -> bin [-0.5,0.5]
+        # 1 tau  -> bin [0.5,1.5]
+        # 2 taus -> bin [1.5,2.5]
+        max_taus = int(np.max(n_taus))
+
+        bin_edges = np.arange(
+            -0.5,
+            max_taus + 1.5,
+            1
+        )
+
+        title = (
+            f"Reconstructed Tau Multiplicity per Event "
+            f"(M={mass_point} GeV)"
+        )
+
+        save_png(
+            output_dir=output_dir,
+            histogram_name="tau_multiplicity",
+            title=title,
+            values=n_taus,
+            bin_edges=bin_edges,
+            xlabel="Number of reconstructed taus",
+            ylabel="Events",
+            num_events=num_events,
+            num_particles=len(n_taus),
+        )
+
+    except Exception as e:
+        error_msg = (
+            f"\n[ERROR] Failed to save tau multiplicity histogram\n"
+            f"  Exception: {type(e).__name__}: {str(e)}\n"
+        )
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e

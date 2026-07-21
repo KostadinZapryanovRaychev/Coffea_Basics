@@ -1,5 +1,9 @@
 ## Quick Setup
 
+Project available on
+
+/eos/user/k/kraychev/Coffea_Basics
+
 ```bash
 cd ..
 bash NAOD_TAU/setup_option_b_venv.sh
@@ -56,3 +60,10 @@ outputs/M-750/   → histograms for M-750 GeV
 ```
 
 Methodology: [PhysRevD.111.112004](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.111.112004)
+
+The Plan 17.07.26
+
+1. To understand the structure of NANOAOD data and how they are related to real physics
+2. To start using Root and Python and to compare the results from both
+3. To Figure out what we have and what we can do with this
+4. To save all the results in root files ( C files )

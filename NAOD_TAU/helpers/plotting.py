@@ -3,7 +3,7 @@ import logging
 import awkward as ak
 import matplotlib.pyplot as plt
 import numpy as np
-from .image_processing import save_png , compute_histogram_data, save_2d_histogram_png
+from .image_processing import save_png , compute_histogram_data, save_2d_histogram_png,save_tau_multiplicity_histogram
 
 
 logger = logging.getLogger(__name__)
@@ -639,5 +639,26 @@ def get_delta_r_vs_delta_phi_2d_his(output_dir: Path, lhe_minus_lv, lhe_plus_lv,
         return None  # 2D histograms not saved to ROOT
     except Exception as e:
         error_msg = f"Failed to save LHE 2D delta-R vs delta-phi histogram: {str(e)}"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg) from e
+
+
+def get_tau_multiplicity_histogram(output_dir, tau_info):
+    """
+    Save a histogram of tau multiplicity per event.
+    
+    Args:
+        output_dir: Output directory
+        tau_info: Dictionary containing tau multiplicity information
+    Returns:
+        None (histogram is saved as PNG only)
+    Raises:
+        RuntimeError: If histogram save fails
+    """
+    try:
+        save_tau_multiplicity_histogram(output_dir, tau_info)
+        return None  # Multiplicity histogram not saved to ROOT
+    except Exception as e:
+        error_msg = f"Failed to save tau multiplicity histogram: {str(e)}"
         logger.error(error_msg)
         raise RuntimeError(error_msg) from e
