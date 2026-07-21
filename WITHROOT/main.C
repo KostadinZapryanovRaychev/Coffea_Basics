@@ -14,9 +14,6 @@ int main()
 
     // BranchReader only manages which branches are active on the tree
     // (disables everything, then re-enables the ones we pass in).
-    // Note: Tau_idDeepTau2017v2p1VSjet is left enabled but not printed
-    // below — it is a UChar_t array, while ColumnPrinter's array path
-    // currently only supports Float_t arrays (see ColumnPrinter.h).
     BranchReader reader(Events);
     reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_idDeepTau2017v2p1VSjet"});
 
@@ -25,18 +22,33 @@ int main()
     // counts or output paths; all of that is passed in below.
     ColumnPrinter printer(Events);
 
-    // "nTau" is a per-event Int_t count, not a Float_t scalar — it must
-    // NOT go through printSingleBranch (that caused a type mismatch and
-    // a segfault previously). It is printed together with the per-tau
-    // arrays below via printCountedArrayBranches instead.
+    const Long64_t maxEvents = 10;
+    const Int_t tauArraySize = 32; // NanoAOD array capacity for Tau_* branches in this file.
 
-    // Print the tau count together with all four per-tau Float_t arrays
-    // (pt, eta, phi, mass) for the first 10 events. 32 is the NanoAOD
-    // array capacity for Tau_* branches in this file, passed explicitly
-    // rather than hardcoded inside ColumnPrinter.
-    printer.printCountedArrayBranches("nTau",
-                                      {"Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass"},
-                                      32, 10, "tau_kinematics_columns.txt");
+    // "nTau" is a per-event Int_t scalar count (not Float_t), so it gets
+    // its own dedicated print path (printIntBranch), separate from the
+    // per-tau array branches below.
+    printer.printIntBranch("nTau", maxEvents, "nTau_column.txt");
+
+    // Each per-tau Float_t array branch is printed to its own file.
+    // "nTau" is still passed in as the count branch so each branch
+    // knows how many of its 32 slots are valid per event.
+    printer.printCountedArrayBranches("nTau", {"Tau_pt"}, tauArraySize, maxEvents, "Tau_pt_column.txt");
+    printer.printCountedArrayBranches("nTau", {"Tau_eta"}, tauArraySize, maxEvents, "Tau_eta_column.txt");
+    printer.printCountedArrayBranches("nTau", {"Tau_phi"}, tauArraySize, maxEvents, "Tau_phi_column.txt");
+    printer.printCountedArrayBranches("nTau", {"Tau_mass"}, tauArraySize, maxEvents, "Tau_mass_column.txt");
+
+    // Tau_idDeepTau2017v2p1VSjet is stored as UChar_t, not Float_t, so
+    // it needs its own print path rather than printCountedArrayBranches.
+    printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2017v2p1VSjet",
+                                          tauArraySize, maxEvents,
+                                          "Tau_idDeepTau2017v2p1VSjet_column.txt");
+
+    // Same branch again, but for the first 50 events, into its own
+    // separate file.
+    printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2017v2p1VSjet",
+                                          tauArraySize, 50,
+                                          "Tau_idDeepTau2017v2p1VSjet_column_50.txt");
 
     return 0;
 }

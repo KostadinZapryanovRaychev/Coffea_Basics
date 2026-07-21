@@ -26,6 +26,12 @@ public:
                            Long64_t maxEvents,
                            const std::string &outputPath) const;
 
+    // Print a single per-event scalar Int_t branch (e.g. "nTau") to
+    // outputPath — one value per event, no associated array.
+    void printIntBranch(const std::string &branchName,
+                         Long64_t maxEvents,
+                         const std::string &outputPath) const;
+
     // Print a per-event Int_t count branch (e.g. "nTau") together with
     // any number of associated Float_t array branches (e.g. "Tau_pt",
     // "Tau_eta", "Tau_phi", "Tau_mass") to outputPath. Each array branch
@@ -37,6 +43,17 @@ public:
                                    Int_t maxArraySize,
                                    Long64_t maxEvents,
                                    const std::string &outputPath) const;
+
+    // Print a single per-object UChar_t array branch (e.g.
+    // "Tau_idDeepTau2017v2p1VSjet") to outputPath, using countBranch
+    // (e.g. "nTau") to know how many of the maxArraySize slots are
+    // valid per event. Separate from printCountedArrayBranches because
+    // NanoAOD ID/flag branches are stored as UChar_t, not Float_t.
+    void printCountedUCharArrayBranch(const std::string &countBranch,
+                                       const std::string &arrayBranch,
+                                       Int_t maxArraySize,
+                                       Long64_t maxEvents,
+                                       const std::string &outputPath) const;
 
 private:
     TTree *tree_;

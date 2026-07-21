@@ -63,6 +63,49 @@ void ColumnPrinter::printSingleBranch(const std::string &branchName,
 }
 
 // ============================================================
+// Print a single scalar Int_t branch (e.g. nTau on its own, with no
+// associated arrays). Kept separate from printSingleBranch because
+// that one binds a Float_t address and would misread an Int_t branch.
+// ============================================================
+
+void ColumnPrinter::printIntBranch(const std::string &branchName,
+                                    Long64_t maxEvents,
+                                    const std::string &outputPath) const
+{
+    if (!tree_)
+    {
+        std::cerr << "Error: Cannot print branch. TTree pointer is null."
+                   << std::endl;
+        return;
+    }
+
+    Int_t value = 0;
+    tree_->SetBranchAddress(branchName.c_str(), &value);
+
+    std::ofstream outFile(outputPath);
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error: Could not open " << outputPath
+                   << " for writing!" << std::endl;
+        return;
+    }
+
+    // maxEvents <= 0 means "print every entry in the tree".
+    Long64_t nEntries = tree_->GetEntries();
+    Long64_t limit = (maxEvents > 0) ? std::min(maxEvents, nEntries) : nEntries;
+
+    outFile << "Event | " << branchName << std::endl;
+    for (Long64_t i = 0; i < limit; ++i)
+    {
+        tree_->GetEntry(i);
+        outFile << "Event " << i << " | " << branchName << "=" << value << std::endl;
+    }
+
+    outFile.close();
+    std::cout << "Saved " << limit << " events to " << outputPath << std::endl;
+}
+
+// ============================================================
 // Print a "counted array" pattern: one Int_t branch giving the number
 // of objects in the event (e.g. nTau), and any number of Float_t array
 // branches holding one value per object (e.g. Tau_pt, Tau_eta, Tau_phi,
@@ -134,6 +177,66 @@ void ColumnPrinter::printCountedArrayBranches(const std::string &countBranch,
                 }
             }
             outFile << "] ";
+        }
+        outFile << std::endl;
+    }
+
+    outFile.close();
+    std::cout << "Saved " << limit << " events to " << outputPath << std::endl;
+}
+
+// ============================================================
+// Print a single UChar_t array branch (e.g. Tau_idDeepTau2017v2p1VSjet)
+// alongside its count branch (e.g. nTau). Separate from
+// printCountedArrayBranches because NanoAOD ID/flag branches use
+// UChar_t storage, not Float_t.
+// ============================================================
+
+void ColumnPrinter::printCountedUCharArrayBranch(const std::string &countBranch,
+                                                  const std::string &arrayBranch,
+                                                  Int_t maxArraySize,
+                                                  Long64_t maxEvents,
+                                                  const std::string &outputPath) const
+{
+    if (!tree_)
+    {
+        std::cerr << "Error: Cannot print branch. TTree pointer is null."
+                   << std::endl;
+        return;
+    }
+
+    Int_t count = 0;
+    // Sized at runtime from the caller-supplied maxArraySize.
+    std::vector<UChar_t> buffer(maxArraySize);
+
+    tree_->SetBranchAddress(countBranch.c_str(), &count);
+    tree_->SetBranchAddress(arrayBranch.c_str(), buffer.data());
+
+    std::ofstream outFile(outputPath);
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error: Could not open " << outputPath
+                   << " for writing!" << std::endl;
+        return;
+    }
+
+    // maxEvents <= 0 means "print every entry in the tree".
+    Long64_t nEntries = tree_->GetEntries();
+    Long64_t limit = (maxEvents > 0) ? std::min(maxEvents, nEntries) : nEntries;
+
+    outFile << "Event | " << countBranch << " | " << arrayBranch << std::endl;
+    for (Long64_t i = 0; i < limit; ++i)
+    {
+        tree_->GetEntry(i);
+        outFile << "Event " << i << " | " << countBranch << "=" << count << " | ";
+
+        // Guard against a count larger than the buffer we allocated.
+        Int_t objectsToPrint = std::min(count, maxArraySize);
+        for (Int_t t = 0; t < objectsToPrint; ++t)
+        {
+            // Cast to int so it prints as a number, not a char.
+            outFile << "[#" << t << " " << arrayBranch << ": "
+                    << static_cast<int>(buffer[t]) << "] ";
         }
         outFile << std::endl;
     }
