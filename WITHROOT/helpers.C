@@ -1,7 +1,10 @@
 #include "helpers.h"
-
 #include <fstream>
 #include <cstdio>
+#include <iostream>
+#include <sys/stat.h>
+#include <cerrno>
+#include <cstring>
 
 void reader(std::string filePath)
 {

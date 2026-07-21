@@ -89,7 +89,7 @@ bool BranchReader::enableBranch(const std::string &branchName)
 // ============================================================
 
 void BranchReader::enableBranches(
-    const std::vectorstd::string &branchNames)
+    const std::vector<std::string> &branchNames)
 {
     for (const std::string &branchName : branchNames)
     {

@@ -8,9 +8,8 @@
 class BranchReader
 {
 public:
-    ```
-        // Constructor
-        BranchReader(TTree *tree);
+    // Constructor
+    BranchReader(TTree *tree);
 
     // Disable all branches in the TTree
     void disableAllBranches();
@@ -26,14 +25,10 @@ public:
 
     // Get the underlying TTree
     TTree *getTree() const;
-```
 
-    private :
-
-```
+private:
     // Pointer to the ROOT TTree
     TTree *tree_;
-    ```
 };
 
 #endif
