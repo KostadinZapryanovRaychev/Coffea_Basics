@@ -64,17 +64,15 @@ void ColumnPrinter::printSingleBranch(const std::string &branchName,
 
 // ============================================================
 // Print a "counted array" pattern: one Int_t branch giving the number
-// of objects in the event (e.g. nTau), two Float_t array branches
-// holding one value per object (e.g. Tau_pt, Tau_eta), and one extra
-// per-event scalar branch (e.g. MET_pt). All branch names, the array
-// capacity, the event count and the output path are supplied by the
-// caller — nothing here is tied to a specific ntuple layout.
+// of objects in the event (e.g. nTau), and any number of Float_t array
+// branches holding one value per object (e.g. Tau_pt, Tau_eta, Tau_phi,
+// Tau_mass). All branch names, the array capacity, the event count and
+// the output path are supplied by the caller — nothing here is tied to
+// a specific ntuple layout.
 // ============================================================
 
 void ColumnPrinter::printCountedArrayBranches(const std::string &countBranch,
-                                               const std::string &arrayBranch1,
-                                               const std::string &arrayBranch2,
-                                               const std::string &extraScalarBranch,
+                                               const std::vector<std::string> &arrayBranches,
                                                Int_t maxArraySize,
                                                Long64_t maxEvents,
                                                const std::string &outputPath) const
@@ -87,16 +85,16 @@ void ColumnPrinter::printCountedArrayBranches(const std::string &countBranch,
     }
 
     Int_t count = 0;
-    Float_t extraScalar = 0.0;
-    // Sized at runtime from the caller-supplied maxArraySize instead of
-    // a hardcoded constant.
-    std::vector<Float_t> array1(maxArraySize);
-    std::vector<Float_t> array2(maxArraySize);
-
     tree_->SetBranchAddress(countBranch.c_str(), &count);
-    tree_->SetBranchAddress(arrayBranch1.c_str(), array1.data());
-    tree_->SetBranchAddress(arrayBranch2.c_str(), array2.data());
-    tree_->SetBranchAddress(extraScalarBranch.c_str(), &extraScalar);
+
+    // One buffer per array branch, each sized at runtime from the
+    // caller-supplied maxArraySize instead of a hardcoded constant.
+    std::vector<std::vector<Float_t>> buffers(arrayBranches.size());
+    for (size_t b = 0; b < arrayBranches.size(); ++b)
+    {
+        buffers[b].resize(maxArraySize);
+        tree_->SetBranchAddress(arrayBranches[b].c_str(), buffers[b].data());
+    }
 
     std::ofstream outFile(outputPath);
     if (!outFile.is_open())
@@ -110,21 +108,32 @@ void ColumnPrinter::printCountedArrayBranches(const std::string &countBranch,
     Long64_t nEntries = tree_->GetEntries();
     Long64_t limit = (maxEvents > 0) ? std::min(maxEvents, nEntries) : nEntries;
 
-    outFile << "Event | " << countBranch << " | " << extraScalarBranch
-            << " | " << arrayBranch1 << ", " << arrayBranch2 << std::endl;
+    outFile << "Event | " << countBranch;
+    for (const std::string &branchName : arrayBranches)
+    {
+        outFile << " | " << branchName;
+    }
+    outFile << std::endl;
 
     for (Long64_t i = 0; i < limit; ++i)
     {
         tree_->GetEntry(i);
-        outFile << "Event " << i << " | " << countBranch << "=" << count
-                << " | " << extraScalarBranch << "=" << extraScalar << " | ";
+        outFile << "Event " << i << " | " << countBranch << "=" << count << " | ";
 
         // Guard against a count larger than the buffer we allocated.
         Int_t objectsToPrint = std::min(count, maxArraySize);
         for (Int_t t = 0; t < objectsToPrint; ++t)
         {
-            outFile << "[#" << t << " " << arrayBranch1 << ": " << array1[t]
-                    << ", " << arrayBranch2 << ": " << array2[t] << "] ";
+            outFile << "[#" << t << " ";
+            for (size_t b = 0; b < arrayBranches.size(); ++b)
+            {
+                outFile << arrayBranches[b] << ": " << buffers[b][t];
+                if (b + 1 < arrayBranches.size())
+                {
+                    outFile << ", ";
+                }
+            }
+            outFile << "] ";
         }
         outFile << std::endl;
     }
