@@ -16,4 +16,4 @@ Event Tau_pt Tau_eta Muon_pt Jet_pt HLT_IsoMu24
 
 1. Task to try to print each branch for event 1 and to try to understand the meaning of it
 
-rm -f /tmp/main_test /Users/macbookpro/Documents/BAN-Doctor-Degree/Tools/Coffea/WITHROOT/_\_column_.txt
+rm -f /tmp/main*test /Users/macbookpro/Documents/BAN-Doctor-Degree/Tools/Coffea/WITHROOT/*\_column\_.txt

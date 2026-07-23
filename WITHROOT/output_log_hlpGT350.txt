@@ -1,4 +1,0 @@
-
-Processing main.C...
-Done! Found 178 passing events. Saved results to 'HLT_HT350_passed_events.txt'.
-(int) 0
