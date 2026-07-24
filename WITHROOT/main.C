@@ -10,6 +10,8 @@
 #include "ColumnPrinter.h"
 #include "BranchPlotter.C"
 #include "BranchPlotter.h"
+#include "Selector.C"
+#include "Selector.h"
 
 int main()
 {
@@ -66,6 +68,36 @@ int main()
     plotter.plotIntBranch("nTau", "h_nTau", 10, 0, 10, maxEvents, "h_nTau.root");
     plotter.plotCountedArrayBranch("nTau", "Tau_pt", "h_Tau_pt", tauArraySize, 50, 0, 200, maxEvents, "h_Tau_pt.root");
     plotter.plotCountedArrayBranch("nTau", "Tau_eta", "h_Tau_eta", tauArraySize, 50, -3, 3, maxEvents, "h_Tau_eta.root");
+
+    // Selector reproduces what the mentor did interactively at the ROOT
+    // prompt (Events->Draw("nTau", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20")),
+    // but saved to file so the histograms can be compared/overlaid later.
+    // Needs Tau_idDeepTau2018v2p5VSjet and Tau_pt re-enabled on the tree.
+    reader.enableBranches({"Tau_idDeepTau2018v2p5VSjet"});
+
+    Selector selector(Events);
+
+    std::vector<Cut> tauCuts = {
+        {"noCut", ""},
+        {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
+        {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
+    };
+    // One nTau histogram per cut, all in h_nTau_selection.root, so the
+    // effect of tightening the tau ID/pt selection on the nTau
+    // distribution can be seen directly (this is the hypothesis test).
+    selector.plotOverlay("nTau", tauCuts, "h_nTau", 10, 0, 10, maxEvents, "h_nTau_selection.root");
+
+    // Second example from the mentor: GenPart_pt restricted to
+    // generator-level taus (|pdgId|==15) that are the hard-process
+    // final decay product (status==23).
+    reader.enableBranches({"GenPart_pt", "GenPart_pdgId", "GenPart_status"});
+
+    std::vector<Cut> genTauCuts = {
+        {"allGenPart", ""},
+        {"genTau", "abs(GenPart_pdgId)==15"},
+        {"genTauHardProcess", "abs(GenPart_pdgId)==15 && GenPart_status==23"},
+    };
+    selector.plotOverlay("GenPart_pt", genTauCuts, "h_GenPart_pt", 50, 0, 200, maxEvents, "h_GenPart_pt_selection.root");
 
     return 0;
 }
