@@ -1,4 +1,4 @@
-root -l main.C
+root -l -b -q main.C
 
 What is NANOAOD
 https://indico.cern.ch/event/708041/papers/3276172/files/8621-nanoaod_acat19_v2.pdf
