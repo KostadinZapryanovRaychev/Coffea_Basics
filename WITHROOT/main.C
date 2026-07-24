@@ -1,3 +1,5 @@
+#include "Config.C"
+#include "Config.h"
 #include "event.C"
 #include "event.h"
 #include "helpers.C"
@@ -11,8 +13,12 @@
 
 int main()
 {
+    // Load settings (currently just the input file path) from config.json
+    // instead of hardcoding it here.
+    Config config = loadConfig("config.json");
+
     // Open the NanoAOD file and grab the "Events" TTree.
-    TTree *Events = getEventsTree("../nanoaodsim_coffea_1.root");
+    TTree *Events = getEventsTree(config.inputFile);
 
     printEventTree(Events);
 
