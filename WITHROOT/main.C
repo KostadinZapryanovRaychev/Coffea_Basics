@@ -13,13 +13,11 @@
 
 int main()
 {
-    // Load settings (currently just the input file path) from config.json
-    // instead of hardcoding it here.
+    // Load path from here
     Config config = loadConfig("config.json");
 
     // Open the NanoAOD file and grab the "Events" TTree.
     TTree *Events = getEventsTree(config.inputFile);
-
     printEventTree(Events);
 
     // BranchReader only manages which branches are active on the tree(disables everything, then re - enables the ones we pass in).
@@ -61,18 +59,11 @@ int main()
 
     // BranchPlotter only knows how to fill and save histograms from
     // branch values it is told about — no hardcoded branch names,
-    // binning, event counts or output paths; all of that is passed in
-    // below. No event selection/cuts are applied here.
+
     BranchPlotter plotter(Events);
 
-    // "nTau" is a per-event Int_t scalar count, so it gets its own
-    // dedicated plot path (plotIntBranch).
+    // the numbers 10, 0 , 10 or 50 ,0 , 200 in arguments are actually the bining . for example 50 bins from 0 to 200 meaning 4 GeV per bin for Tau_pt. 50 bins from -3 to 3 meaning 0.12 per bin for Tau_eta. 10 bins from 0 to 10 meaning 1 per bin for nTau.
     plotter.plotIntBranch("nTau", "h_nTau", 10, 0, 10, maxEvents, "h_nTau.root");
-
-    // Each per-tau Float_t array branch is filled into its own
-    // histogram, one entry per tau object across all events. "nTau" is
-    // still passed in as the count branch so it knows how many of the
-    // 32 slots are valid per event.
     plotter.plotCountedArrayBranch("nTau", "Tau_pt", "h_Tau_pt", tauArraySize, 50, 0, 200, maxEvents, "h_Tau_pt.root");
     plotter.plotCountedArrayBranch("nTau", "Tau_eta", "h_Tau_eta", tauArraySize, 50, -3, 3, maxEvents, "h_Tau_eta.root");
 
