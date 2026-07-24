@@ -59,6 +59,13 @@ void ColumnPrinter::printSingleBranch(const std::string &branchName,
     }
 
     outFile.close();
+
+    // Branch addresses bound above point at locals that are about to go
+    // out of scope. Without this, the TTree keeps those dangling
+    // pointers registered and the next GetEntry() call anywhere (by
+    // this class or another) writes into freed memory.
+    tree_->ResetBranchAddresses();
+
     std::cout << "Saved " << limit << " events to " << outputPath << std::endl;
 }
 
@@ -102,6 +109,13 @@ void ColumnPrinter::printIntBranch(const std::string &branchName,
     }
 
     outFile.close();
+
+    // See printSingleBranch: without this, the address bound above to
+    // a local variable stays registered on the TTree after it goes out
+    // of scope, and the next GetEntry() anywhere writes into freed
+    // memory.
+    tree_->ResetBranchAddresses();
+
     std::cout << "Saved " << limit << " events to " << outputPath << std::endl;
 }
 
@@ -182,6 +196,13 @@ void ColumnPrinter::printCountedArrayBranches(const std::string &countBranch,
     }
 
     outFile.close();
+
+    // See printSingleBranch: without this, the addresses bound above to
+    // locals (count + array buffers) stay registered on the TTree after
+    // they go out of scope, and the next GetEntry() anywhere writes
+    // into freed memory.
+    tree_->ResetBranchAddresses();
+
     std::cout << "Saved " << limit << " events to " << outputPath << std::endl;
 }
 
@@ -242,5 +263,12 @@ void ColumnPrinter::printCountedUCharArrayBranch(const std::string &countBranch,
     }
 
     outFile.close();
+
+    // See printSingleBranch: without this, the addresses bound above to
+    // locals (count + buffer) stay registered on the TTree after they
+    // go out of scope, and the next GetEntry() anywhere writes into
+    // freed memory.
+    tree_->ResetBranchAddresses();
+
     std::cout << "Saved " << limit << " events to " << outputPath << std::endl;
 }

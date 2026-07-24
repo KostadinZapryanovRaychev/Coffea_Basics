@@ -67,6 +67,12 @@ void BranchPlotter::plotSingleBranch(const std::string &branchName,
     hist.Write();
     outFile.Close();
 
+    // Branch address bound above points at a local that is about to go
+    // out of scope. Without this, the TTree keeps that dangling pointer
+    // registered and the next GetEntry() call anywhere (by this class
+    // or another) writes into freed memory.
+    tree_->ResetBranchAddresses();
+
     std::cout << "Saved histogram '" << histName << "' from " << limit
               << " events to " << outputPath << std::endl;
 }
@@ -116,6 +122,11 @@ void BranchPlotter::plotIntBranch(const std::string &branchName,
     }
     hist.Write();
     outFile.Close();
+
+    // See plotSingleBranch: without this, the address bound above to a
+    // local stays registered on the TTree after it goes out of scope,
+    // and the next GetEntry() anywhere writes into freed memory.
+    tree_->ResetBranchAddresses();
 
     std::cout << "Saved histogram '" << histName << "' from " << limit
               << " events to " << outputPath << std::endl;
@@ -182,6 +193,12 @@ void BranchPlotter::plotCountedArrayBranch(const std::string &countBranch,
     }
     hist.Write();
     outFile.Close();
+
+    // See plotSingleBranch: without this, the addresses bound above to
+    // locals (count + array buffer) stay registered on the TTree after
+    // they go out of scope, and the next GetEntry() anywhere writes
+    // into freed memory.
+    tree_->ResetBranchAddresses();
 
     std::cout << "Saved histogram '" << histName << "' from " << limit
               << " events to " << outputPath << std::endl;
