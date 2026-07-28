@@ -30,18 +30,18 @@ Selector::Selector(TTree *tree)
 // GetNdata()/EvalInstance() loop — no hardcoded array size needed.
 // ============================================================
 void Selector::plot(const std::string &varExpr,
-                     const std::string &cutExpression,
-                     const std::string &histName,
-                     Int_t nBins,
-                     Double_t xMin,
-                     Double_t xMax,
-                     Long64_t maxEvents,
-                     const std::string &outputPath) const
+                    const std::string &cutExpression,
+                    const std::string &histName,
+                    Int_t nBins,
+                    Double_t xMin,
+                    Double_t xMax,
+                    Long64_t maxEvents,
+                    const std::string &outputPath) const
 {
     if (!tree_)
     {
         std::cerr << "Error: Cannot plot selection. TTree pointer is null."
-                   << std::endl;
+                  << std::endl;
         return;
     }
 
@@ -90,7 +90,7 @@ void Selector::plot(const std::string &varExpr,
     if (outFile.IsZombie())
     {
         std::cerr << "Error: Could not open " << outputPath
-                   << " for writing!" << std::endl;
+                  << " for writing!" << std::endl;
         delete cutFormula;
         return;
     }
@@ -111,13 +111,13 @@ void Selector::plot(const std::string &varExpr,
 // the actual "test a hypothesis" step.
 // ============================================================
 void Selector::plotOverlay(const std::string &varExpr,
-                            const std::vector<Cut> &cuts,
-                            const std::string &histNamePrefix,
-                            Int_t nBins,
-                            Double_t xMin,
-                            Double_t xMax,
-                            Long64_t maxEvents,
-                            const std::string &outputPath) const
+                           const std::vector<Cut> &cuts,
+                           const std::string &histNamePrefix,
+                           Int_t nBins,
+                           Double_t xMin,
+                           Double_t xMax,
+                           Long64_t maxEvents,
+                           const std::string &outputPath) const
 {
     // Truncate/create the file once, then let each plot() call below
     // append (UPDATE) into it.

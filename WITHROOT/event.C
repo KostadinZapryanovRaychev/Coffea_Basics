@@ -1,5 +1,4 @@
 #include "event.h"
-
 #include <TFile.h>
 #include <TTree.h>
 #include <cstdio>

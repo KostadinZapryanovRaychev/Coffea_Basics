@@ -23,24 +23,18 @@ int main()
     printEventTree(Events);
 
     // BranchReader only manages which branches are active on the tree(disables everything, then re - enables the ones we pass in).
+    // For optimization purposes in order to run faster
     BranchReader reader(Events);
     reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_idDeepTau2017v2p1VSjet"});
 
-    // ColumnPrinter only knows how to read/print branch values it is
-    // told about — it has no hardcoded branch names, array sizes, event
-    // counts or output paths; all of that is passed in below.
+    // create an instance of printer that is for debugging purposes
     ColumnPrinter printer(Events);
 
     const Long64_t maxEvents = Events->GetEntries(); // Use all events in the file.
     const Int_t tauArraySize = 32;                   // NanoAOD array capacity for Tau_* branches in this file.
 
-    // "nTau" is a per-event Int_t scalar count (not Float_t), so it gets
-    // its own dedicated print path (printIntBranch), separate from the
-    // per-tau array branches below.
+    // print infor just for informative purposes
     printer.printIntBranch("nTau", maxEvents, "nTau_column.txt");
-
-    // Each per-tau Float_t array branch is printed to its own file.
-    // "nTau" is still passed in as the count branch so each branch
 
     // printer.printCountedArrayBranches("nTau", {"Tau_pt"}, tauArraySize, maxEvents, "Tau_pt_column.txt");
     // printer.printCountedArrayBranches("nTau", {"Tau_eta"}, tauArraySize, maxEvents, "Tau_eta_column.txt");
@@ -66,14 +60,22 @@ int main()
 
     // the numbers 10, 0 , 10 or 50 ,0 , 200 in arguments are actually the bining . for example 50 bins from 0 to 200 meaning 4 GeV per bin for Tau_pt. 50 bins from -3 to 3 meaning 0.12 per bin for Tau_eta. 10 bins from 0 to 10 meaning 1 per bin for nTau.
     plotter.plotIntBranch("nTau", "h_nTau", 10, 0, 10, maxEvents, "h_nTau.root");
+
+    // here we plot a pt for each tau in the datasample we look how much per events there are and we plot each one
     plotter.plotCountedArrayBranch("nTau", "Tau_pt", "h_Tau_pt", tauArraySize, 50, 0, 200, maxEvents, "h_Tau_pt.root");
+
+    // the same for eta we plot a eta for each tau in the datasample we look how much per events there are and we plot each one
     plotter.plotCountedArrayBranch("nTau", "Tau_eta", "h_Tau_eta", tauArraySize, 50, -3, 3, maxEvents, "h_Tau_eta.root");
 
-    // Selector reproduces what the mentor did interactively at the ROOT
     // prompt (Events->Draw("nTau", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20")),
-    // but saved to file so the histograms can be compared/overlaid later.
     // Needs Tau_idDeepTau2018v2p5VSjet and Tau_pt re-enabled on the tree.
     reader.enableBranches({"Tau_idDeepTau2018v2p5VSjet"});
+
+    // A branch that doesn't exist
+    // A valid branch but wrong type
+    // A valid expression that is logically wrong
+    // A valid expression that is syntactically complex
+    // we are parsing the expression
 
     Selector selector(Events);
 
@@ -82,14 +84,10 @@ int main()
         {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
         {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
     };
-    // One nTau histogram per cut, all in h_nTau_selection.root, so the
-    // effect of tightening the tau ID/pt selection on the nTau
-    // distribution can be seen directly (this is the hypothesis test).
+
     selector.plotOverlay("nTau", tauCuts, "h_nTau", 10, 0, 10, maxEvents, "h_nTau_selection.root");
 
-    // Second example from the mentor: GenPart_pt restricted to
-    // generator-level taus (|pdgId|==15) that are the hard-process
-    // final decay product (status==23).
+    // second example with GenPart_pt and GenPart_pdgId and GenPart_status that should be further considered
     reader.enableBranches({"GenPart_pt", "GenPart_pdgId", "GenPart_status"});
 
     std::vector<Cut> genTauCuts = {
