@@ -97,5 +97,25 @@ int main()
     };
     selector.plotOverlay("GenPart_pt", genTauCuts, "h_GenPart_pt", 50, 0, 200, maxEvents, "h_GenPart_pt_selection.root");
 
+    // Alternativly we can do this selection To be tested
+    // std::vector<Cut> tauCuts = {
+    //     {"noCut", ""},
+    //     {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
+    //     {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
+    //     {"highPt", "Tau_pt >= 50"},
+    //     {"centralTau", "abs(Tau_eta) < 2.3"},
+    //     {"highPtCentral", "Tau_pt >= 50 && abs(Tau_eta) < 2.3"},
+    // };
+
+    // selector.plotOverlay(
+    //     "Tau_pt",
+    //     tauCuts,
+    //     "h_Tau_pt",
+    //     50,
+    //     0,
+    //     200,
+    //     maxEvents,
+    //     "h_Tau_pt_selection.root");
+
     return 0;
 }
