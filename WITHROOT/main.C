@@ -28,12 +28,14 @@ int main()
     reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_idDeepTau2017v2p1VSjet"});
 
     // create an instance of printer that is for debugging purposes
+    // one if to be added for debugging
     ColumnPrinter printer(Events);
 
     const Long64_t maxEvents = Events->GetEntries(); // Use all events in the file.
     const Int_t tauArraySize = 32;                   // NanoAOD array capacity for Tau_* branches in this file.
 
     // print infor just for informative purposes
+    // if debug
     printer.printIntBranch("nTau", maxEvents, "nTau_column.txt");
 
     // printer.printCountedArrayBranches("nTau", {"Tau_pt"}, tauArraySize, maxEvents, "Tau_pt_column.txt");
@@ -58,10 +60,14 @@ int main()
 
     BranchPlotter plotter(Events);
 
+    // TODO all to go in one root file (pocket coffea to be checked)
     // the numbers 10, 0 , 10 or 50 ,0 , 200 in arguments are actually the bining . for example 50 bins from 0 to 200 meaning 4 GeV per bin for Tau_pt. 50 bins from -3 to 3 meaning 0.12 per bin for Tau_eta. 10 bins from 0 to 10 meaning 1 per bin for nTau.
     plotter.plotIntBranch("nTau", "h_nTau", 10, 0, 10, maxEvents, "h_nTau.root");
 
     // here we plot a pt for each tau in the datasample we look how much per events there are and we plot each one
+    // TODO all the parameters to be intiutive
+    // tauArraySize to be checked
+    // All limits to be default
     plotter.plotCountedArrayBranch("nTau", "Tau_pt", "h_Tau_pt", tauArraySize, 50, 0, 200, maxEvents, "h_Tau_pt.root");
 
     // the same for eta we plot a eta for each tau in the datasample we look how much per events there are and we plot each one
@@ -79,11 +85,15 @@ int main()
 
     Selector selector(Events);
 
+    // ths branch to be understood
     std::vector<Cut> tauCuts = {
         {"noCut", ""},
         {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
         {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
     };
+
+    // TODO with sin and arctang to be added more difficult formula
+    // to be added some function from outside
 
     selector.plotOverlay("nTau", tauCuts, "h_nTau", 10, 0, 10, maxEvents, "h_nTau_selection.root");
 
@@ -96,6 +106,8 @@ int main()
         {"genTauHardProcess", "abs(GenPart_pdgId)==15 && GenPart_status==23"},
     };
     selector.plotOverlay("GenPart_pt", genTauCuts, "h_GenPart_pt", 50, 0, 200, maxEvents, "h_GenPart_pt_selection.root");
+
+    // TODO to be double checked the entries are not correct
 
     // Alternativly we can do this selection To be tested
     // std::vector<Cut> tauCuts = {
