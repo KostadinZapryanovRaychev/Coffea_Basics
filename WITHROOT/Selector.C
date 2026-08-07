@@ -28,9 +28,13 @@ Selector::Selector(TTree *tree)
 // value per object per event) through the same GetNdata()/
 // EvalInstance() loop — no hardcoded array size needed.
 // ============================================================
+
+// varExpr: a string like "nTau" or "Tau_pt" or "Tau_pt*Tau_eta" or "sqrt(Tau_pt*Tau_pt + Tau_eta*Tau_eta)". what to remain
+// cutExpression: a string like "Tau_pt>20" or "nTau>0 && Tau_pt>20" or "abs(Tau_eta)<2.3". empty string means no cut, i.e. all events pass
+// maxEvents: maximum number of events to process. <=0 means "use every entry in the tree".
 std::vector<Double_t> Selector::select(const std::string &varExpr,
-                                        const std::string &cutExpression,
-                                        Long64_t maxEvents) const
+                                       const std::string &cutExpression,
+                                       Long64_t maxEvents) const
 {
     std::vector<Double_t> selected;
 
