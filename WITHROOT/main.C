@@ -12,6 +12,8 @@
 #include "BranchPlotter.h"
 #include "Selector.C"
 #include "Selector.h"
+#include "HistogramWriter.C"
+#include "HistogramWriter.h"
 
 int main()
 {
@@ -28,8 +30,9 @@ int main()
     TTree *Events = getEventsTree(config.inputFile);
     printEventTree(Events);
 
-    const Long64_t maxEvents = Events->GetEntries(); // Use all events in the file.
-    const Int_t tauArraySize = 32;                   // NanoAOD array capacity for Tau_* branches in this file.
+    // Use all events in the file.
+    const Long64_t maxEvents = Events->GetEntries();
+    const Int_t tauArraySize = 32; // NanoAOD array capacity for Tau_* branches in this file. TODO to be checked further why it is needed
 
     // ======================================================================
     // 1. BRANCH ENABLING
@@ -89,14 +92,30 @@ int main()
     // TODO with sin and arctang to be added more difficult formula
     // to be added some function from outside
 
-    selector.plotOverlay("nTau", tauCuts, "h_nTau", 10, 0, 10, maxEvents, "h_nTau_selection.root");
+    // One histogram per cut, all saved into the same file so they can
+    // be overlaid afterwards: selector.select() does the filtering,
+    // HistogramWriter::write() does the plotting — first cut
+    // (re)creates the file, the rest append (UPDATE) into it.
+    for (size_t i = 0; i < tauCuts.size(); ++i)
+    {
+        const Cut &cut = tauCuts[i];
+        std::vector<Double_t> values = selector.select("nTau", cut.expression, maxEvents);
+        HistogramWriter::write(values, "h_nTau_" + cut.name, 10, 0, 10,
+                                "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
+    }
 
     std::vector<Cut> genTauCuts = {
         {"allGenPart", ""},
         {"genTau", "abs(GenPart_pdgId)==15"},
         {"genTauHardProcess", "abs(GenPart_pdgId)==15 && GenPart_status==23"},
     };
-    selector.plotOverlay("GenPart_pt", genTauCuts, "h_GenPart_pt", 50, 0, 200, maxEvents, "h_GenPart_pt_selection.root");
+    for (size_t i = 0; i < genTauCuts.size(); ++i)
+    {
+        const Cut &cut = genTauCuts[i];
+        std::vector<Double_t> values = selector.select("GenPart_pt", cut.expression, maxEvents);
+        HistogramWriter::write(values, "h_GenPart_pt_" + cut.name, 50, 0, 200,
+                                "h_GenPart_pt_selection.root", i == 0 ? "RECREATE" : "UPDATE");
+    }
 
     // TODO to be double checked the entries are not correct
 
@@ -110,15 +129,12 @@ int main()
     //     {"highPtCentral", "Tau_pt >= 50 && abs(Tau_eta) < 2.3"},
     // };
 
-    // selector.plotOverlay(
-    //     "Tau_pt",
-    //     tauCuts,
-    //     "h_Tau_pt",
-    //     50,
-    //     0,
-    //     200,
-    //     maxEvents,
-    //     "h_Tau_pt_selection.root");
+    // for (size_t i = 0; i < tauCuts.size(); ++i) {
+    //     const Cut &cut = tauCuts[i];
+    //     std::vector<Double_t> values = selector.select("Tau_pt", cut.expression, maxEvents);
+    //     HistogramWriter::write(values, "h_Tau_pt_" + cut.name, 50, 0, 200,
+    //                             "h_Tau_pt_selection.root", i == 0 ? "RECREATE" : "UPDATE");
+    // }
 
     // TODO tau pog (physics object group) selection
     // TODO to read this https://twiki.cern.ch/twiki/bin/viewauth/CMS/Tau?extralog=-%20caching%20topic
