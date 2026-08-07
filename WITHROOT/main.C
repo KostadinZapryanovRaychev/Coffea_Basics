@@ -129,5 +129,13 @@ int main()
     //     maxEvents,
     //     "h_Tau_pt_selection.root");
 
+    // TODO tau pog (physics object group) selection
+    // in each event to
+    // TODO to read this https://twiki.cern.ch/twiki/bin/viewauth/CMS/Tau?extralog=-%20caching%20topic
+    // from reconstruted events to be applied this selection in new class
+    // TO skip all the events where one tau pass this selection ( one tau to do it) leave the events
+    // how much tau leptons can handle this selection
+    // in one root
+
     return 0;
 }
