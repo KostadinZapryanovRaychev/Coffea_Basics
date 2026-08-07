@@ -34,7 +34,7 @@ int main()
     const Long64_t maxEvents = Events->GetEntries(); // Use all events in the file.
     const Int_t tauArraySize = 32;                   // NanoAOD array capacity for Tau_* branches in this file.
 
-    // print infor just for informative purposes
+    // print info just for informative purposes
     // if debug
     printer.printIntBranch("nTau", maxEvents, "nTau_column.txt");
 
@@ -59,8 +59,6 @@ int main()
     // branch values it is told about — no hardcoded branch names,
 
     BranchPlotter plotter(Events);
-
-    // TODO all to go in one root file (pocket coffea to be checked)
     // the numbers 10, 0 , 10 or 50 ,0 , 200 in arguments are actually the bining . for example 50 bins from 0 to 200 meaning 4 GeV per bin for Tau_pt. 50 bins from -3 to 3 meaning 0.12 per bin for Tau_eta. 10 bins from 0 to 10 meaning 1 per bin for nTau.
     plotter.plotIntBranch("nTau", "h_nTau", 10, 0, 10, maxEvents, "h_nTau.root");
 
@@ -130,12 +128,11 @@ int main()
     //     "h_Tau_pt_selection.root");
 
     // TODO tau pog (physics object group) selection
-    // in each event to
     // TODO to read this https://twiki.cern.ch/twiki/bin/viewauth/CMS/Tau?extralog=-%20caching%20topic
-    // from reconstruted events to be applied this selection in new class
-    // TO skip all the events where one tau pass this selection ( one tau to do it) leave the events
-    // how much tau leptons can handle this selection
-    // in one root
+    // TODO from reconstruted events to be applied this selection in new class
+    // TODO skip all the events where one tau pass this selection ( one tau to do it) leave the events
+    // TODO to answer how much tau leptons can handle this selection
+    // TODO in one root file to be saved all the histograms
 
     return 0;
 }
