@@ -15,6 +15,12 @@
 
 int main()
 {
+    // Debug mode: enable by starting the session with, e.g.
+    //   DEBUG=1 root -l -q main.C
+    // When off, the printer calls below are skipped entirely.
+    const bool debug = (gSystem->Getenv("DEBUG") != nullptr) &&
+                        (TString(gSystem->Getenv("DEBUG")) == "1");
+
     // Load path from here
     Config config = loadConfig("config.json");
 
@@ -35,25 +41,25 @@ int main()
     const Int_t tauArraySize = 32;                   // NanoAOD array capacity for Tau_* branches in this file.
 
     // print info just for informative purposes
-    // if debug
-    printer.printIntBranch("nTau", maxEvents, "nTau_column.txt");
+    if (debug)
+    {
+        printer.printIntBranch("nTau", maxEvents, "nTau_column.txt");
 
-    // printer.printCountedArrayBranches("nTau", {"Tau_pt"}, tauArraySize, maxEvents, "Tau_pt_column.txt");
-    // printer.printCountedArrayBranches("nTau", {"Tau_eta"}, tauArraySize, maxEvents, "Tau_eta_column.txt");
-    // printer.printCountedArrayBranches("nTau", {"Tau_phi"}, tauArraySize, maxEvents, "Tau_phi_column.txt");
-    // printer.printCountedArrayBranches("nTau", {"Tau_mass"}, tauArraySize, maxEvents, "Tau_mass_column.txt");
+        printer.printCountedArrayBranches("nTau", {"Tau_pt"}, tauArraySize, maxEvents, "Tau_pt_column.txt");
+        printer.printCountedArrayBranches("nTau", {"Tau_eta"}, tauArraySize, maxEvents, "Tau_eta_column.txt");
+        printer.printCountedArrayBranches("nTau", {"Tau_phi"}, tauArraySize, maxEvents, "Tau_phi_column.txt");
+        printer.printCountedArrayBranches("nTau", {"Tau_mass"}, tauArraySize, maxEvents, "Tau_mass_column.txt");
 
-    // Tau_idDeepTau2017v2p1VSjet is stored as UChar_t, not Float_t, so
+        // Tau_idDeepTau2017v2p1VSjet is stored as UChar_t, not Float_t, so
+        printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2017v2p1VSjet",
+                                              tauArraySize, maxEvents,
+                                              "Tau_idDeepTau2017v2p1VSjet_column.txt");
 
-    // printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2017v2p1VSjet",
-    //                                      tauArraySize, maxEvents,
-    //                                      "Tau_idDeepTau2017v2p1VSjet_column.txt");
-
-    // Same branch again, but for the first 50 events, into its own file.
-
-    // printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2017v2p1VSjet",
-    //                                      tauArraySize, 50,
-    //                                      "Tau_idDeepTau2017v2p1VSjet_column_50.txt");
+        // Same branch again, but for the first 50 events, into its own file.
+        printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2017v2p1VSjet",
+                                              tauArraySize, 50,
+                                              "Tau_idDeepTau2017v2p1VSjet_column_50.txt");
+    }
 
     // BranchPlotter only knows how to fill and save histograms from
     // branch values it is told about — no hardcoded branch names,
