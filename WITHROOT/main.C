@@ -85,14 +85,12 @@ int main()
     // here we put 3 types of selections in a shape of key value pairs in a vector and further they will be used to select the events.
     // The first one is no cut, the second one is tightVSjet and the third one is tightVSjetAndPt20
     // very important notion here could be added as much as needed cuts just making this object tauCuts bigger adding more conditions like previous {}
+    // we can put expressions like that with more complicated logic {"example1", "sin(Tau_phi) > 0.5"}
     std::vector<Cut> tauCuts = {
         {"noCut", ""},
         {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
         {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
     };
-
-    // TODO with sin and arctang to be added more difficult formula
-    // to be added some function from outside
 
     // One histogram per cut, all saved into the same file so they can
     // be overlaid afterwards: selector.select() does the filtering,
