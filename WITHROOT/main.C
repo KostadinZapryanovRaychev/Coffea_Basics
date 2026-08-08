@@ -71,6 +71,9 @@ int main()
 
     // ======================================================================
     // 2. SELECTIONS
+    // Selector is a class that can filter events based on branch values, and return the values of a branch for the selected events.
+
+    // TODO: to bechecked the following situations
     // A branch that doesn't exist
     // A valid branch but wrong type
     // A valid expression that is logically wrong
@@ -79,7 +82,9 @@ int main()
     // ======================================================================
     Selector selector(Events);
 
-    // ths branch to be understood
+    // here we put 3 types of selections in a shape of key value pairs in a vector and further they will be used to select the events.
+    // The first one is no cut, the second one is tightVSjet and the third one is tightVSjetAndPt20
+    // very important notion here could be added as much as needed cuts just making this object tauCuts bigger adding more conditions like previous {}
     std::vector<Cut> tauCuts = {
         {"noCut", ""},
         {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
