@@ -41,10 +41,7 @@ int main()
     // ======================================================================
     BranchReader reader(Events);
     reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_idDeepTau2017v2p1VSjet",
-                           // prompt (Events->Draw("nTau", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20")),
-                           // Needs Tau_idDeepTau2018v2p5VSjet and Tau_pt re-enabled on the tree.
                            "Tau_idDeepTau2018v2p5VSjet",
-                           // second example with GenPart_pt and GenPart_pdgId and GenPart_status that should be further considered
                            "GenPart_pt", "GenPart_pdgId", "GenPart_status"});
 
     // create an instance of printer that is for debugging purposes
