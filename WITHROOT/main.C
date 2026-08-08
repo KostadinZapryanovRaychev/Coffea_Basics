@@ -101,7 +101,7 @@ int main()
         const Cut &cut = tauCuts[i];
         std::vector<Double_t> values = selector.select("nTau", cut.expression, maxEvents);
         HistogramWriter::write(values, "h_nTau_" + cut.name, 10, 0, 10,
-                                "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
+                               "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
     }
 
     std::vector<Cut> genTauCuts = {
@@ -114,7 +114,7 @@ int main()
         const Cut &cut = genTauCuts[i];
         std::vector<Double_t> values = selector.select("GenPart_pt", cut.expression, maxEvents);
         HistogramWriter::write(values, "h_GenPart_pt_" + cut.name, 50, 0, 200,
-                                "h_GenPart_pt_selection.root", i == 0 ? "RECREATE" : "UPDATE");
+                               "h_GenPart_pt_selection.root", i == 0 ? "RECREATE" : "UPDATE");
     }
 
     // TODO to be double checked the entries are not correct
