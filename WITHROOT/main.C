@@ -92,6 +92,15 @@ int main()
         {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
     };
 
+    std::vector<Cut> genTauCuts = {
+        {"allGenPart", ""},
+        {"genTau", "abs(GenPart_pdgId)==15"},
+        {"genTauHardProcess", "abs(GenPart_pdgId)==15 && GenPart_status==23"},
+    };
+
+    // ======================================================================
+    // 3. PLOTTING into a single root file per  std::vector<Cut> created
+
     // One histogram per cut, all saved into the same file so they can
     // be overlaid afterwards: selector.select() does the filtering,
     // HistogramWriter::write() does the plotting — first cut
@@ -104,11 +113,6 @@ int main()
                                "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
     }
 
-    std::vector<Cut> genTauCuts = {
-        {"allGenPart", ""},
-        {"genTau", "abs(GenPart_pdgId)==15"},
-        {"genTauHardProcess", "abs(GenPart_pdgId)==15 && GenPart_status==23"},
-    };
     for (size_t i = 0; i < genTauCuts.size(); ++i)
     {
         const Cut &cut = genTauCuts[i];
@@ -148,17 +152,17 @@ int main()
     // BranchPlotter only knows how to fill and save histograms from
     // branch values it is told about — no hardcoded branch names,
     // ======================================================================
-    BranchPlotter plotter(Events);
+    // BranchPlotter plotter(Events);
     // the numbers 10, 0 , 10 or 50 ,0 , 200 in arguments are actually the bining . for example 50 bins from 0 to 200 meaning 4 GeV per bin for Tau_pt. 50 bins from -3 to 3 meaning 0.12 per bin for Tau_eta. 10 bins from 0 to 10 meaning 1 per bin for nTau.
-    plotter.plotIntBranch("nTau", "h_nTau", 10, 0, 10, maxEvents, "h_nTau.root");
+    // plotter.plotIntBranch("nTau", "h_nTau", 10, 0, 10, maxEvents, "h_nTau.root");
 
     // here we plot a pt for each tau in the datasample we look how much per events there are and we plot each one
     // TODO all the parameters to be intiutive
     // tauArraySize to be checked
     // All limits to be default
-    plotter.plotCountedArrayBranch("nTau", "Tau_pt", "h_Tau_pt", tauArraySize, 50, 0, 200, maxEvents, "h_Tau_pt.root");
+    // plotter.plotCountedArrayBranch("nTau", "Tau_pt", "h_Tau_pt", tauArraySize, 50, 0, 200, maxEvents, "h_Tau_pt.root");
     // the same for eta we plot a eta for each tau in the datasample we look how much per events there are and we plot each one
-    plotter.plotCountedArrayBranch("nTau", "Tau_eta", "h_Tau_eta", tauArraySize, 50, -3, 3, maxEvents, "h_Tau_eta.root");
+    // plotter.plotCountedArrayBranch("nTau", "Tau_eta", "h_Tau_eta", tauArraySize, 50, -3, 3, maxEvents, "h_Tau_eta.root");
 
     return 0;
 }
