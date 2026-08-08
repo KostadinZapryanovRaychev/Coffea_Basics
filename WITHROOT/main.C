@@ -124,6 +124,12 @@ int main()
     // THIS WILL BE THE END SO FAR and MUCH STUFF WILL BE TESTED TILL THERE
 
     // TODO to be double checked the entries are not correct
+    // TODO tau pog (physics object group) selection
+    // TODO to read this https://twiki.cern.ch/twiki/bin/viewauth/CMS/Tau?extralog=-%20caching%20topic
+    // TODO from reconstruted events to be applied this selection in new class
+    // TODO skip all the events where one tau pass this selection ( one tau to do it) leave the events
+    // TODO to answer how much tau leptons can handle this selection
+    // TODO in one root file to be saved all the histograms
 
     // Alternativly we can do this selection To be tested
     // std::vector<Cut> tauCuts = {
@@ -141,30 +147,6 @@ int main()
     //     HistogramWriter::write(values, "h_Tau_pt_" + cut.name, 50, 0, 200,
     //                             "h_Tau_pt_selection.root", i == 0 ? "RECREATE" : "UPDATE");
     // }
-
-    // TODO tau pog (physics object group) selection
-    // TODO to read this https://twiki.cern.ch/twiki/bin/viewauth/CMS/Tau?extralog=-%20caching%20topic
-    // TODO from reconstruted events to be applied this selection in new class
-    // TODO skip all the events where one tau pass this selection ( one tau to do it) leave the events
-    // TODO to answer how much tau leptons can handle this selection
-    // TODO in one root file to be saved all the histograms
-
-    // ======================================================================
-    // 3. PLOTTING
-    // BranchPlotter only knows how to fill and save histograms from
-    // branch values it is told about — no hardcoded branch names,
-    // ======================================================================
-    // BranchPlotter plotter(Events);
-    // the numbers 10, 0 , 10 or 50 ,0 , 200 in arguments are actually the bining . for example 50 bins from 0 to 200 meaning 4 GeV per bin for Tau_pt. 50 bins from -3 to 3 meaning 0.12 per bin for Tau_eta. 10 bins from 0 to 10 meaning 1 per bin for nTau.
-    // plotter.plotIntBranch("nTau", "h_nTau", 10, 0, 10, maxEvents, "h_nTau.root");
-
-    // here we plot a pt for each tau in the datasample we look how much per events there are and we plot each one
-    // TODO all the parameters to be intiutive
-    // tauArraySize to be checked
-    // All limits to be default
-    // plotter.plotCountedArrayBranch("nTau", "Tau_pt", "h_Tau_pt", tauArraySize, 50, 0, 200, maxEvents, "h_Tau_pt.root");
-    // the same for eta we plot a eta for each tau in the datasample we look how much per events there are and we plot each one
-    // plotter.plotCountedArrayBranch("nTau", "Tau_eta", "h_Tau_eta", tauArraySize, 50, -3, 3, maxEvents, "h_Tau_eta.root");
 
     return 0;
 }
