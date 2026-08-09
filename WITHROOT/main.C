@@ -90,9 +90,6 @@ int main()
         {"noCut", ""},
         {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
         {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
-    };
-
-    std::vector<Cut> genTauCuts = {
         {"allGenPart", ""},
         {"genTau", "abs(GenPart_pdgId)==15"},
         {"genTauHardProcess", "abs(GenPart_pdgId)==15 && GenPart_status==23"},
@@ -111,14 +108,6 @@ int main()
         std::vector<Double_t> values = selector.select("nTau", cut.expression, maxEvents);
         HistogramWriter::write(values, "h_nTau_" + cut.name, 10, 0, 10,
                                "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
-    }
-
-    for (size_t i = 0; i < genTauCuts.size(); ++i)
-    {
-        const Cut &cut = genTauCuts[i];
-        std::vector<Double_t> values = selector.select("GenPart_pt", cut.expression, maxEvents);
-        HistogramWriter::write(values, "h_GenPart_pt_" + cut.name, 50, 0, 200,
-                               "h_GenPart_pt_selection.root", i == 0 ? "RECREATE" : "UPDATE");
     }
 
     // THIS WILL BE THE END SO FAR and MUCH STUFF WILL BE TESTED TILL THERE
