@@ -88,3 +88,56 @@ std::vector<Double_t> Selector::select(const std::string &varExpr,
 
     return selected;
 }
+
+// ============================================================
+// Same event loop as select(), but instead of collecting per-object
+// values it just asks "did at least one object in this event pass
+// the cut?" and records the event index (== entry number) if so.
+// An empty cutExpression means every event passes.
+// ============================================================
+std::vector<Long64_t> Selector::selectEventIndices(const std::string &cutExpression,
+                                                    Long64_t maxEvents) const
+{
+    std::vector<Long64_t> eventIndices;
+
+    if (!tree_)
+    {
+        std::cerr << "Error: Cannot select. TTree pointer is null."
+                  << std::endl;
+        return eventIndices;
+    }
+
+    TTreeFormula *cutFormula = nullptr;
+    if (!cutExpression.empty())
+    {
+        cutFormula = new TTreeFormula("cutFormula", cutExpression.c_str(), tree_);
+    }
+
+    Long64_t nEntries = tree_->GetEntries();
+    Long64_t limit = (maxEvents > 0) ? std::min(maxEvents, nEntries) : nEntries;
+
+    for (Long64_t i = 0; i < limit; ++i)
+    {
+        tree_->GetEntry(i);
+
+        if (!cutFormula)
+        {
+            eventIndices.push_back(i);
+            continue;
+        }
+
+        Int_t cutNData = cutFormula->GetNdata();
+        for (Int_t j = 0; j < cutNData; ++j)
+        {
+            if (cutFormula->EvalInstance(j) != 0)
+            {
+                eventIndices.push_back(i);
+                break;
+            }
+        }
+    }
+
+    delete cutFormula;
+
+    return eventIndices;
+}

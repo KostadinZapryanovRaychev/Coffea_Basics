@@ -1,3 +1,4 @@
+#include <fstream>
 #include "Config.C"
 #include "Config.h"
 #include "event.C"
@@ -100,12 +101,41 @@ int main()
     // be overlaid afterwards: selector.select() does the filtering,
     // HistogramWriter::write() does the plotting — first cut
     // (re)creates the file, the rest append (UPDATE) into it.
+    //
+    // Each histogram is "how many taus per event pass this cut", one
+    // entry per event (not per tau), so it's directly comparable to
+    // "noCut" and its entry count always equals maxEvents:
+    //   - noCut:   var = "nTau"                 -> raw tau multiplicity
+    //   - a cut:   var = "Sum$(cutExpression)"   -> passing-tau count per event
+    // Sum$ is a TTreeFormula/TTree::Draw builtin that sums a per-object
+    // boolean expression over all objects in the event, collapsing it
+    // to a single scalar per event, exactly the "how many taus pass"
+    // question we want here. We pass "" as the cut to select() itself
+    // so every event contributes one entry (including the "0 taus
+    // passed" events), giving the full per-event distribution.
     for (size_t i = 0; i < tauCuts.size(); ++i)
     {
         const Cut &cut = tauCuts[i];
-        std::vector<Double_t> values = selector.select("nTau", cut.expression, maxEvents);
+        std::string varExpr = cut.expression.empty() ? "nTau" : "Sum$(" + cut.expression + ")";
+        std::vector<Double_t> values = selector.select(varExpr, "", maxEvents);
         HistogramWriter::write(values, "h_nTau_" + cut.name, 10, 0, 10,
                                "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
+
+        // Event-level view: how many *events* (not taus) have at least
+        // one tau passing this cut, and which ones (their entry index
+        // in Events, i.e. the event id since we read in order).
+        if (!cut.expression.empty())
+        {
+            std::vector<Long64_t> eventIndices = selector.selectEventIndices(cut.expression, maxEvents);
+            std::cout << "Cut '" << cut.name << "': " << eventIndices.size()
+                      << " / " << maxEvents << " events have >=1 tau passing." << std::endl;
+
+            std::ofstream idFile("event_ids_" + cut.name + ".txt");
+            for (Long64_t evId : eventIndices)
+            {
+                idFile << evId << "\n";
+            }
+        }
     }
 
     // THIS WILL BE THE END SO FAR and MUCH STUFF WILL BE TESTED TILL THERE

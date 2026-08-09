@@ -41,6 +41,14 @@ public:
                                   const std::string &cutExpression,
                                   Long64_t maxEvents) const;
 
+    // Event-level version: returns the tree entry index (== event id,
+    // since Events is read in order) of every event that has at least
+    // one object satisfying cutExpression. Unlike select(), this
+    // counts events, not objects, so an event with 2 taus passing the
+    // cut still contributes a single index.
+    std::vector<Long64_t> selectEventIndices(const std::string &cutExpression,
+                                              Long64_t maxEvents) const;
+
 private:
     TTree *tree_;
 };
