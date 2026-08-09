@@ -96,3 +96,23 @@ for local usage
 {
 "inputFile": "../nanoaodsim_coffea_1.root"
 }
+
+--- The main hadronic tau decays
+
+τ⁻ → π⁻ ντ
+
+τ⁻ → K⁻ ντ
+
+τ⁻ → π⁻ π⁰ ντ
+
+τ⁻ → K⁻ π⁰ ντ
+
+τ⁻ → π⁻ π⁰ π⁰ ντ
+
+τ⁻ → K⁻ π⁰ π⁰ ντ
+
+τ⁻ → π⁻ π⁺ π⁻ ντ
+
+τ⁻ → K⁻ π⁺ π⁻ ντ
+
+---
