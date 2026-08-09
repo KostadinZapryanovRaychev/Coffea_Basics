@@ -90,9 +90,6 @@ int main()
         {"noCut", ""},
         {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
         {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
-        {"allGenPart", ""},
-        {"genTau", "abs(GenPart_pdgId)==15"},
-        {"genTauHardProcess", "abs(GenPart_pdgId)==15 && GenPart_status==23"},
     };
 
     // ======================================================================
