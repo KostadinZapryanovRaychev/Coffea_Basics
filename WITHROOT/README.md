@@ -86,7 +86,13 @@ HistogramWriter
 ↓
 ROOT histograms
 
-root h_nTau.root
-TFile \*f = TFile::Open("h_nTau.root");
-f->ls();
+root h_nTau_selection.root
+TFile \*f = TFile::Open("h_nTau_selection.root");
+f->ls()
 new TBrowser();
+
+for local usage
+
+{
+"inputFile": "../nanoaodsim_coffea_1.root"
+}
