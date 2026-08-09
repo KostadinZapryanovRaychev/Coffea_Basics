@@ -92,6 +92,7 @@ int main()
     std::vector<Cut> tauCuts = {
         {"noCut", ""},
         {"recoTauSelection", "Tau_pt > 20 && abs(Tau_eta) < 2.5 && abs(Tau_dz) < 0.2"},
+        {"recoTauSelectionPt80to150", "Tau_pt > 80 && Tau_pt < 150 && abs(Tau_eta) < 2.5 && abs(Tau_dz) < 0.2"},
     };
 
     // ======================================================================
