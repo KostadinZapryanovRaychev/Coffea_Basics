@@ -121,6 +121,21 @@ int main()
         HistogramWriter::write(values, "h_nTau_" + cut.name, 10, 0, 10,
                                "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
 
+        // Kinematics of the individual taus that survive this cut (one
+        // entry per passing tau, not per event), so we can actually
+        // look at their pt/pz distributions instead of just counting
+        // them. Same file, appended (UPDATE) so it never re-creates.
+        // pz isn't a NanoAOD branch; it's derived from pt and eta via
+        // pz = pt * sinh(eta), same as any 4-vector's longitudinal
+        // momentum component.
+        std::vector<Double_t> tauPt = selector.select("Tau_pt", cut.expression, maxEvents);
+        HistogramWriter::write(tauPt, "h_Tau_pt_" + cut.name, 50, 0, 200,
+                               "h_nTau_selection.root", "UPDATE");
+
+        std::vector<Double_t> tauPz = selector.select("Tau_pt*sinh(Tau_eta)", cut.expression, maxEvents);
+        HistogramWriter::write(tauPz, "h_Tau_pz_" + cut.name, 50, -500, 500,
+                               "h_nTau_selection.root", "UPDATE");
+
         // Event-level view: how many *events* (not taus) have at least
         // one tau passing this cut, and which ones (their entry index
         // in Events, i.e. the event id since we read in order).
