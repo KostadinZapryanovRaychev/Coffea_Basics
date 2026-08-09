@@ -40,7 +40,7 @@ int main()
     // For optimization purposes in order to run faster
     // ======================================================================
     BranchReader reader(Events);
-    reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_idDeepTau2017v2p1VSjet",
+    reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_dz", "Tau_idDeepTau2017v2p1VSjet",
                            "Tau_idDeepTau2018v2p5VSjet",
                            "GenPart_pt", "GenPart_pdgId", "GenPart_status"});
 
@@ -86,10 +86,11 @@ int main()
     // The first one is no cut, the second one is tightVSjet and the third one is tightVSjetAndPt20
     // very important notion here could be added as much as needed cuts just making this object tauCuts bigger adding more conditions like previous {}
     // we can put expressions like that with more complicated logic {"example1", "sin(Tau_phi) > 0.5"}
+    // README selection for reconstructed taus:
+    // "Use reconstructed taus with pT > 20 GeV, |eta| < 2.5, |dz| < 0.2."
     std::vector<Cut> tauCuts = {
         {"noCut", ""},
-        {"tightVSjet", "Tau_idDeepTau2018v2p5VSjet >= 3"},
-        {"tightVSjetAndPt20", "Tau_idDeepTau2018v2p5VSjet >= 3 && Tau_pt >= 20"},
+        {"recoTauSelection", "Tau_pt > 20 && abs(Tau_eta) < 2.5 && abs(Tau_dz) < 0.2"},
     };
 
     // ======================================================================
