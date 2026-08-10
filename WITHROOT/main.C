@@ -31,6 +31,9 @@ int main()
     TTree *Events = getEventsTree(config.inputFile);
     printEventTree(Events);
 
+    // Dump every branch name on the Events tree to a txt file for exploration.
+    listBranchNames(Events, "outputs/branch_names.txt");
+
     // Use all events in the file.
     const Long64_t maxEvents = Events->GetEntries();
     const Int_t tauArraySize = 32; // NanoAOD array capacity for Tau_* branches in this file. TODO to be checked further why it is needed

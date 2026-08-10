@@ -213,3 +213,33 @@ void inspectTauKinematics(TTree *tree, Long64_t maxEvents)
     // 7. Reset branch status back to default
     tree->SetBranchStatus("*", 1);
 }
+
+// Writes the name of every branch on the tree to a txt file, one per line,
+// so they can be browsed/grepped without opening ROOT.
+void listBranchNames(TTree *tree, const std::string &outputPath)
+{
+    if (!tree)
+    {
+        std::cerr << "Error: Null TTree pointer provided." << std::endl;
+        return;
+    }
+
+    createOutputsFolder();
+    std::ofstream outFile(outputPath);
+    if (!outFile.is_open())
+    {
+        std::cerr << "Error: Could not open " << outputPath << " for writing!" << std::endl;
+        return;
+    }
+
+    TObjArray *branches = tree->GetListOfBranches();
+    for (int i = 0; i < branches->GetEntries(); ++i)
+    {
+        TBranch *branch = static_cast<TBranch *>(branches->At(i));
+        outFile << branch->GetName() << "\n";
+    }
+
+    outFile.close();
+    std::cout << "Successfully written " << branches->GetEntries()
+               << " branch names to: " << outputPath << std::endl;
+}
