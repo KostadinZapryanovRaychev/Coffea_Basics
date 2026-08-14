@@ -184,5 +184,16 @@ int main()
     //                             "h_Tau_pt_selection.root", i == 0 ? "RECREATE" : "UPDATE");
     // }
 
+    // pog reccomendation
+    // analysis note !!! shared
+    // all tau collection is from reco part
+    // twiki page ( working points what other use)
+    // what is reconstructed tau lepton as an object
+    // space to be created many dimensions
+    // https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun3#Kinematic_tau_selection
+    // https://cms-alcm.web.cern.ch/notes/CMS-AN-2020-134/AN2020_134_v17.pdf - page - 27
+    // tau lepton channel to read
+    // too tau leptons to tau pog selection and difference between their phi and so on
+
     return 0;
 }
