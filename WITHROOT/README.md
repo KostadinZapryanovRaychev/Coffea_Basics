@@ -120,3 +120,55 @@ for local usage
 τ⁻ → K⁻ π⁺ π⁻ ντ
 
 ---
+
+---- The main leptonic channels
+
+τ− → e−νˉe​ντ​
+τ− → μ−νˉμ​ντ​
+
+---- The main semi leptonic channels
+
+τ− →e−νˉe​ντ
+
+τ− →μ−νˉμ​ντ​​
+
+---
+
+so we look for this channel the following channels
+
+Z′ → τ+τ −→ (μ− (νˉμ) ​(ντ)​) (π+(ντ)​)
+
+Z′ → τ+τ −→ (μ−νˉμ​ντ​) (K+ντ​)
+
+Q Electric charge
+B Baryon number
+L Lepton number
+
+Color charge (in strong interactions)
+
+energy
+momentum
+
+The magnetic moment (\(\vec{\mu }\)) of a point-like Dirac particle is defined as
+
+\_\_
+mu = g( q/2m ) S
+
+g- gyromagnetic momment
+m - mass of particle
+q - electric charge
+s - sping ( for fermions 1/2)
+
+magnetic moment of tau = -5.34 times 10^{-27} J/T.
+
+electric dipole moment
+dτ =1.5×10−17e cm. or e+ <---> e- this distance equals to 1.5 X 10 of power of -17 distance
+
+Imaginary electric dipole moment it has again very small
+
+τWEAK DIPOLE MOMENT (dwτ)τWEAK DIPOLE MOMENT (dwτ)τWEAK DIPOLE MOMEN ----- HADJIISKA TO EXPLAIN ME THIS !!!!
+
+https://pdg.lbl.gov/2026/listings/contents_listings.html from here decays
+Γ1 particle−≥0 neutrals≥0K0ντ(“1-prong”)(85.24±0.06 ) %
+Γ2 particle−≥0 neutrals≥0K0Lντ(84.58±0.06 ) %
+Γ3 μ− [a]νμ ντ (17.37±0.04 ) %
