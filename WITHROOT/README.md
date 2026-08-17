@@ -79,6 +79,8 @@ GenPart_status
 GenPart_statusFlags
 GenPart_genPartIdxMother
 
+masseless quark model ???
+
 Workflow
 NanoAOD
 ↓
@@ -136,7 +138,7 @@ for local usage
 
 so we look for this channel the following channels
 
-Z′ → τ+τ −→ (μ− (νˉμ) ​(ντ)​) (π+(ντ)​)
+Z′ → τ+τ −→ (μ− (antiνμ) ​(ντ)​) (π+( anti ντ)​) checked
 
 Z′ → τ+τ −→ (μ−νˉμ​ντ​) (K+ντ​)
 
@@ -172,3 +174,43 @@ https://pdg.lbl.gov/2026/listings/contents_listings.html from here decays
 Γ1 particle−≥0 neutrals≥0K0ντ(“1-prong”)(85.24±0.06 ) %
 Γ2 particle−≥0 neutrals≥0K0Lντ(84.58±0.06 ) %
 Γ3 μ− [a]νμ ντ (17.37±0.04 ) %
+
+for electron channel from the manuel
+
+Cut Barrel EndCap
+H/E < 0.060 0.065
+σiηiη < 0.011 0.031
+|∆ηin| < 0.004 N/A
+|∆φin| < 0.020 N/A
+|1/E − 1/p| 0.013 0.013
+ECAL PF Cluster Isolation < 0.160 0.120
+HCAL PF Cluster Isolation < 0.120 0.120
+Tracker Isolation < 0.08 0.08
+
+Ht should be also examinated
+
+The search is motivated by
+B Meson anomalies
+
+𝐵 → 𝐾+ 𝜈 𝜈¯
+
+Flavour universality states that each flavour (or generation of leptons ), is equally likely to interact with a W boson.
+
+The new ATLAS result is based on a study of its full dataset from the second run of the LHC, collected between 2015 and 2018. The analysis looked at over 100 million top-quark-pair collision events. The top quark decays promptly into a W boson and a bottom quark, so this sample provides 100 million pairs of W bosons. By counting the number of these events with two electrons (and no muon) or two muons (and no electron), physicists can test whether the W boson decays more often into an electron or a muon.
+
+Z→e+e− Г=83.4093 MeV
+Z→μ+μ− Г=83.4087 Me
+Z→τ+τ− Г=83.2205 MeV
+
+Z→e+e−,
+Z→μ+μ−,
+Z→τ+τ−,
+Z→ννˉ,
+Z→q+qˉ,
+
+Γe​,Γμ​,Γτ​,Γν​,Γq​,…
+
+ΓZ ​≃2.5 GeV = 2500 МеV
+ГZtau/tau = 83 MeV
+
+those are on tree level ( meaning from Quantum field theory we cound only first order processes without loop)
