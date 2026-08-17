@@ -214,3 +214,149 @@ Z→q+qˉ,
 ГZtau/tau = 83 MeV
 
 those are on tree level ( meaning from Quantum field theory we cound only first order processes without loop)
+
+One of the decayse of B mesons are to D meson and tau and tau neutrino
+
+B→Dτντ​
+
+B→Deνe​
+
+B→Dμνμ​​
+
+We expecte each of this to be euqally distributted the
+
+R(D)=Γ(B→Dτντ)/Γ(B→Dℓνℓ) we expect this for instance to be close to some number
+
+SM predictions is due to LFU R(D)SM​≈0.294
+
+but experimmentally we observe a value
+
+R(D)exp ≈ 0.347
+​
+
+| Quantity                   | What it compares/measures                       |                  SM |         Experiment |
+| -------------------------- | ----------------------------------------------- | ------------------: | -----------------: |
+| (R(D))                     | (B\to D\tau\nu) vs (B\to D\ell\nu)              |     (0.299\pm0.004) |    (0.342\pm0.026) |
+| (R(D^\*))                  | (B\to D^_\tau\nu) vs (B\to D^_\ell\nu)          |     (0.257\pm0.005) |    (0.287\pm0.012) |
+| (R(J/\psi))                | (B_c\to J/\psi\tau\nu) vs (B_c\to J/\psi\mu\nu) |     (0.258\pm0.004) |      (0.52\pm0.20) |
+| (BR(B^+\to K^+\nu\bar\nu)) | Fraction of (B^+) decays into (K^+\nu\bar\nu)   | (4.29\times10^{-6}) | (2.3\times10^{-5}) |
+
+the B meson anomalies
+
+predicts
+
+R(D),R(D
+∗
+),R(J/ψ),BR(B→Kν
+ν
+ˉ
+)
+
+↓
+
+experiments measure them
+
+↓
+
+some measurements have shown deviations
+
+↓
+
+physicists ask whether
+
+SM+new interaction
+​
+
+fits everything better.
+
+Candidate new interactions include:
+
+Z
+′
+​
+
+W
+′
+​
+
+leptoquark
+​
+
+new scalars
+​
+
+Table 20: Electron ID Selections.
+Cut Barrel EndCap
+H/E < 0.060 0.065
+σiηiη < 0.011 0.031
+|∆ηin| < 0.004 N/A
+|∆φin| < 0.020 N/A
+|1/E − 1/p| 0.013 0.013
+ECAL PF Cluster Isolation < 0.160 0.120
+HCAL PF Cluster Isolation < 0.120 0.120
+Tracker Isolation < 0.08 0.08
+
+https://twiki.cern.ch/twiki/bin/viewauth/CMS/SWGuideMuonIdRun2
+
+Table 21: µ Identification
+Cut
+recoMu.isGlobalMuon()
+muon::isPFMuon()
+recoMu.globalTrack()-> normalizedChi2()< 10
+recoMu.globalTrack()-> hitPattern().numberOfValidMuonHits()> 0
+recoMu.numberOfMatchedStations()> 1
+fabs(recoMu.muonBestTrack()-> dxy(vertex-> position()))< 0.2
+fabs(recoMu.muonBestTrack()-> dz(vertex-> position()))< 0.5
+recoMu.innerTrack()-> hitPattern().numberOfValidPixelHits()> 0
+recoMu.innerTrack()-> hitPattern().trackerLayersWithMeasurement()> 5
+
+Table 22: Reconstructed Tau Decay Modes
+HPS Tau Decay Modes
+Single Charged Hadron + Zero Strip
+Single Charged Hadron + One Strip
+Single Charged Hadron + Two Strips
+Two Charged Hadrons
+Three Hadrons
+
+Table 23: τh
+ID criteria.
+TauIDAlgorithm TauIdDeepTau2017v2p1
+Isolation Tight
+Prongs 1 or 3 hp
+|η(τh
+)| < 2.1
+Discriminator against µ Tight (for all channels)
+Discriminator against e loose (τhτh
+), Medium (eτh and µτh
+)
+
+the following: ∆pT
+(τ`/h
+, τh
+490 ),
+cos[∆φ(τ`/h
+, τh
+)], mreco(τ`/h
+, τh
+), and cos{∆φ[pT
+(τh
+), E
+miss
+T
+491 ]}.
+
+N
+signal
+​
+
+=N
+observed
+​
+
+−N
+background
+​
+
+    ​
+
+So if you don't know the QCD background accurately, you can't reliably determine whether you have a signal.
