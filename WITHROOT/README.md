@@ -8,6 +8,10 @@ how to do analysis
 
 https://codimd.web.cern.ch/PMpenr-wQXGb49NavQSu1w?view
 
+Article
+
+https://journals.aps.org/prd/abstract/10.1103/PhysRevD.111.112004
+
 Each column is called a branch ?
 
 Event Tau_pt Tau_eta Muon_pt Jet_pt HLT_IsoMu24
@@ -360,3 +364,56 @@ background
     ​
 
 So if you don't know the QCD background accurately, you can't reliably determine whether you have a signal.
+
+Muons are measured in the pseudorapidity range |𝜂| <2.4,
+To suppress muons from hadron decays and other nonprompt sources, an additional requirement is imposed on the relative isolation, defined as the ratio of the energy from neutral and charged PF candidates in a cone of Δ⁢𝑅≡√(Δ⁢𝜂)2+(Δ⁢𝜙)2<0.4
+Electrons are reconstructed using energy deposits in the ECAL detector that have a matching track in (𝜂,𝜙) space in the silicon tracking system, within |𝜂| <2.4. Electron candidates that fall in the transition region between the barrel and the end cap of the CMS detector, located at 1.44 <|𝜂| <1.57,
+To identify electrons, we use the high-energy electron pairs (HEEP) ID for the selection of signal events;
+Events are required to have one 𝜏h candidate accompanied by a 𝜇, 𝑒, or second 𝜏h candidate of opposite-sign (OS) charge, all within |𝜂| <2.1. To avoid possible overlaps among the three channels, we reject events containing additional lepton candidates of any flavor beyond the selected OS lepton candidate pair. Specifically, the additional lepton can be a 𝜇 or 𝑒 candidate with 𝑝T>10  GeV and |𝜂| <2.1
+𝑍′ bosons through quark-antiquark annihilation, events from vector boson fusion are suppressed by vetoing events with a pair of jets 𝑗1,2, each of which passes 𝑝T >30  GeV and |𝜂| <4.7, with a pseudorapidity separation |Δ⁢𝜂⁡(𝑗1,𝑗2)|>4.2 and an invariant mass above 500 GeV.
+
+A. The 𝜏𝜇⁢𝜏h SR
+The 𝜏𝜇⁢𝜏h events are required to satisfy the single-muon trigger, whose efficiency exceeds 90% over the full 𝜂 range for the selected muon candidates with 𝑝T>35  GeV. Muons are also required to be well isolated and to pass the tight ID criteria defined in Ref. [38]. The 𝜏h candidate is required to satisfy 𝑝T >20  GeV. The two candidates are required to be well separated in (𝜂,𝜙) space by the criterion Δ⁢𝑅≡√(Δ⁢𝜙⁡(𝜏𝜇,𝜏h))2+(Δ⁢𝜂⁡(𝜏𝜇,𝜏h))2>0.3. We reject events containing 𝑏 jet candidates with 𝑝T>30  GeV and |𝜂| <2.4. Events from DY, 𝑊 +jets, and QCD multijet production are significantly suppressed by requiring the 𝜏𝜇 and 𝜏h candidates to have a large azimuthal separation given by cos⁡Δ⁢𝜙⁡(𝜏𝜇,𝜏h)<−0.98. In addition, we require that
+→
+𝑝
+miss
+T lie in the direction opposite that of the 𝜏h or of the 𝜏𝜇 candidate with the highest 𝑝T (leading lepton, ℓl), by requiring cos⁡Δ⁢𝜙⁡(𝑝miss
+T,ℓl)<−0.95. This requirement further reduces the contribution of 𝑊 +jets and QCD multijet events. The transverse mass of the leading lepton and
+→
+𝑝
+miss
+T, 𝑚T⁡(𝑝miss
+T,ℓl)=√𝑝miss
+T⁡𝑝T⁡(ℓl)⁢(1−cos⁡(Δ⁢𝜙⁡(𝑝miss
+T,ℓl))), is required to be greater than 150 GeV for further suppression of 𝑊 +jets events.
+
+B. The 𝜏𝑒⁢𝜏h SR
+Similar selection criteria are applied to the 𝜏𝑒⁢𝜏h channel, with the following differences. We require these events to satisfy a single-electron trigger that has an efficiency above 90% for electrons after the requirement 𝑝T >35⁢(55)  GeV for data collected in 2016 (2017–2018).
+
+C. The 𝜏h⁢𝜏h SR
+For the 𝜏h⁢𝜏h channel we select events that satisfy a dedicated trigger [29] with at least two 𝜏h candidates. We require each 𝜏h candidate to have 𝑝T>70  GeV, ensuring a trigger efficiency of at least 90%. The two 𝜏h candidates must be separated by Δ⁢𝑅 >0.3. Events with any 𝑏 jet candidate having 𝑝T>30  GeV and |𝜂| <2.4 are removed, to suppress top quark backgrounds. To reduce the contribution of DY events, the reconstructed mass of the 𝜏h pair is required to exceed 100 GeV. To discriminate against 𝑊 +jets and QCD multijet events, we require the two 𝜏h candidates to have a large azimuthal separation, cos⁡Δ⁢𝜙⁡(𝜏1
+h,𝜏2
+h)<−0.95, while the
+→
+𝑝
+miss
+T and the leading- 𝑝T 𝜏h candidate 𝜏l
+h are required to satisfy |cos⁡Δ⁢𝜙⁡(𝑝miss
+T,𝜏l
+h)|>0.9. Further suppression of the contribution of QCD multijet events is achieved with a requirement 𝑝miss
+T>30  GeV.
+
+how much tau leptons in one event
+distrubution it Pt
+how much are hadronic decayed
+how much are leptonic decayed
+how much are muonic channel
+how much electronic channel
+
+in each event
+
+one prong two prong to know more
+
+stacked plots root or overlayed
+
+LHC Run 3: DeepTau, PNet, and UParT the Algo used for rectostruntict tao leptons
