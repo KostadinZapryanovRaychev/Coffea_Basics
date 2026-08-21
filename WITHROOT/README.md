@@ -16,6 +16,10 @@ Meaning of columns
 
 https://cms-xpog.docs.cern.ch/autoDoc/NanoAODv12/2022/2023/doc_DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8_Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2.html
 
+interesting to be checked
+
+https://github.com/cms-tau-pog/TauIDSFs/blob/master/docs/TESunc.png
+
 root h_nTau_selection.root
 TFile \*f = TFile::Open("h_nTau_selection.root");
 f->ls()
