@@ -15,6 +15,8 @@
 #include "Selector.h"
 #include "HistogramWriter.C"
 #include "HistogramWriter.h"
+#include "HistogramOverlay.C"
+#include "HistogramOverlay.h"
 
 int main()
 {
@@ -242,6 +244,41 @@ int main()
             }
         }
     }
+
+    // ======================================================================
+    // 4. OVERLAY: put the pt distributions from each channel's cut on top
+    // of "noCut" of the same channel, and separately compare the three
+    // channels' selected-tau pt spectra against each other, so differences
+    // are visible in one picture instead of three separate histograms.
+    // Canvases are written back into h_nTau_selection.root (same file as
+    // the histograms), not saved out as PNGs -- open it in a TBrowser or
+    // f->Get("c_pt_overlay_hadronic") etc. to view them.
+    // ======================================================================
+    HistogramOverlay::overlay("h_nTau_selection.root",
+                              {"h_Tau_pt_noCut", "h_Tau_pt_tauDecayedHadronically"},
+                              {"No cut", "tau decayed hadronically"},
+                              "Tau p_{T}: no cut vs hadronic selection",
+                              "c_pt_overlay_hadronic");
+
+    HistogramOverlay::overlay("h_nTau_selection.root",
+                              {"h_Muon_pt_noCut", "h_Muon_pt_tauDecayedMuonically"},
+                              {"No cut", "tau decayed muonically"},
+                              "Muon p_{T}: no cut vs muonic selection",
+                              "c_pt_overlay_muonic");
+
+    HistogramOverlay::overlay("h_nTau_selection.root",
+                              {"h_Electron_pt_noCut", "h_Electron_pt_tauDecayedElectronically"},
+                              {"No cut", "tau decayed electronically"},
+                              "Electron p_{T}: no cut vs electronic selection",
+                              "c_pt_overlay_electronic");
+
+    // Cross-channel comparison: the selected-tau pt spectra side by side.
+    HistogramOverlay::overlay("h_nTau_selection.root",
+                              {"h_Tau_pt_tauDecayedHadronically", "h_Muon_pt_tauDecayedMuonically",
+                               "h_Electron_pt_tauDecayedElectronically"},
+                              {"Hadronic (tau_h)", "Muonic (tau->mu)", "Electronic (tau->e)"},
+                              "Selected tau pT by decay channel",
+                              "c_pt_overlay_by_channel");
 
     // THIS WILL BE THE END SO FAR and MUCH STUFF WILL BE TESTED TILL THERE
 
