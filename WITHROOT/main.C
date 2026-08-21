@@ -46,7 +46,8 @@ int main()
     // For optimization purposes in order to run faster
     // ======================================================================
     BranchReader reader(Events);
-    reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_dz", "Tau_idDeepTau2017v2p1VSjet",
+    reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_dz", "Tau_decayMode",
+                           "Tau_idDeepTau2017v2p1VSjet",
                            "Tau_idDeepTau2018v2p5VSjet", "Tau_idDeepTau2018v2p5VSmu", "Tau_idDeepTau2018v2p5VSe",
                            "nElectron", "Electron_pt", "Electron_eta", "Electron_cutBased",
                            "nMuon", "Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all",
@@ -116,15 +117,27 @@ int main()
     //   VSmu:  1=VLoose, 2=Loose, 3=Medium, 4=Tight
     //   VSe:   1=VVVLoose .. 5=Medium .. 8=VVTight
 
-    // 1) tau decayed hadronically (tau_h), Sec. 6.3 tau_h tau_h SR:
-    // pT > 70 GeV (trigger turn-on), |eta| < 2.1, DeepTau tight-vs-jet,
-    // tight-vs-muon, medium-vs-electron.
+    // 1) tau decayed hadronically (tau_h), Sec. 6.3 tau_h tau_h SR and
+    // Table 56/57 of the analysis note (arXiv:2412.04357 and the CMS AN
+    // behind it): pT > 70 GeV (trigger turn-on), |eta| < 2.1, DeepTau
+    // tight-vs-jet, tight-vs-muon, medium-vs-electron, PLUS a decay-mode
+    // (prong) filter that Table 56 lists explicitly ("Prongs: 1 or 3 hp")
+    // and that the ID/kinematic cuts alone don't cover: HPS occasionally
+    // emits a 2-prong candidate, which is almost always a reconstruction
+    // failure (a genuine 3-prong decay that lost/merged a track) rather
+    // than a real hadronic tau decay mode, since the physical hadronic
+    // decays are only 1-prong (pi/K +- up to 2 pi0) or 3-prong (3 pi/K
+    // +- optional pi0) -- see WITHROOT/README.md's list of hadronic decay
+    // channels. NanoAOD Tau_decayMode encoding: 0 = 1-prong, 1 = 1-prong
+    // + pi0, 2 = 1-prong + 2pi0, 10 = 3-prong, 11 = 3-prong + pi0.
     std::vector<Cut> hadronicTauCuts = {
         {"noCut", ""},
         {"tauDecayedHadronically", "Tau_pt > 70 && abs(Tau_eta) < 2.1 && abs(Tau_dz) < 0.2 "
                                    "&& Tau_idDeepTau2018v2p5VSjet >= 6 "
                                    "&& Tau_idDeepTau2018v2p5VSmu >= 4 "
-                                   "&& Tau_idDeepTau2018v2p5VSe >= 5"},
+                                   "&& Tau_idDeepTau2018v2p5VSe >= 5 "
+                                   "&& (Tau_decayMode == 0 || Tau_decayMode == 1 || Tau_decayMode == 2 "
+                                   "|| Tau_decayMode == 10 || Tau_decayMode == 11)"},
     };
 
     // 2) tau decayed muonically (tau -> mu nu nu), Sec. 6.1 tau_mu leg:
