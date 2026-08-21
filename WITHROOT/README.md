@@ -12,6 +12,15 @@ Article
 
 https://journals.aps.org/prd/abstract/10.1103/PhysRevD.111.112004
 
+Meaning of columns
+
+https://cms-xpog.docs.cern.ch/autoDoc/NanoAODv12/2022/2023/doc_DYJetsToLL_M-50_TuneCP5_13p6TeV-madgraphMLM-pythia8_Run3Summer22NanoAODv12-130X_mcRun3_2022_realistic_v5-v2.html
+
+root h_nTau_selection.root
+TFile \*f = TFile::Open("h_nTau_selection.root");
+f->ls()
+new TBrowser();
+
 Each column is called a branch ?
 
 Event Tau_pt Tau_eta Muon_pt Jet_pt HLT_IsoMu24
@@ -95,11 +104,6 @@ Selector
 HistogramWriter
 ↓
 ROOT histograms
-
-root h_nTau_selection.root
-TFile \*f = TFile::Open("h_nTau_selection.root");
-f->ls()
-new TBrowser();
 
 for local usage
 
@@ -417,3 +421,82 @@ one prong two prong to know more
 stacked plots root or overlayed
 
 LHC Run 3: DeepTau, PNet, and UParT the Algo used for rectostruntict tao leptons
+
+## Hadronically decayed tau selection
+
+Used in `main.C` as `hadronicTauCuts["tauDecayedHadronically"]`.
+
+| Variable      | Requirement         |
+| ------------- | ------------------- |
+| pT(τ)         | > 70 GeV            |
+| \|η(τ)\|      | < 2.1               |
+| \|dz(τ)\|     | < 0.2 cm            |
+| DeepTau VSjet | ≥ 6 (Tight)         |
+| DeepTau VSmu  | ≥ 4 (Tight)         |
+| DeepTau VSe   | ≥ 5 (Medium)        |
+| decayMode     | ∈ {0, 1, 2, 10, 11} |
+
+### Why each cut is there
+
+**pT(τ) > 70 GeV**
+A trigger requirement, not a tau-physics one. The dedicated di-tau trigger
+only reaches ~90% efficiency above 70 GeV (arXiv:2412.04357, Sec. 6.3), so
+lower-pT candidates aren't reliably recorded in real data. It also rejects
+much of the QCD-jet background, whose steeply falling spectrum piles up
+near threshold.
+
+**|η(τ)| < 2.1**
+Keeps candidates inside the region where DeepTau's jet/e/μ rejection is
+reliable. Tighter than HPS's raw |η| < 2.3 fiducial reach
+(CMS-AN-2020-134, Table 56). pg 60
+
+**|dz(τ)| < 0.2 cm**
+Vertex association: requires the tau's leading track to originate close to
+the event's primary vertex along the beam axis, rejecting taus
+reconstructed from pileup (a separate, simultaneous pp collision).
+
+**DeepTau VSjet ≥ 6 (Tight)**
+The main purity driver. HPS builds a tau-shaped candidate out of any
+1-or-3-track jet fragment; without this cut, the tau collection is
+dominated by ordinary QCD jets misreconstructed as taus (jet→τ_h fake rate
+~0.6% at this WP vs. ~60% genuine efficiency, per the paper).
+
+**DeepTau VSmu ≥ 4 (Tight)**
+Rejects real muons that a track plus a minimal calorimeter deposit can
+fake as a 1-prong tau candidate.
+
+**DeepTau VSe ≥ 5 (Medium)**
+Rejects real electrons, whose ECAL shower plus a track can fake a
+1-prong(+strip) tau candidate. Looser than VSjet/VSmu since electron fakes
+are a smaller background here (CMS Sec. 5.2 specifies Medium for this WP
+across channels).
+
+**decayMode ∈ {0, 1, 2, 10, 11}**
+Restricts to physically real topologies: 1-prong (0, 1, 2: π/K ± up to
+2π⁰) and 3-prong (10, 11: 3π/K ± optional π⁰). Excludes modes 5/6
+(2-prong), which the Tau POG documents as reconstruction failures rather
+than real decays.
+
+Cross-checked against: arXiv:2412.04357 / PRD 111, 112004 (Sec. 6.3),
+CMS-AN-2020-134 (Tables 56/57), and the CMS Tau POG Run-3 ID
+recommendations page.
+
+### Does this "guarantee" a tau decayed hadronically?
+
+No. It's a purity-maximizing selection, not a certainty:
+
+- It only uses reconstructed detector quantities — the generator-level
+  truth (`GenPart_pdgId`/`status`) isn't checked at all.
+- Even at VSjet Tight, ~0.6% of real jets still fake a τ_h candidate.
+  Given how much larger the QCD jet cross section is than the signal,
+  that small fake rate can still be a real background — exactly why CMS
+  builds a dedicated data-driven QCD estimate (the ABCD method) rather
+  than relying on the cut alone.
+- What it does deliver is high purity — a candidate passing all seven
+  rows is very likely (order 90%+, depending on process and pT) a genuine
+  hadronic tau, not a jet/electron/muon — good enough to build an
+  analysis on, the same standard CMS itself uses.
+
+  ​
+
+  ​
