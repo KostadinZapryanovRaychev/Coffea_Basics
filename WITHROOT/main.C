@@ -45,7 +45,9 @@ int main()
     // ======================================================================
     BranchReader reader(Events);
     reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_dz", "Tau_idDeepTau2017v2p1VSjet",
-                           "Tau_idDeepTau2018v2p5VSjet",
+                           "Tau_idDeepTau2018v2p5VSjet", "Tau_idDeepTau2018v2p5VSmu", "Tau_idDeepTau2018v2p5VSe",
+                           "nElectron", "Electron_pt", "Electron_eta", "Electron_cutBased",
+                           "nMuon", "Muon_pt", "Muon_eta", "Muon_tightId", "Muon_pfRelIso04_all",
                            "GenPart_pt", "GenPart_pdgId", "GenPart_status"});
 
     // create an instance of printer that is for debugging purposes
@@ -71,6 +73,20 @@ int main()
         printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2017v2p1VSjet",
                                              tauArraySize, 50,
                                              "Tau_idDeepTau2017v2p1VSjet_column_50.txt");
+
+        // VSmu/VSe raw WP values for the first 50 events, so the WP
+        // encoding assumed by tauDecayedHadronically below (VSjet: 1..8,
+        // VSmu: 1..4, VSe: 1..8) can be checked against this NanoAOD
+        // production before trusting the cut on real data.
+        printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2018v2p5VSjet",
+                                             tauArraySize, 50,
+                                             "Tau_idDeepTau2018v2p5VSjet_column_50.txt");
+        printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2018v2p5VSmu",
+                                             tauArraySize, 50,
+                                             "Tau_idDeepTau2018v2p5VSmu_column_50.txt");
+        printer.printCountedUCharArrayBranch("nTau", "Tau_idDeepTau2018v2p5VSe",
+                                             tauArraySize, 50,
+                                             "Tau_idDeepTau2018v2p5VSe_column_50.txt");
     }
 
     // ======================================================================
@@ -86,16 +102,46 @@ int main()
     // ======================================================================
     Selector selector(Events);
 
-    // here we put 3 types of selections in a shape of key value pairs in a vector and further they will be used to select the events.
-    // The first one is no cut, the second one is tightVSjet and the third one is tightVSjetAndPt20
-    // very important notion here could be added as much as needed cuts just making this object tauCuts bigger adding more conditions like previous {}
-    // we can put expressions like that with more complicated logic {"example1", "sin(Tau_phi) > 0.5"}
-    // README selection for reconstructed taus:
-    // "Use reconstructed taus with pT > 20 GeV, |eta| < 2.5, |dz| < 0.2."
-    std::vector<Cut> tauCuts = {
+    // Three independent selections, one per tau decay channel, each its own
+    // vector processed by identical code below, so they're easy to check
+    // side by side. Cuts follow the CMS Z'->tautau search
+    // (arXiv:2412.04357 / PRD 111, 112004), Sec. 6.1-6.3.
+    //
+    // WP encodings for the DeepTau branches below (verify against
+    // Tau_idDeepTau2018v2p5VS{jet,mu,e}_column_50.txt from a DEBUG=1 run
+    // before trusting this on real data):
+    //   VSjet: 1=VVVLoose .. 6=Tight .. 8=VVTight
+    //   VSmu:  1=VLoose, 2=Loose, 3=Medium, 4=Tight
+    //   VSe:   1=VVVLoose .. 5=Medium .. 8=VVTight
+
+    // 1) tau decayed hadronically (tau_h), Sec. 6.3 tau_h tau_h SR:
+    // pT > 70 GeV (trigger turn-on), |eta| < 2.1, DeepTau tight-vs-jet,
+    // tight-vs-muon, medium-vs-electron.
+    std::vector<Cut> hadronicTauCuts = {
         {"noCut", ""},
-        {"recoTauSelection", "Tau_pt > 20 && abs(Tau_eta) < 2.5 && abs(Tau_dz) < 0.2"},
-        {"recoTauSelectionPt80to150", "Tau_pt > 80 && Tau_pt < 150 && abs(Tau_eta) < 2.5 && abs(Tau_dz) < 0.2"},
+        {"tauDecayedHadronically", "Tau_pt > 70 && abs(Tau_eta) < 2.1 && abs(Tau_dz) < 0.2 "
+                                   "&& Tau_idDeepTau2018v2p5VSjet >= 6 "
+                                   "&& Tau_idDeepTau2018v2p5VSmu >= 4 "
+                                   "&& Tau_idDeepTau2018v2p5VSe >= 5"},
+    };
+
+    // 2) tau decayed muonically (tau -> mu nu nu), Sec. 6.1 tau_mu leg:
+    // pT > 35 GeV, |eta| < 2.1, tight muon ID, relative isolation < 0.15.
+    std::vector<Cut> muonicTauCuts = {
+        {"noCut", ""},
+        {"tauDecayedMuonically", "Muon_pt > 35 && abs(Muon_eta) < 2.1 "
+                                 "&& Muon_tightId == 1 && Muon_pfRelIso04_all < 0.15"},
+    };
+
+    // 3) tau decayed electronically (tau -> e nu nu), Sec. 6.2 tau_e leg:
+    // pT > 35 GeV, |eta| < 2.1 excluding the barrel-endcap transition
+    // 1.44 < |eta| < 1.57, tight cut-based electron ID (approximating the
+    // paper's HEEP ID, which may not be available in this NanoAOD production).
+    std::vector<Cut> electronicTauCuts = {
+        {"noCut", ""},
+        {"tauDecayedElectronically", "Electron_pt > 35 && abs(Electron_eta) < 2.1 "
+                                     "&& !(abs(Electron_eta) > 1.44 && abs(Electron_eta) < 1.57) "
+                                     "&& Electron_cutBased >= 4"},
     };
 
     // ======================================================================
@@ -117,37 +163,77 @@ int main()
     // question we want here. We pass "" as the cut to select() itself
     // so every event contributes one entry (including the "0 taus
     // passed" events), giving the full per-event distribution.
-    for (size_t i = 0; i < tauCuts.size(); ++i)
+    for (size_t i = 0; i < hadronicTauCuts.size(); ++i)
     {
-        const Cut &cut = tauCuts[i];
+        const Cut &cut = hadronicTauCuts[i];
         std::string varExpr = cut.expression.empty() ? "nTau" : "Sum$(" + cut.expression + ")";
         std::vector<Double_t> values = selector.select(varExpr, "", maxEvents);
         HistogramWriter::write(values, "h_nTau_" + cut.name, 10, 0, 10,
                                "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
 
-        // Kinematics of the individual taus that survive this cut (one
-        // entry per passing tau, not per event), so we can actually
-        // look at their pt/pz distributions instead of just counting
-        // them. Same file, appended (UPDATE) so it never re-creates.
-        // pz isn't a NanoAOD branch; it's derived from pt and eta via
-        // pz = pt * sinh(eta), same as any 4-vector's longitudinal
-        // momentum component.
         std::vector<Double_t> tauPt = selector.select("Tau_pt", cut.expression, maxEvents);
         HistogramWriter::write(tauPt, "h_Tau_pt_" + cut.name, 50, 0, 200,
                                "h_nTau_selection.root", "UPDATE");
 
-        std::vector<Double_t> tauPz = selector.select("Tau_pt*sinh(Tau_eta)", cut.expression, maxEvents);
-        HistogramWriter::write(tauPz, "h_Tau_pz_" + cut.name, 50, -500, 500,
-                               "h_nTau_selection.root", "UPDATE");
-
-        // Event-level view: how many *events* (not taus) have at least
-        // one tau passing this cut, and which ones (their entry index
-        // in Events, i.e. the event id since we read in order).
         if (!cut.expression.empty())
         {
             std::vector<Long64_t> eventIndices = selector.selectEventIndices(cut.expression, maxEvents);
             std::cout << "Cut '" << cut.name << "': " << eventIndices.size()
                       << " / " << maxEvents << " events have >=1 tau passing." << std::endl;
+
+            std::ofstream idFile("event_ids_" + cut.name + ".txt");
+            for (Long64_t evId : eventIndices)
+            {
+                idFile << evId << "\n";
+            }
+        }
+    }
+
+    // ---- 2) tau decayed muonically: same code as above, on Muon_* ----
+    for (size_t i = 0; i < muonicTauCuts.size(); ++i)
+    {
+        const Cut &cut = muonicTauCuts[i];
+        std::string varExpr = cut.expression.empty() ? "nMuon" : "Sum$(" + cut.expression + ")";
+        std::vector<Double_t> values = selector.select(varExpr, "", maxEvents);
+        HistogramWriter::write(values, "h_nMuon_" + cut.name, 10, 0, 10,
+                               "h_nTau_selection.root", "UPDATE");
+
+        std::vector<Double_t> muonPt = selector.select("Muon_pt", cut.expression, maxEvents);
+        HistogramWriter::write(muonPt, "h_Muon_pt_" + cut.name, 50, 0, 200,
+                               "h_nTau_selection.root", "UPDATE");
+
+        if (!cut.expression.empty())
+        {
+            std::vector<Long64_t> eventIndices = selector.selectEventIndices(cut.expression, maxEvents);
+            std::cout << "Cut '" << cut.name << "': " << eventIndices.size()
+                      << " / " << maxEvents << " events have >=1 muon passing." << std::endl;
+
+            std::ofstream idFile("event_ids_" + cut.name + ".txt");
+            for (Long64_t evId : eventIndices)
+            {
+                idFile << evId << "\n";
+            }
+        }
+    }
+
+    // ---- 3) tau decayed electronically: same code again, on Electron_* ----
+    for (size_t i = 0; i < electronicTauCuts.size(); ++i)
+    {
+        const Cut &cut = electronicTauCuts[i];
+        std::string varExpr = cut.expression.empty() ? "nElectron" : "Sum$(" + cut.expression + ")";
+        std::vector<Double_t> values = selector.select(varExpr, "", maxEvents);
+        HistogramWriter::write(values, "h_nElectron_" + cut.name, 10, 0, 10,
+                               "h_nTau_selection.root", "UPDATE");
+
+        std::vector<Double_t> electronPt = selector.select("Electron_pt", cut.expression, maxEvents);
+        HistogramWriter::write(electronPt, "h_Electron_pt_" + cut.name, 50, 0, 200,
+                               "h_nTau_selection.root", "UPDATE");
+
+        if (!cut.expression.empty())
+        {
+            std::vector<Long64_t> eventIndices = selector.selectEventIndices(cut.expression, maxEvents);
+            std::cout << "Cut '" << cut.name << "': " << eventIndices.size()
+                      << " / " << maxEvents << " events have >=1 electron passing." << std::endl;
 
             std::ofstream idFile("event_ids_" + cut.name + ".txt");
             for (Long64_t evId : eventIndices)
