@@ -331,5 +331,9 @@ int main()
     // tau lepton channel to read
     // too tau leptons to tau pog selection and difference between their phi and so on
 
+    // TODO in a dedicated file to create the kinematics for LHE
+    // TODO in a dedicated file to create the kinematics for gen part
+    // TODO in a dedicated file to create the kinematics of current logic taken from the analysis note
+
     return 0;
 }
