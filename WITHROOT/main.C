@@ -20,6 +20,8 @@
 #include "TauChannelAnalysis.h"
 #include "TauLHEKinematics.C"
 #include "TauLHEKinematics.h"
+#include "TauGenParticleKinematics.C"
+#include "TauGenParticleKinematics.h"
 
 int main()
 {
@@ -50,10 +52,10 @@ int main()
     // bound as more parts of the event (LHE, GenParticles, ...) get their
     // own dedicated logic.
     //
-    // TODO in a dedicated file/module to create the kinematics for GenPart
     // ======================================================================
     TauChannelAnalysis::run(Events, debug, maxEvents);
     TauLHEKinematics::run(Events, debug, maxEvents, config.inputFile);
+    TauGenParticleKinematics::run(Events, debug, maxEvents, config.inputFile);
 
     // TODO to be double checked the entries are not correct
     // TODO tau pog (physics object group) selection
