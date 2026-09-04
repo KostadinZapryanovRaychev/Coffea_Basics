@@ -11,18 +11,21 @@
 #include "HistogramWriter.h"
 #include "MassPointUtils.h"
 
-// ============================================================
-// LHE-level tau/anti-tau kinematics: enable branches -> select
-// LHEPart_pdgId==15/-15 -> build per-event Lorentz vectors -> histogram
-// single-particle and pair-difference variables, mirroring
-// NAOD_TAU/helpers/lhe_ditau_candidates.py + plotting.py.
-// ============================================================
 void TauLHEKinematics::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
-                            const std::string &inputFilePath)
+                           const std::string &inputFilePath)
 {
-    // ======================================================================
-    // 1. BRANCH ENABLING
-    // ======================================================================
+
+    // Object property	Type	Description
+
+    // LHEPart_eta	Float_t	Pseodorapidity of LHE particles
+    // LHEPart_mass	Float_t	Mass of LHE particles
+    // LHEPart_pdgId	Int_t	PDG ID of LHE particles
+    // LHEPart_phi	Float_t	Phi of LHE particles
+    // LHEPart_pt	Float_t	Pt of LHE particles
+    // nLHEPart	Int_t
+
+    // LHEPart_spin	Int_t	Spin of LHE particles can we use spin ?
+    // LHEPart_incomingpz	Float_t	Pz of incoming LHE particles can we use this ?
     BranchReader reader(Events);
     reader.enableBranches({"nLHEPart", "LHEPart_pt", "LHEPart_eta", "LHEPart_phi",
                            "LHEPart_mass", "LHEPart_pdgId"});
@@ -40,12 +43,7 @@ void TauLHEKinematics::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     // This assumes exactly one tau and one anti-tau per event at LHE level
     // (true for this Z'->tautau hard process), so selecting each kinematic
     // branch under the same pdgId cut yields one aligned value per event
-    // per array, in the same event order across all four branches and
-    // across both particles -- exactly what build_tau_vectors() in the
-    // python pipeline gets from lep_minus_lv[:, 0] / lep_plus_lv[:, 0]
-    // (first LHE tau/anti-tau per event). If a production has more than
-    // one of either per event, this would silently misalign; the size
-    // check below at least catches a minus/plus count mismatch.
+    // per array, in the same event order across all four branches
     // ======================================================================
     Selector selector(Events);
 
@@ -69,10 +67,8 @@ void TauLHEKinematics::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     if (tauPt.size() != antiTauPt.size())
     {
         std::cerr << "TauLHEKinematics: tau(-)/tau(+) count mismatch (" << tauPt.size()
-                  << " vs " << antiTauPt.size() << ") -- per-event pairing would be "
-                  << "misaligned, so pairing-dependent histograms (mass, delta-phi, "
-                  << "cos(delta-phi), delta-eta, delta-R) are skipped. Single-particle "
-                  << "pt/eta/phi/pz histograms are still filled." << std::endl;
+                  << " vs " << antiTauPt.size() << ") -- pairing may be misaligned."
+                  << std::endl;
     }
 
     // ======================================================================
