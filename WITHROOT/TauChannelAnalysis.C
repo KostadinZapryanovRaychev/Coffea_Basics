@@ -8,14 +8,25 @@
 #include "Selector.h"
 #include "HistogramWriter.h"
 #include "HistogramOverlay.h"
+#include "MassPointUtils.h"
 
 // ============================================================
 // Full tau-decay-channel analysis: branch enabling -> (optional debug
 // dumps) -> selections -> plotting -> overlay. See TauChannelAnalysis.h
 // for why this is its own module.
 // ============================================================
-void TauChannelAnalysis::run(TTree *Events, Bool_t debug, Long64_t maxEvents)
+void TauChannelAnalysis::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
+                              const std::string &inputFilePath)
 {
+    // Scales the pt histogram ranges below to the actual Z' mass point of
+    // the sample (see MassPointUtils.h) instead of a range hardcoded for
+    // one specific mass. Same 0.6*M convention TauLHEKinematics and
+    // TauGenParticleKinematics use for their pt ranges, so reco-level and
+    // truth-level pt histograms stay visually comparable to each other.
+    const Double_t M = MassPointUtils::extractMassPoint(inputFilePath);
+    const Int_t ptBins = 120;
+    const Double_t ptMax = 0.6 * M;
+
     const Int_t tauArraySize = 32; // NanoAOD array capacity for Tau_* branches in this file. TODO to be checked further why it is needed
 
     // ======================================================================
@@ -165,7 +176,7 @@ void TauChannelAnalysis::run(TTree *Events, Bool_t debug, Long64_t maxEvents)
                                "h_nTau_selection.root", i == 0 ? "RECREATE" : "UPDATE");
 
         std::vector<Double_t> tauPt = selector.select("Tau_pt", cut.expression, maxEvents);
-        HistogramWriter::write(tauPt, "h_Tau_pt_" + cut.name, 50, 0, 200,
+        HistogramWriter::write(tauPt, "h_Tau_pt_" + cut.name, ptBins, 0, ptMax,
                                "h_nTau_selection.root", "UPDATE");
 
         if (!cut.expression.empty())
@@ -192,7 +203,7 @@ void TauChannelAnalysis::run(TTree *Events, Bool_t debug, Long64_t maxEvents)
                                "h_nTau_selection.root", "UPDATE");
 
         std::vector<Double_t> muonPt = selector.select("Muon_pt", cut.expression, maxEvents);
-        HistogramWriter::write(muonPt, "h_Muon_pt_" + cut.name, 50, 0, 200,
+        HistogramWriter::write(muonPt, "h_Muon_pt_" + cut.name, ptBins, 0, ptMax,
                                "h_nTau_selection.root", "UPDATE");
 
         if (!cut.expression.empty())
@@ -219,7 +230,7 @@ void TauChannelAnalysis::run(TTree *Events, Bool_t debug, Long64_t maxEvents)
                                "h_nTau_selection.root", "UPDATE");
 
         std::vector<Double_t> electronPt = selector.select("Electron_pt", cut.expression, maxEvents);
-        HistogramWriter::write(electronPt, "h_Electron_pt_" + cut.name, 50, 0, 200,
+        HistogramWriter::write(electronPt, "h_Electron_pt_" + cut.name, ptBins, 0, ptMax,
                                "h_nTau_selection.root", "UPDATE");
 
         if (!cut.expression.empty())

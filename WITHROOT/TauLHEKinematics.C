@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <regex>
 
 #include "TLorentzVector.h"
 #include "TMath.h"
@@ -10,26 +9,7 @@
 #include "BranchReader.h"
 #include "Selector.h"
 #include "HistogramWriter.h"
-
-namespace
-{
-// Mirrors extract_mass_point() in NAOD_TAU/helpers/io.py: pull the
-// integer out of a "...M-250_..." style substring of the file path.
-// Falls back to 500 GeV, same default the python pipeline uses when it
-// can't parse a mass point ("unknown" -> 500.0 in _convert_mass_point_to_float).
-Double_t extractMassPoint(const std::string &inputFilePath)
-{
-    static const std::regex massPattern("M-(\\d+)");
-    std::smatch match;
-    if (std::regex_search(inputFilePath, match, massPattern))
-    {
-        return std::stod(match[1].str());
-    }
-    std::cout << "TauLHEKinematics: could not find an 'M-<number>' mass point in '"
-              << inputFilePath << "', defaulting to 500 GeV for histogram ranges." << std::endl;
-    return 500.0;
-}
-} // namespace
+#include "MassPointUtils.h"
 
 // ============================================================
 // LHE-level tau/anti-tau kinematics: enable branches -> select
@@ -150,7 +130,7 @@ void TauLHEKinematics::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     // All saved into one combined ROOT file, matching
     // save_lhe_histograms_root()'s single "tau_pair_histograms.root".
     // ======================================================================
-    const Double_t M = extractMassPoint(inputFilePath);
+    const Double_t M = MassPointUtils::extractMassPoint(inputFilePath);
     const std::string outFile = "outputs/lhe_tau_pair_histograms.root";
 
     HistogramWriter::write(tauPt, "lhe_tau_pt", 120, 0, 0.6 * M, outFile, "RECREATE");

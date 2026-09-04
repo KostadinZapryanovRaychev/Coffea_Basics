@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <regex>
 
 #include "TLorentzVector.h"
 #include "TMath.h"
@@ -10,30 +9,7 @@
 #include "BranchReader.h"
 #include "Selector.h"
 #include "HistogramWriter.h"
-
-namespace
-{
-// Same idea as TauLHEKinematics.C's extractMassPoint() -- duplicated
-// rather than shared, on purpose: each analysis module stays
-// self-contained (see TauChannelAnalysis.h for the reasoning), so a
-// module can be copied, modified, or deleted without touching its
-// siblings. Named differently (extractGenMassPoint, not
-// extractMassPoint) because main.C #includes every module's .C file
-// into one translation unit, where two same-named functions --even
-// each in their own anonymous namespace-- collide.
-Double_t extractGenMassPoint(const std::string &inputFilePath)
-{
-    static const std::regex massPattern("M-(\\d+)");
-    std::smatch match;
-    if (std::regex_search(inputFilePath, match, massPattern))
-    {
-        return std::stod(match[1].str());
-    }
-    std::cout << "TauGenParticleKinematics: could not find an 'M-<number>' mass point in '"
-              << inputFilePath << "', defaulting to 500 GeV for histogram ranges." << std::endl;
-    return 500.0;
-}
-} // namespace
+#include "MassPointUtils.h"
 
 // ============================================================
 // GenPart-level tau/anti-tau kinematics: enable branches -> select
@@ -173,7 +149,7 @@ void TauGenParticleKinematics::run(TTree *Events, Bool_t debug, Long64_t maxEven
     // All saved into one combined ROOT file, matching
     // save_lhe_histograms_root()'s single "gen_tau_pair_histograms.root".
     // ======================================================================
-    const Double_t M = extractGenMassPoint(inputFilePath);
+    const Double_t M = MassPointUtils::extractMassPoint(inputFilePath);
     const std::string outFile = "outputs/gen_tau_pair_histograms.root";
 
     HistogramWriter::write(tauPt, "gen_tau_pt", 120, 0, 0.6 * M, outFile, "RECREATE");

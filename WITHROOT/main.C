@@ -16,6 +16,8 @@
 #include "HistogramWriter.h"
 #include "HistogramOverlay.C"
 #include "HistogramOverlay.h"
+#include "MassPointUtils.C"
+#include "MassPointUtils.h"
 #include "TauChannelAnalysis.C"
 #include "TauChannelAnalysis.h"
 #include "TauLHEKinematics.C"
@@ -53,7 +55,7 @@ int main()
     // own dedicated logic.
     //
     // ======================================================================
-    TauChannelAnalysis::run(Events, debug, maxEvents);
+    TauChannelAnalysis::run(Events, debug, maxEvents, config.inputFile);
     TauLHEKinematics::run(Events, debug, maxEvents, config.inputFile);
     TauGenParticleKinematics::run(Events, debug, maxEvents, config.inputFile);
 

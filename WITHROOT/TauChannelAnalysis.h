@@ -1,6 +1,7 @@
 #ifndef TAUCHANNELANALYSIS_H
 #define TAUCHANNELANALYSIS_H
 
+#include <string>
 #include "TTree.h"
 #include "Rtypes.h"
 
@@ -26,7 +27,14 @@ public:
     //   writes the *_column.txt / *_column_50.txt debug dumps.
     // maxEvents: how many entries to process (<=0 not meaningful here;
     //   main() passes Events->GetEntries()).
-    static void run(TTree *Events, Bool_t debug, Long64_t maxEvents);
+    // inputFilePath: source file path, used only to extract the Z' mass
+    //   point (via MassPointUtils) so the pt histogram ranges scale with
+    //   it -- config.json points at a different mass-point sample each
+    //   run (see NAOD_TAU/file_config_batch_all_mass_points.json for the
+    //   range of mass points this can be), so a hardcoded range would be
+    //   wrong for every sample except the one it was tuned for.
+    static void run(TTree *Events, Bool_t debug, Long64_t maxEvents,
+                     const std::string &inputFilePath);
 };
 
 #endif
