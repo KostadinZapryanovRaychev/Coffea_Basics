@@ -96,11 +96,13 @@ void TauLHEKinematics::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
 
     std::vector<Double_t> pairMass, deltaPhi, cosDeltaPhi, deltaEta, deltaR;
     const size_t nPairs = std::min(tauPt.size(), antiTauPt.size());
+    // pre locate the vectors to avoid repeated reallocations during push_back (optimization)
     pairMass.reserve(nPairs);
     deltaPhi.reserve(nPairs);
     cosDeltaPhi.reserve(nPairs);
     deltaEta.reserve(nPairs);
     deltaR.reserve(nPairs);
+
     for (size_t i = 0; i < nPairs; ++i)
     {
         TLorentzVector tauLv, antiTauLv;
