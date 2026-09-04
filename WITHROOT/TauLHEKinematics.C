@@ -72,11 +72,17 @@ void TauLHEKinematics::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     }
 
     // ======================================================================
-    // 3. DERIVED KINEMATICS: pz (not a stored branch, pz = pt*sinh(eta))
-    // and the pair four-vector sum -> invariant mass, for every event
-    // that has both a tau(-) and a tau(+).
+    // 3. DERIVED KINEMATICS:
+    // Pz
+    // η = -ln(tan(θ / 2)), where θ is the polar angle from the beam axis.A few lines of trig(using the half - angle identities sin θ = 2t / (1 + t²), cos θ = (1 - t²) / (1 + t²) with t = tan(θ / 2) = e ^ {-η}) gives you the identity :
+    // sinh(η) = cos(θ) / sin(θ) = cot(θ) Now,
+    // pt = p·sin(θ)(transverse component) pz = p·cos(θ)(longitudinal, along the beam) Dividing :
+    // pz / pt = cos(θ)/sin(θ) = cot(θ) = sinh(η)
+    // pz = pt · sinh(η)
     // ======================================================================
-    std::vector<Double_t> tauPz, antiTauPz;
+    std::vector<Double_t>
+        tauPz,
+        antiTauPz;
     tauPz.reserve(tauPt.size());
     for (size_t i = 0; i < tauPt.size(); ++i)
     {
