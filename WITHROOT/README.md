@@ -5,16 +5,15 @@ DEBUG=1 root -l -q main.C - if we want to print
 "inputFile": "../nanoaodsim_coffea_1.root"
 }
 
-{
-"inputFile": "../nanoaodsim_coffea_1.root"
-}
-
 What is NANOAOD
 https://indico.cern.ch/event/708041/papers/3276172/files/8621-nanoaod_acat19_v2.pdf
 
 how to do analysis
 
 https://codimd.web.cern.ch/PMpenr-wQXGb49NavQSu1w?view
+
+https://twiki.cern.ch/twiki/bin/viewauth/CMS/TauIDRecommendationForRun3
+tau pdg recommendations
 
 Article
 

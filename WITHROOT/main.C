@@ -4,18 +4,10 @@
 #include "event.h"
 #include "helpers.C"
 #include "helpers.h"
-#include "BranchReader.C"
-#include "BranchReader.h"
-#include "Selector.C"
-#include "Selector.h"
 #include "HistogramWriter.C"
 #include "HistogramWriter.h"
-#include "MassPointUtils.C"
-#include "MassPointUtils.h"
-#include "TauHadHadRecoMass.C"
-#include "TauHadHadRecoMass.h"
-#include "TauHadHadDataMass.C"
-#include "TauHadHadDataMass.h"
+#include "TauPogMass.C"
+#include "TauPogMass.h"
 
 int main()
 {
@@ -39,20 +31,16 @@ int main()
     const Long64_t maxEvents = Events->GetEntries();
 
     // ======================================================================
-    // Two tau_h tau_h m_rec modules:
-    //   TauHadHadRecoMass  -- TRUTH level, uses GenVisTau. Only works on
-    //                         MC (real data has no generator objects).
-    //   TauHadHadDataMass  -- RECONSTRUCTED level, uses the Tau collection
-    //                         + HLT trigger + full tau selection. Works on
-    //                         both MC and real data (e.g. the CMS dataset
-    //                         /Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD).
-    // On an MC file both run, so truth m_rec and reco m_rec can be
-    // compared. On real data only TauHadHadDataMass produces a meaningful
-    // result -- TauHadHadRecoMass just prints "branch not found" and an
-    // empty histogram, harmless.
+    // Only TauPogMass runs: the Tau POG Run-3 baseline tau selection
+    // (pT > 20, |eta| < 2.5, |dz| < 0.2 -- nothing else), then the mass
+    // of the two leading taus in every event with >= 2 of them.
+    //
+    // The other modules (TauHadHadRecoMass, TauHadHadDataMass,
+    // TauChannelAnalysis, TauLHEKinematics, TauGenParticleKinematics)
+    // still exist as separate files and can be added back with one call
+    // each -- see git history.
     // ======================================================================
-    TauHadHadRecoMass::run(Events, debug, maxEvents, config.inputFile);
-    TauHadHadDataMass::run(Events, debug, maxEvents, config.inputFile);
+    TauPogMass::run(Events, debug, maxEvents, config.inputFile);
 
     return 0;
 }
