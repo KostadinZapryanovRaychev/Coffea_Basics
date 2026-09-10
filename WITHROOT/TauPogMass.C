@@ -6,6 +6,8 @@
 #include <vector>
 #include "TTreeReader.h"
 #include "TTreeReaderArray.h"
+#include "TFile.h"
+#include "TH2F.h"
 
 #include "HistogramWriter.h"
 
@@ -40,12 +42,12 @@ namespace
         return std::sqrt(std::max(0.0, e * e - x * x - y * y - z * z));
     }
 
-    // invariant mass of the leading tau of each charge,
-    // or -1 if the event does not have one of each
-    double ditauMass(const std::vector<Tau> &taus)
+    // leading (highest-pT) tau of each charge; either pointer is null
+    // if the event has no tau of that charge
+    void leadingPair(const std::vector<Tau> &taus, const Tau *&minus, const Tau *&plus)
     {
-        const Tau *minus = nullptr;
-        const Tau *plus = nullptr;
+        minus = nullptr;
+        plus = nullptr;
         for (const Tau &t : taus)
         {
             if (t.charge < 0 && (minus == nullptr || t.pt > minus->pt))
@@ -57,6 +59,15 @@ namespace
                 plus = &t;
             }
         }
+    }
+
+    // invariant mass of the leading opposite-sign pair,
+    // or -1 if the event does not have one of each charge
+    double ditauMass(const std::vector<Tau> &taus)
+    {
+        const Tau *minus = nullptr;
+        const Tau *plus = nullptr;
+        leadingPair(taus, minus, plus);
         return (minus && plus) ? invariantMass(*minus, *plus) : -1.0;
     }
 
@@ -123,6 +134,13 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
         {"m_vis_tautau_full_hadhad", selFullHadHad},
     };
 
+    // 2D: di-tau mass (x) vs the pT of the bigger of the two paired taus (y).
+    // Filled from the Tau POG baseline selection (pT > 20). Shows directly
+    // how the visible mass grows as the leading tau gets harder.
+    TH2F massVsLeadPt("m_vs_leadpt",
+                      "di-tau mass vs leading tau p_{T};m(#tau#tau) [GeV];leading #tau p_{T} [GeV]",
+                      100, 0, 500, 100, 0, 500);
+
     Long64_t nEventsSeen = 0;
     while (reader.Next())
     {
@@ -158,6 +176,23 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
                 s.masses.push_back(m);
             }
         }
+
+        // 2D fill: baseline (pT > 20) selection
+        std::vector<Tau> baseline;
+        for (const Tau &t : taus)
+        {
+            if (selPt20(t))
+            {
+                baseline.push_back(t);
+            }
+        }
+        const Tau *minus = nullptr;
+        const Tau *plus = nullptr;
+        leadingPair(baseline, minus, plus);
+        if (minus && plus)
+        {
+            massVsLeadPt.Fill(invariantMass(*minus, *plus), std::max(minus->pt, plus->pt));
+        }
     }
 
     bool first = true;
@@ -168,4 +203,9 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
                                "outputs/tau_pog_mass.root", first ? "RECREATE" : "UPDATE");
         first = false;
     }
+
+    TFile out("outputs/tau_pog_mass.root", "UPDATE");
+    massVsLeadPt.Write();
+    out.Close();
+    std::cout << "m_vs_leadpt: " << massVsLeadPt.GetEntries() << " entries (2D)" << std::endl;
 }
