@@ -12,57 +12,57 @@
 
 namespace
 {
-// Runs the Selector::select() calls for a given cut, pairs up consecutive
-// (leg1, leg2) entries (see the k/i1/i2 discussion -- valid whenever the
-// cut guarantees exactly 2 matching GenVisTau per selected event), and
-// computes m_rec(Z') per event via Eq. (1) of arXiv:2412.04357:
-//
-//   m_rec = sqrt[ (E1+E2+|pT_miss|)^2 - (pz1+pz2)^2 ]
-//
-// pT_miss = -(pT1_vis + pT2_vis) (zero net Z' transverse momentum
-// assumed), pz_miss = 0. The transverse part of (p1vis+p2vis+p_miss)
-// cancels to exactly zero by construction, which is why only the pz term
-// survives under the square root -- an exact simplification, not an
-// approximation.
-std::vector<Double_t> computeHadHadMasses(Selector &selector, const std::string &cut,
-                                          Long64_t maxEvents)
-{
-    std::vector<Double_t> pt = selector.select("GenVisTau_pt", cut, maxEvents);
-    std::vector<Double_t> eta = selector.select("GenVisTau_eta", cut, maxEvents);
-    std::vector<Double_t> phi = selector.select("GenVisTau_phi", cut, maxEvents);
-    std::vector<Double_t> mass = selector.select("GenVisTau_mass", cut, maxEvents);
-
-    const size_t nEvents = pt.size() / 2; // two GenVisTau entries per selected event
-    std::vector<Double_t> mRec;
-    mRec.reserve(nEvents);
-
-    for (size_t k = 0; k < nEvents; k++)
+    // Runs the Selector::select() calls for a given cut, pairs up consecutive
+    // (leg1, leg2) entries (see the k/i1/i2 discussion -- valid whenever the
+    // cut guarantees exactly 2 matching GenVisTau per selected event), and
+    // computes m_rec(Z') per event via Eq. (1) of arXiv:2412.04357:
+    //
+    //   m_rec = sqrt[ (E1+E2+|pT_miss|)^2 - (pz1+pz2)^2 ]
+    //
+    // pT_miss = -(pT1_vis + pT2_vis) (zero net Z' transverse momentum
+    // assumed), pz_miss = 0. The transverse part of (p1vis+p2vis+p_miss)
+    // cancels to exactly zero by construction, which is why only the pz term
+    // survives under the square root -- an exact simplification, not an
+    // approximation.
+    std::vector<Double_t> computeHadHadMasses(Selector &selector, const std::string &cut,
+                                              Long64_t maxEvents)
     {
-        const size_t i1 = 2 * k;
-        const size_t i2 = 2 * k + 1;
+        std::vector<Double_t> pt = selector.select("GenVisTau_pt", cut, maxEvents);
+        std::vector<Double_t> eta = selector.select("GenVisTau_eta", cut, maxEvents);
+        std::vector<Double_t> phi = selector.select("GenVisTau_phi", cut, maxEvents);
+        std::vector<Double_t> mass = selector.select("GenVisTau_mass", cut, maxEvents);
 
-        // px = pt*cos(phi), py = pt*sin(phi), pz = pt*sinh(eta),
-        // E = sqrt(px^2 + py^2 + pz^2 + mass^2)
-        const Double_t px1 = pt[i1] * std::cos(phi[i1]);
-        const Double_t py1 = pt[i1] * std::sin(phi[i1]);
-        const Double_t pz1 = pt[i1] * std::sinh(eta[i1]);
-        const Double_t E1 = std::sqrt(px1 * px1 + py1 * py1 + pz1 * pz1 + mass[i1] * mass[i1]);
+        const size_t nEvents = pt.size() / 2; // two GenVisTau entries per selected event
+        std::vector<Double_t> mRec;
+        mRec.reserve(nEvents);
 
-        const Double_t px2 = pt[i2] * std::cos(phi[i2]);
-        const Double_t py2 = pt[i2] * std::sin(phi[i2]);
-        const Double_t pz2 = pt[i2] * std::sinh(eta[i2]);
-        const Double_t E2 = std::sqrt(px2 * px2 + py2 * py2 + pz2 * pz2 + mass[i2] * mass[i2]);
+        for (size_t k = 0; k < nEvents; k++)
+        {
+            const size_t i1 = 2 * k;
+            const size_t i2 = 2 * k + 1;
 
-        const Double_t missPt = std::sqrt((px1 + px2) * (px1 + px2) + (py1 + py2) * (py1 + py2));
-        const Double_t energyTerm = E1 + E2 + missPt;
-        const Double_t pzTerm = pz1 + pz2;
+            // px = pt*cos(phi), py = pt*sin(phi), pz = pt*sinh(eta),
+            // E = sqrt(px^2 + py^2 + pz^2 + mass^2)
+            const Double_t px1 = pt[i1] * std::cos(phi[i1]);
+            const Double_t py1 = pt[i1] * std::sin(phi[i1]);
+            const Double_t pz1 = pt[i1] * std::sinh(eta[i1]);
+            const Double_t E1 = std::sqrt(px1 * px1 + py1 * py1 + pz1 * pz1 + mass[i1] * mass[i1]);
 
-        const Double_t mRecSquared = energyTerm * energyTerm - pzTerm * pzTerm;
-        mRec.push_back(std::sqrt(std::max(0.0, mRecSquared)));
+            const Double_t px2 = pt[i2] * std::cos(phi[i2]);
+            const Double_t py2 = pt[i2] * std::sin(phi[i2]);
+            const Double_t pz2 = pt[i2] * std::sinh(eta[i2]);
+            const Double_t E2 = std::sqrt(px2 * px2 + py2 * py2 + pz2 * pz2 + mass[i2] * mass[i2]);
+
+            const Double_t missPt = std::sqrt((px1 + px2) * (px1 + px2) + (py1 + py2) * (py1 + py2));
+            const Double_t energyTerm = E1 + E2 + missPt;
+            const Double_t pzTerm = pz1 + pz2;
+
+            const Double_t mRecSquared = energyTerm * energyTerm - pzTerm * pzTerm;
+            mRec.push_back(std::sqrt(std::max(0.0, mRecSquared)));
+        }
+
+        return mRec;
     }
-
-    return mRec;
-}
 } // namespace
 
 void TauHadHadRecoMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
