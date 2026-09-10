@@ -642,3 +642,5 @@ processed_ds_name:"Run2024C-2024CDEReprocessing-v1"
 name:"/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"
 
 dasgoclient -query="dataset=/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"
+
+GenPart is in my case for MC in this case LHE input from MGraph5 provided to Pythia for further hadroniztion and further decay and adding stuff or something like that Z -> tau tau - > more channels
