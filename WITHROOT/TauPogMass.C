@@ -1,10 +1,8 @@
 #include "TauPogMass.h"
-
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <vector>
-
 #include "TTreeReader.h"
 #include "TTreeReaderArray.h"
 

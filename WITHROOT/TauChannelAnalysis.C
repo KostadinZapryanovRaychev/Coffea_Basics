@@ -1,7 +1,13 @@
 #include "TauChannelAnalysis.h"
 
+#include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <iostream>
+#include <vector>
+
+#include "TTreeReader.h"
+#include "TTreeReaderArray.h"
 
 #include "BranchReader.h"
 #include "ColumnPrinter.h"
@@ -9,6 +15,56 @@
 #include "HistogramWriter.h"
 #include "HistogramOverlay.h"
 #include "MassPointUtils.h"
+
+// Helpers for the di-tau invariant mass (section 5). Same visible-mass
+// formula as TauPogMass; named namespace so nothing clashes when several
+// modules are compiled together in main.C.
+namespace tauch
+{
+    struct Tau
+    {
+        double pt;
+        double eta;
+        double phi;
+        double mass;
+        int charge; // -1 = tau, +1 = anti-tau
+
+        double px() const { return pt * std::cos(phi); }
+        double py() const { return pt * std::sin(phi); }
+        double pz() const { return pt * std::sinh(eta); }
+        double e() const { return std::sqrt(px() * px() + py() * py() + pz() * pz() + mass * mass); }
+    };
+
+    // m = sqrt[ (E1+E2)^2 - |p1+p2|^2 ]  -- visible mass, neutrinos ignored
+    double invariantMass(const Tau &a, const Tau &b)
+    {
+        const double e = a.e() + b.e();
+        const double x = a.px() + b.px();
+        const double y = a.py() + b.py();
+        const double z = a.pz() + b.pz();
+        return std::sqrt(std::max(0.0, e * e - x * x - y * y - z * z));
+    }
+
+    // invariant mass of the leading tau of each charge,
+    // or -1 if the event does not have one of each
+    double ditauMass(const std::vector<Tau> &taus)
+    {
+        const Tau *minus = nullptr;
+        const Tau *plus = nullptr;
+        for (const Tau &t : taus)
+        {
+            if (t.charge < 0 && (minus == nullptr || t.pt > minus->pt))
+            {
+                minus = &t;
+            }
+            if (t.charge > 0 && (plus == nullptr || t.pt > plus->pt))
+            {
+                plus = &t;
+            }
+        }
+        return (minus && plus) ? invariantMass(*minus, *plus) : -1.0;
+    }
+}
 
 // ============================================================
 // Full tau-decay-channel analysis: branch enabling -> (optional debug
@@ -36,6 +92,7 @@ void TauChannelAnalysis::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     // ======================================================================
     BranchReader reader(Events);
     reader.enableBranches({"nTau", "Tau_pt", "Tau_eta", "Tau_phi", "Tau_mass", "Tau_dz", "Tau_decayMode",
+                           "Tau_charge",
                            "Tau_idDeepTau2017v2p1VSjet",
                            "Tau_idDeepTau2018v2p5VSjet", "Tau_idDeepTau2018v2p5VSmu", "Tau_idDeepTau2018v2p5VSe",
                            "nElectron", "Electron_pt", "Electron_eta", "Electron_cutBased",
@@ -281,4 +338,58 @@ void TauChannelAnalysis::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
                               {"Hadronic (tau_h)", "Muonic (tau->mu)", "Electronic (tau->e)"},
                               "Selected tau pT by decay channel",
                               "c_pt_overlay_by_channel");
+
+    // ======================================================================
+    // 5. DI-TAU INVARIANT MASS (tau_h tau_h channel)
+    // Same visible-mass formula as TauPogMass: build each tau's 4-vector
+    // from (pt, eta, phi, mass), take the leading tau of each charge, and
+    // m = sqrt[(E1+E2)^2 - |p1+p2|^2]. One entry per event that has an
+    // opposite-sign pair among the taus passing the SAME hadronic
+    // selection as hadronicTauCuts["tauDecayedHadronically"] above
+    // (pT > 70, |eta| < 2.1, |dz| < 0.2, DeepTau tight-jet/tight-mu/
+    // medium-e, decay mode 0/1/2/10/11).
+    // ======================================================================
+    TTreeReader massReader(Events);
+    TTreeReaderArray<Float_t> mTauPt(massReader, "Tau_pt");
+    TTreeReaderArray<Float_t> mTauEta(massReader, "Tau_eta");
+    TTreeReaderArray<Float_t> mTauPhi(massReader, "Tau_phi");
+    TTreeReaderArray<Float_t> mTauMass(massReader, "Tau_mass");
+    TTreeReaderArray<Float_t> mTauDz(massReader, "Tau_dz");
+    TTreeReaderArray<Short_t> mTauCharge(massReader, "Tau_charge");
+    TTreeReaderArray<UChar_t> mTauDecayMode(massReader, "Tau_decayMode");
+    TTreeReaderArray<UChar_t> mTauVSjet(massReader, "Tau_idDeepTau2018v2p5VSjet");
+    TTreeReaderArray<UChar_t> mTauVSmu(massReader, "Tau_idDeepTau2018v2p5VSmu");
+    TTreeReaderArray<UChar_t> mTauVSe(massReader, "Tau_idDeepTau2018v2p5VSe");
+
+    std::vector<Double_t> ditauMasses;
+
+    while (massReader.Next())
+    {
+        std::vector<tauch::Tau> selected;
+        for (size_t j = 0; j < mTauPt.GetSize(); ++j)
+        {
+            if (mTauPt[j] <= 70.0)
+                continue;
+            if (std::abs(mTauEta[j]) >= 2.1 || std::abs(mTauDz[j]) >= 0.2)
+                continue;
+            if (mTauVSjet[j] < 6 || mTauVSmu[j] < 4 || mTauVSe[j] < 5)
+                continue;
+            const int dm = mTauDecayMode[j];
+            if (dm != 0 && dm != 1 && dm != 2 && dm != 10 && dm != 11)
+                continue;
+            selected.push_back({mTauPt[j], mTauEta[j], mTauPhi[j], mTauMass[j], mTauCharge[j]});
+        }
+
+        const double m = tauch::ditauMass(selected);
+        if (m >= 0.0)
+        {
+            ditauMasses.push_back(m);
+        }
+    }
+
+    std::cout << "Di-tau mass (tau_h tau_h): " << ditauMasses.size()
+              << " events with an opposite-sign selected pair." << std::endl;
+
+    HistogramWriter::write(ditauMasses, "h_ditau_mass_hadronic", 100, 0, 500,
+                           "h_nTau_selection.root", "UPDATE");
 }

@@ -4,10 +4,22 @@
 #include "event.h"
 #include "helpers.C"
 #include "helpers.h"
+#include "BranchReader.C"
+#include "BranchReader.h"
+#include "ColumnPrinter.C"
+#include "ColumnPrinter.h"
+#include "Selector.C"
+#include "Selector.h"
 #include "HistogramWriter.C"
 #include "HistogramWriter.h"
+#include "HistogramOverlay.C"
+#include "HistogramOverlay.h"
+#include "MassPointUtils.C"
+#include "MassPointUtils.h"
 #include "TauPogMass.C"
 #include "TauPogMass.h"
+#include "TauChannelAnalysis.C"
+#include "TauChannelAnalysis.h"
 
 int main()
 {
@@ -30,8 +42,11 @@ int main()
     // Use all events in the file.
     const Long64_t maxEvents = Events->GetEntries();
 
-    // Run the Tau POG mass reconstruction.
+    // Tau POG baseline di-tau mass (before / after the POG selection).
     TauPogMass::run(Events, debug, maxEvents, config.inputFile);
+
+    // Full tau-decay-channel analysis + di-tau invariant mass (section 5).
+    TauChannelAnalysis::run(Events, debug, maxEvents, config.inputFile);
 
     return 0;
 }
