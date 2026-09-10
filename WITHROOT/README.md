@@ -28,7 +28,7 @@ interesting to be checked
 https://github.com/cms-tau-pog/TauIDSFs/blob/master/docs/TESunc.png
 
 root h_nTau_selection.root
-TFile \*f = TFile::Open("h_nTau_selection.root");
+TFile \*f = TFile::Open("tau_pog_mass.root");
 f->ls()
 new TBrowser();
 
