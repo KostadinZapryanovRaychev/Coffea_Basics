@@ -1,8 +1,10 @@
 #include "TauPogMass.h"
+
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <vector>
+
 #include "TTreeReader.h"
 #include "TTreeReaderArray.h"
 
@@ -16,54 +18,62 @@ namespace
         double eta;
         double phi;
         double mass;
+        double dz;
         int charge; // -1 = tau, +1 = anti-tau
+
+        double px() const { return pt * std::cos(phi); }
+        double py() const { return pt * std::sin(phi); }
+        double pz() const { return pt * std::sinh(eta); }
+        double e() const { return std::sqrt(px() * px() + py() * py() + pz() * pz() + mass * mass); }
     };
 
-    // (pt, eta, phi, mass) -> Cartesian 4-momentum (E, px, py, pz):
-    //   px = pt * cos(phi)
-    //   py = pt * sin(phi)
-    //   pz = pt * sinh(eta)
-    //   E  = sqrt(px^2 + py^2 + pz^2 + mass^2)
-    void toFourMomentum(const Tau &t, double &px, double &py, double &pz, double &E)
-    {
-        px = t.pt * std::cos(t.phi);
-        py = t.pt * std::sin(t.phi);
-        pz = t.pt * std::sinh(t.eta);
-        E = std::sqrt(px * px + py * py + pz * pz + t.mass * t.mass);
-    }
-
-    // plain invariant mass of the two visible tau 4-vectors:
-    //   m = sqrt[ (E1+E2)^2 - |p1+p2|^2 ]
-    // no correction for the escaping neutrinos.
+    // m = sqrt[ (E1+E2)^2 - |p1+p2|^2 ]  -- visible mass, neutrinos ignored
     double invariantMass(const Tau &a, const Tau &b)
     {
-        double px1, py1, pz1, E1;
-        double px2, py2, pz2, E2;
-        toFourMomentum(a, px1, py1, pz1, E1);
-        toFourMomentum(b, px2, py2, pz2, E2);
-
-        const double E = E1 + E2;
-        const double px = px1 + px2;
-        const double py = py1 + py2;
-        const double pz = pz1 + pz2;
-
-        const double mSquared = E * E - px * px - py * py - pz * pz;
-        return std::sqrt(std::max(0.0, mSquared));
+        const double e = a.e() + b.e();
+        const double x = a.px() + b.px();
+        const double y = a.py() + b.py();
+        const double z = a.pz() + b.pz();
+        return std::sqrt(std::max(0.0, e * e - x * x - y * y - z * z));
     }
 
-    // CMS Tau POG Run-3 baseline tau selection.
-    bool passesTauPogSelection(double pt, double eta, double dz)
+    // CMS Tau POG Run-3 baseline selection
+    bool passesTauPog(const Tau &t)
     {
-        return pt > 20.0 && std::abs(eta) < 2.5 && std::abs(dz) < 0.2;
+        return t.pt > 20.0 && std::abs(t.eta) < 2.5 && std::abs(t.dz) < 0.2;
     }
 
-    // One kept event: its entry number + the taus that passed the POG
-    // selection in it.
-    struct SelectedEvent
+    bool hasOppositeSignPair(const std::vector<Tau> &taus)
     {
-        Long64_t id;
-        std::vector<Tau> taus;
-    };
+        bool minus = false;
+        bool plus = false;
+        for (const Tau &t : taus)
+        {
+            minus = minus || t.charge < 0;
+            plus = plus || t.charge > 0;
+        }
+        return minus && plus;
+    }
+
+    // invariant mass of the leading tau of each charge,
+    // or -1 if the event does not have one of each
+    double ditauMass(const std::vector<Tau> &taus)
+    {
+        const Tau *minus = nullptr;
+        const Tau *plus = nullptr;
+        for (const Tau &t : taus)
+        {
+            if (t.charge < 0 && (minus == nullptr || t.pt > minus->pt))
+            {
+                minus = &t;
+            }
+            if (t.charge > 0 && (plus == nullptr || t.pt > plus->pt))
+            {
+                plus = &t;
+            }
+        }
+        return (minus && plus) ? invariantMass(*minus, *plus) : -1.0;
+    }
 }
 
 void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
@@ -72,7 +82,6 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     (void)debug;
     (void)inputFilePath;
 
-    // ---- enable branches ----
     TTreeReader reader(Events);
     TTreeReaderArray<Float_t> tauPt(reader, "Tau_pt");
     TTreeReaderArray<Float_t> tauEta(reader, "Tau_eta");
@@ -81,8 +90,8 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     TTreeReaderArray<Float_t> tauDz(reader, "Tau_dz");
     TTreeReaderArray<Short_t> tauCharge(reader, "Tau_charge");
 
-    // keptEvents: all events with >= 2 taus and at least one of each charge
-    std::vector<Long64_t> keptEvents;
+    std::vector<double> massBeforePog;
+    std::vector<double> massAfterPog;
     Long64_t nEventsSeen = 0;
 
     while (reader.Next())
@@ -93,92 +102,39 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
         }
         ++nEventsSeen;
 
-        const size_t nRawTaus = tauPt.GetSize();
-        if (nRawTaus < 2)
+        // all taus in this event
+        std::vector<Tau> taus;
+        for (size_t j = 0; j < tauPt.GetSize(); ++j)
+        {
+            taus.push_back({tauPt[j], tauEta[j], tauPhi[j], tauMass[j], tauDz[j], tauCharge[j]});
+        }
+
+        // need at least two taus, with an opposite-sign pair among them
+        if (taus.size() < 2 || !hasOppositeSignPair(taus))
         {
             continue;
         }
 
-        bool hasMinus = false;
-        bool hasPlus = false;
-        for (size_t j = 0; j < nRawTaus; ++j)
-        {
-            if (tauCharge[j] < 0)
-            {
-                hasMinus = true;
-            }
-            else if (tauCharge[j] > 0)
-            {
-                hasPlus = true;
-            }
-        }
+        // 1) di-tau mass before the Tau POG selection
+        massBeforePog.push_back(ditauMass(taus));
 
-        if (hasMinus && hasPlus)
-        {
-            keptEvents.push_back(reader.GetCurrentEntry());
-        }
-    }
-
-    // tauPogRecommended: all events with >= 2 taus that pass the POG
-    // baseline selection (pT > 20, |eta| < 2.5, |dz| < 0.2) and at least one of each charge
-    std::vector<SelectedEvent> tauPogRecommended;
-
-    for (Long64_t id : keptEvents)
-    {
-        reader.SetEntry(id);
-
+        // 2) di-tau mass after the Tau POG selection
         std::vector<Tau> selected;
-        bool hasMinus = false;
-        bool hasPlus = false;
-        for (size_t j = 0; j < tauPt.GetSize(); ++j)
+        for (const Tau &t : taus)
         {
-            if (!passesTauPogSelection(tauPt[j], tauEta[j], tauDz[j]))
+            if (passesTauPog(t))
             {
-                continue;
-            }
-            Tau t{tauPt[j], tauEta[j], tauPhi[j], tauMass[j], tauCharge[j]};
-            selected.push_back(t);
-            if (t.charge < 0)
-            {
-                hasMinus = true;
-            }
-            else if (t.charge > 0)
-            {
-                hasPlus = true;
+                selected.push_back(t);
             }
         }
-
-        if (selected.size() >= 2 && hasMinus && hasPlus)
+        if (selected.size() >= 2 && hasOppositeSignPair(selected))
         {
-            tauPogRecommended.push_back({id, selected});
+            massAfterPog.push_back(ditauMass(selected));
         }
     }
 
-    // reconstruct the invariant mass of the two leading taus in each event
-    std::vector<double> masses;
-
-    for (const SelectedEvent &ev : tauPogRecommended)
-    {
-        const Tau *leadingMinus = nullptr;
-        const Tau *leadingPlus = nullptr;
-        for (const Tau &t : ev.taus)
-        {
-            if (t.charge < 0 && (leadingMinus == nullptr || t.pt > leadingMinus->pt))
-            {
-                leadingMinus = &t;
-            }
-            else if (t.charge > 0 && (leadingPlus == nullptr || t.pt > leadingPlus->pt))
-            {
-                leadingPlus = &t;
-            }
-        }
-
-        if (leadingMinus != nullptr && leadingPlus != nullptr)
-        {
-            masses.push_back(invariantMass(*leadingMinus, *leadingPlus));
-        }
-    }
-
-    HistogramWriter::write(masses, "m_vis_tautau", 300, 0, 3000,
+    HistogramWriter::write(massBeforePog, "m_vis_tautau_before_pog", 100, 0, 500,
                            "outputs/tau_pog_mass.root", "RECREATE");
+    HistogramWriter::write(massAfterPog, "m_vis_tautau_after_pog", 100, 0, 500,
+                           "outputs/tau_pog_mass.root", "UPDATE");
 }
