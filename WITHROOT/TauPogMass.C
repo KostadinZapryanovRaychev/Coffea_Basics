@@ -1,7 +1,6 @@
 #include "TauPogMass.h"
 #include <algorithm>
 #include <cmath>
-#include <fstream>
 #include <iostream>
 #include <vector>
 #include "TTreeReader.h"
@@ -57,6 +56,14 @@ namespace
     {
         return pt > 20.0 && std::abs(eta) < 2.5 && std::abs(dz) < 0.2;
     }
+
+    // One kept event: its entry number + the taus that passed the POG
+    // selection in it.
+    struct SelectedEvent
+    {
+        Long64_t id;
+        std::vector<Tau> taus;
+    };
 }
 
 void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
@@ -65,11 +72,7 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     (void)debug;
     (void)inputFilePath;
 
-    // ==================================================================
-    // STEP 1 -- enable the branches we need.
-    // With TTreeReader, binding a TTreeReaderArray to a branch name is
-    // what enables it: only these branches are read from disk.
-    // ==================================================================
+    // ---- enable branches ----
     TTreeReader reader(Events);
     TTreeReaderArray<Float_t> tauPt(reader, "Tau_pt");
     TTreeReaderArray<Float_t> tauEta(reader, "Tau_eta");
@@ -78,13 +81,7 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
     TTreeReaderArray<Float_t> tauDz(reader, "Tau_dz");
     TTreeReaderArray<Short_t> tauCharge(reader, "Tau_charge");
 
-    // ==================================================================
-    // STEP 2 -- keep only events that have at least 2 tau candidates.
-    // Raw count, before any quality selection: a cheap pre-filter that
-    // skips events which can never give a di-tau pair. The entry number
-    // of every surviving event is stored in keptEvents (and written out
-    // to a text file for inspection).
-    // ==================================================================
+    // keptEvents: all events with >= 2 taus and at least one of each charge
     std::vector<Long64_t> keptEvents;
     Long64_t nEventsSeen = 0;
 
@@ -96,61 +93,91 @@ void TauPogMass::run(TTree *Events, Bool_t debug, Long64_t maxEvents,
         }
         ++nEventsSeen;
 
-        if (tauPt.GetSize() >= 2)
+        const size_t nRawTaus = tauPt.GetSize();
+        if (nRawTaus < 2)
+        {
+            continue;
+        }
+
+        bool hasMinus = false;
+        bool hasPlus = false;
+        for (size_t j = 0; j < nRawTaus; ++j)
+        {
+            if (tauCharge[j] < 0)
+            {
+                hasMinus = true;
+            }
+            else if (tauCharge[j] > 0)
+            {
+                hasPlus = true;
+            }
+        }
+
+        if (hasMinus && hasPlus)
         {
             keptEvents.push_back(reader.GetCurrentEntry());
         }
     }
 
-    // ==================================================================
-    // STEP 3 + STEP 4 -- only over the events STEP 2 kept:
-    //   STEP 3: apply the Tau POG selection to each tau candidate.
-    //   STEP 4: from the selected taus, take the best di-tau pair --
-    //           the highest-pT tau of each charge, i.e. the leading
-    //           opposite-sign pair -- and reconstruct its invariant mass.
-    // Events without a valid opposite-sign selected pair are dropped.
-    // ==================================================================
-    std::vector<double> masses;
+    // tauPogRecommended: all events with >= 2 taus that pass the POG
+    // baseline selection (pT > 20, |eta| < 2.5, |dz| < 0.2) and at least one of each charge
+    std::vector<SelectedEvent> tauPogRecommended;
 
     for (Long64_t id : keptEvents)
     {
         reader.SetEntry(id);
 
-        Tau leadingMinus{};
-        Tau leadingPlus{};
-        bool haveMinus = false;
-        bool havePlus = false;
-
+        std::vector<Tau> selected;
+        bool hasMinus = false;
+        bool hasPlus = false;
         for (size_t j = 0; j < tauPt.GetSize(); ++j)
         {
-
             if (!passesTauPogSelection(tauPt[j], tauEta[j], tauDz[j]))
             {
                 continue;
             }
-
             Tau t{tauPt[j], tauEta[j], tauPhi[j], tauMass[j], tauCharge[j]};
-
-            if (t.charge < 0 && (!haveMinus || t.pt > leadingMinus.pt))
+            selected.push_back(t);
+            if (t.charge < 0)
             {
-                leadingMinus = t;
-                haveMinus = true;
+                hasMinus = true;
             }
-            else if (t.charge > 0 && (!havePlus || t.pt > leadingPlus.pt))
+            else if (t.charge > 0)
             {
-                leadingPlus = t;
-                havePlus = true;
+                hasPlus = true;
             }
         }
 
-        if (haveMinus && havePlus)
+        if (selected.size() >= 2 && hasMinus && hasPlus)
         {
-            masses.push_back(invariantMass(leadingMinus, leadingPlus));
+            tauPogRecommended.push_back({id, selected});
         }
     }
 
-    std::cout << "STEP 4: " << masses.size()
-              << " events with a valid opposite-sign selected di-tau pair." << std::endl;
+    // reconstruct the invariant mass of the two leading taus in each event
+    std::vector<double> masses;
+
+    for (const SelectedEvent &ev : tauPogRecommended)
+    {
+        const Tau *leadingMinus = nullptr;
+        const Tau *leadingPlus = nullptr;
+        for (const Tau &t : ev.taus)
+        {
+            if (t.charge < 0 && (leadingMinus == nullptr || t.pt > leadingMinus->pt))
+            {
+                leadingMinus = &t;
+            }
+            else if (t.charge > 0 && (leadingPlus == nullptr || t.pt > leadingPlus->pt))
+            {
+                leadingPlus = &t;
+            }
+        }
+
+        if (leadingMinus != nullptr && leadingPlus != nullptr)
+        {
+            masses.push_back(invariantMass(*leadingMinus, *leadingPlus));
+        }
+    }
 
     HistogramWriter::write(masses, "m_vis_tautau", 300, 0, 3000,
                            "outputs/tau_pog_mass.root", "RECREATE");

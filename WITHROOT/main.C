@@ -30,16 +30,7 @@ int main()
     // Use all events in the file.
     const Long64_t maxEvents = Events->GetEntries();
 
-    // ======================================================================
-    // Only TauPogMass runs: the Tau POG Run-3 baseline tau selection
-    // (pT > 20, |eta| < 2.5, |dz| < 0.2 -- nothing else), then the mass
-    // of the two leading taus in every event with >= 2 of them.
-    //
-    // The other modules (TauHadHadRecoMass, TauHadHadDataMass,
-    // TauChannelAnalysis, TauLHEKinematics, TauGenParticleKinematics)
-    // still exist as separate files and can be added back with one call
-    // each -- see git history.
-    // ======================================================================
+    // Run the Tau POG mass reconstruction.
     TauPogMass::run(Events, debug, maxEvents, config.inputFile);
 
     return 0;
