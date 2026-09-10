@@ -14,6 +14,8 @@
 #include "MassPointUtils.h"
 #include "TauHadHadRecoMass.C"
 #include "TauHadHadRecoMass.h"
+#include "TauHadHadDataMass.C"
+#include "TauHadHadDataMass.h"
 
 int main()
 {
@@ -37,14 +39,20 @@ int main()
     const Long64_t maxEvents = Events->GetEntries();
 
     // ======================================================================
-    // Only the tau_h tau_h reconstructed-mass module runs for now (see
-    // TauHadHadRecoMass.h). It doesn't depend on TauChannelAnalysis,
-    // TauLHEKinematics, or TauGenParticleKinematics -- each analysis
-    // module is self-contained (its own branch enabling through
-    // plotting), so those three still exist as separate files and can be
-    // added back here later with one call each, same as this one.
+    // Two tau_h tau_h m_rec modules:
+    //   TauHadHadRecoMass  -- TRUTH level, uses GenVisTau. Only works on
+    //                         MC (real data has no generator objects).
+    //   TauHadHadDataMass  -- RECONSTRUCTED level, uses the Tau collection
+    //                         + HLT trigger + full tau selection. Works on
+    //                         both MC and real data (e.g. the CMS dataset
+    //                         /Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD).
+    // On an MC file both run, so truth m_rec and reco m_rec can be
+    // compared. On real data only TauHadHadDataMass produces a meaningful
+    // result -- TauHadHadRecoMass just prints "branch not found" and an
+    // empty histogram, harmless.
     // ======================================================================
     TauHadHadRecoMass::run(Events, debug, maxEvents, config.inputFile);
+    TauHadHadDataMass::run(Events, debug, maxEvents, config.inputFile);
 
     return 0;
 }

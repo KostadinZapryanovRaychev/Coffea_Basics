@@ -5,6 +5,10 @@ DEBUG=1 root -l -q main.C - if we want to print
 "inputFile": "../nanoaodsim_coffea_1.root"
 }
 
+{
+"inputFile": "../nanoaodsim_coffea_1.root"
+}
+
 What is NANOAOD
 https://indico.cern.ch/event/708041/papers/3276172/files/8621-nanoaod_acat19_v2.pdf
 
@@ -501,4 +505,141 @@ No. It's a purity-maximizing selection, not a certainty:
 
   ​
 
-  ​
+  ​/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD
+
+  data_tier_name:"NANOAOD"
+  modification_time:1741034371
+  modified_by:"/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cmsunified/CN=658085/CN=Robot: CMS Unified account"
+  creation_date:1737132344
+  dataset_id:15216132
+  name:"/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"
+  physics_group_name:"NoGroup"
+  primary_dataset.name:"Tau"
+  xtcrosssection:0
+  primary_ds_name:"Tau"
+  create_by:"WMAgent"
+  dataset_access_type:"VALID"
+  status:"VALID"
+  acquisition_era_name:"Run2024C"
+  last_modification_date:1741034371
+  processed_ds_name:"Run2024C-2024CDEReprocessing-v1"
+  prep_id:"ReReco-Run2024C-Tau-2024CDEReprocessing-00001"
+  creation_time:1737132344
+  created_by:"WMAgent"
+  datatype:"data"
+  primary_ds_type:"data"
+  last_modified_by:"/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cmsunified/CN=658085/CN=Robot: CMS Unified account"
+  processing_version:1
+
+Dataset: /Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD
+Dataset size: 77820791067 (77.8GB) Number of blocks: 15 Number of events: 50839148 Number of files: 74 Dataset size: 7.7820791067e+10 (77.8GB) Creation time: 2025-01-17 16:45:44 Cross section: 0 Physics group: NoGroup Status: VALID Type: data
+Release, Blocks, Files, Runs, Configs, Parents, Children, Sites, Origin sites, Physics Groups XSDB Sources: dbs3rucio hide
+DAS service: dbs3 DAS api: filesummaries
+median_cdate:1737309579
+nfiles:74
+num_lumi:24600
+name:[]interface {}{"/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"}
+size:77820791067
+num_file:74
+nblocks:15
+nevents:50839148
+median_ldate:1737309579
+nlumis:24600
+max_ldate:1738017634
+
+DAS service: rucio DAS api: dataset4dataset
+states:mongo.DASRecord{"T1_IT_CNAF_Tape":"AVAILABLE",
+"T1_UK_RAL_Disk":"AVAILABLE",
+"T1_US_FNAL_Disk":"AVAILABLE",
+"T1_US_FNAL_Tape_Test":"AVAILABLE",
+"T2_FR_GRIF":"AVAILABLE",
+"T2_KR_KISTI":"AVAILABLE",
+"T2_UA_KIPT":"AVAILABLE",
+"T2_UK_London_IC":"AVAILABLE",
+"T2_US_Caltech":"AVAILABLE"}
+rses:mongo.DASRecord{"T1_IT_CNAF_Tape":[]interface {}{},
+"T1_UK_RAL_Disk":[]interface {}{},
+"T1_US_FNAL_Disk":[]interface {}{},
+"T1_US_FNAL_Tape_Test":[]interface {}{},
+"T2_FR_GRIF":[]interface {}{},
+"T2_KR_KISTI":[]interface {}{},
+"T2_UA_KIPT":[]interface {}{},
+"T2_UK_London_IC":[]interface {}{},
+"T2_US_Caltech":[]interface {}{}}
+bytes:77820791067
+available_bytes:77820791067
+length:74
+nblocks:15
+available_length:74
+size:77820791067
+name:"/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"
+
+DAS service: dbs3 DAS api: dataset_info
+modification_time:1741034371
+last_modified_by:"/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cmsunified/CN=658085/CN=Robot: CMS Unified account"
+processed_ds_name:"Run2024C-2024CDEReprocessing-v1"
+name:"/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"
+prep_id:"ReReco-Run2024C-Tau-2024CDEReprocessing-00001"
+xtcrosssection:0
+create_by:"WMAgent"
+data_tier_name:"NANOAOD"
+last_modification_date:1741034371
+dataset_access_type:"VALID"
+primary_ds_type:"data"
+acquisition_era_name:"Run2024C"
+processing_version:1
+status:"VALID"
+modified_by:"/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cmsunified/CN=658085/CN=Robot: CMS Unified account"
+created_by:"WMAgent"
+physics_group_name:"NoGroup"
+datatype:"data"
+creation_time:1737132344
+dataset_id:15216132
+creation_date:1737132344
+primary_ds_name:"Tau"
+primary_dataset.name:"Tau"
+
+DAS service: dbs3 DAS api: dataset_info
+modified_by:"/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cmsunified/CN=658085/CN=Robot: CMS Unified account"
+data_tier_name:"NANOAOD"
+dataset_access_type:"VALID"
+status:"VALID"
+create_by:"WMAgent"
+processing_version:1
+acquisition_era_name:"Run2024C"
+xtcrosssection:0
+creation_date:1737132344
+primary_dataset.name:"Tau"
+last_modified_by:"/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cmsunified/CN=658085/CN=Robot: CMS Unified account"
+last_modification_date:1741034371
+primary_ds_name:"Tau"
+created_by:"WMAgent"
+datatype:"data"
+processed_ds_name:"Run2024C-2024CDEReprocessing-v1"
+dataset_id:15216132
+name:"/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"
+prep_id:"ReReco-Run2024C-Tau-2024CDEReprocessing-00001"
+primary_ds_type:"data"
+modification_time:1741034371
+physics_group_name:"NoGroup"
+creation_time:1737132344
+
+DAS service: dbs3 DAS api: datasetlist
+dataset_id:15216132
+dataset_access_type:"VALID"
+primary_ds_type:"data"
+data_tier_name:"NANOAOD"
+creation_date:1737132344
+acquisition_era_name:"Run2024C"
+physics_group_name:"NoGroup"
+primary_ds_name:"Tau"
+processing_version:1
+last_modification_date:1741034371
+prep_id:"ReReco-Run2024C-Tau-2024CDEReprocessing-00001"
+xtcrosssection:0
+last_modified_by:"/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=cmsunified/CN=658085/CN=Robot: CMS Unified account"
+create_by:"WMAgent"
+processed_ds_name:"Run2024C-2024CDEReprocessing-v1"
+name:"/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"
+
+dasgoclient -query="dataset=/Tau/Run2024C-2024CDEReprocessing-v1/NANOAOD"
