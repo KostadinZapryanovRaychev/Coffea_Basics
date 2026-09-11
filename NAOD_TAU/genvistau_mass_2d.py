@@ -67,8 +67,8 @@ mass = zPrime.mass
 lead_pt = np.maximum(tau1.pt, tau2.pt)
 
 h2 = hist.Hist(
-    hist.axis.Regular(100, 0.0, 500.0, name="mass", label="m(tau tau) [GeV], pz_miss=0"),
-    hist.axis.Regular(100, 0.0, 500.0, name="leadpt", label="leading GenVisTau p_{T} [GeV]"),
+    hist.axis.Regular(100, 0.0, 300.0, name="mass", label="m(tau tau) [GeV], pz_miss=0"),
+    hist.axis.Regular(100, 0.0, 300.0, name="leadpt", label="leading GenVisTau p_{T} [GeV]"),
 )
 h2.fill(mass=ak.flatten(mass), leadpt=ak.flatten(lead_pt))
 

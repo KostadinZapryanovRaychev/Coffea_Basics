@@ -51,8 +51,8 @@ print(f"{n_pairs} opposite-sign tau pairs")
 
 # 2) 2D histogram: mass (x) vs leading tau pT (y)
 h2 = hist.Hist(
-    hist.axis.Regular(100, 0.0, 500.0, name="mass", label="m(tau tau) [GeV]"),
-    hist.axis.Regular(100, 0.0, 500.0, name="leadpt", label="leading tau p_{T} [GeV]"),
+    hist.axis.Regular(100, 0.0, 300.0, name="mass", label="m(tau tau) [GeV]"),
+    hist.axis.Regular(100, 0.0, 300.0, name="leadpt", label="leading tau p_{T} [GeV]"),
 )
 h2.fill(mass=ak.flatten(ditau_mass), leadpt=ak.flatten(lead_pt))
 
