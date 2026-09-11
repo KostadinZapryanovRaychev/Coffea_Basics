@@ -62,3 +62,5 @@ with uproot.recreate(out_file) as f_out:
     f_out["h2_mass_vs_leadpt"] = h2
 
 print(f"wrote {out_file}")
+print('to view with only "Entries" in the stat box, in ROOT run:')
+print('  gStyle->SetOptStat("e"); h2_mass_vs_leadpt->Draw("COLZ");')
