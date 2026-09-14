@@ -7,6 +7,7 @@ if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 from NAOD_TAU.helpers.io import load_events
+from NAOD_TAU.helpers.config import load_config, get_enabled_root_files
 from NAOD_TAU.helpers.lhe import (
     select_lhe_tau_pairs,
     get_lhe_tau,
@@ -20,7 +21,6 @@ from NAOD_TAU.helpers.histograms import (
     save_histograms,
 )
 
-TEST_ROOT_FILE = Path(__file__).resolve().parents[1] / "nanoaodsim_coffea_1.root"
 OUTPUT_ROOT_FILE = Path(__file__).resolve().parent / "outputs" / "lhe_histograms.root"
 
 
@@ -47,7 +47,9 @@ def build_lhe_histograms(events):
 
 
 def main():
-    events = load_events(str(TEST_ROOT_FILE))
+    config = load_config()
+    root_file = get_enabled_root_files(config)[0]
+    events = load_events(root_file["path"], tree_name=root_file["tree"])
     histograms = build_lhe_histograms(events)
 
     OUTPUT_ROOT_FILE.parent.mkdir(parents=True, exist_ok=True)
