@@ -4,6 +4,8 @@ Project available on
 
 /eos/user/k/kraychev/Coffea_Basics
 
+ls -la /eos/cms/store/data/Run2024C/Tau/NANOAOD/2024CDEReprocessing-v1/140000/
+
 ```bash
 cd ..
 bash NAOD_TAU/setup_option_b_venv.sh
