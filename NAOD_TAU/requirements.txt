@@ -9,6 +9,11 @@ matplotlib>=3.5
 # ROOT and Coffea framework
 uproot>=5.0
 coffea>=0.7.0
+hist>=2.0
+
+# Remote xrootd access (root:// URLs, CMS grid sites)
+fsspec-xrootd
+xrootd
 
 # Additional utilities
 pytest>=7.0

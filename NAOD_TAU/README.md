@@ -69,3 +69,7 @@ The Plan 17.07.26
 2. To start using Root and Python and to compare the results from both
 3. To Figure out what we have and what we can do with this
 4. To save all the results in root files ( C files )
+
+/Tau/Run2024D-MINIv6NANOv15-v1/NANOAOD
+
+"/eos/cms/store/data/Run2018A/Tau/NANOAOD/Nano25Oct2019-v1/230000/02785FC8-0354-A04D-8996-3AD8D18DCF7A.root"
