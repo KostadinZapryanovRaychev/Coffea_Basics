@@ -2,7 +2,7 @@
   "root_files": [
     {
       "name": "ZprimeTo2Tau_coffea_1",
-      "path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000/nanoaodsim_coffea_1.root",
+      "path": "/eos/cms/store/data/Run2018A/Tau/NANOAOD/Nano25Oct2019-v1/230000/02785FC8-0354-A04D-8996-3AD8D18DCF7A.root",
       "tree": "Events",
       "description": "Hipotethical Particle - File 1 from lxplus EOS",
       "enabled": true
