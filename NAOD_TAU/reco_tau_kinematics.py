@@ -21,6 +21,7 @@ OUTPUT_ROOT_FILE = Path(__file__).resolve().parent / "outputs" / "reco_tau_kinem
 DELTA_PHI_MIN = 2.5
 TAU_PT_MIN = 20.0
 TAU_ETA_MAX = 2.3
+PAIR_PZ_MAX = 300.0
 
 
 def select_events_with_two_taus(taus):
@@ -53,6 +54,11 @@ def select_kinematic_pairs(tau, antitau):
     return tau[mask], antitau[mask]
 
 
+def select_pz_pairs(tau, antitau):
+    mask = abs(compute_pz(tau, antitau)) < PAIR_PZ_MAX
+    return tau[mask], antitau[mask]
+
+
 def compute_pair_kinematics(events):
     taus = get_tau_collection(events)
     taus = select_events_with_two_taus(taus)
@@ -60,6 +66,7 @@ def compute_pair_kinematics(events):
     tau, antitau = select_opposite_sign_pairs(tau, antitau)
     tau, antitau = select_back_to_back_pairs(tau, antitau)
     tau, antitau = select_kinematic_pairs(tau, antitau)
+    tau, antitau = select_pz_pairs(tau, antitau)
 
     delta_phi = compute_delta_phi(tau, antitau)
 

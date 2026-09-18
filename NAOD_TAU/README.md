@@ -155,3 +155,17 @@ simple analysis for check
 /store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/870a8b9c-853e-4f80-b289-e869a82a02ef.root
 /store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/10132535-1c6c-44b8-ae7b-4233289e6e88.root
 /store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/cec64127-dbc0-4332-b6b2-d5d9635154fd.root
+
+pz — longitudinal momentum of the τ⁻τ⁺ system, role: sanity/bias check, not a discriminator
+
+pz = pz(τ) + pz(τ̄). Physically: inside each proton, the two colliding partons (quarks/gluons) each carry some fraction of the proton's momentum (x₁, x₂), and these fractions are essentially never equal. Whatever momentum imbalance exists gets inherited by the resonance, so the τ⁻τ⁺ system is usually boosted along the beam (z) axis by some amount — that boost is pz.
+
+What role does it play in our analysis specifically? It's not something we cut on or search in — it's a consistency/bias check:
+
+It should come out symmetric around 0 in a proton-proton collider (LHC collides identical beams head-on, so there's no preferred direction — as much chance of boost toward +z as −z). Our result showed exactly that (mean ≈ −3.6, essentially zero within the spread) — that tells us there's no accidental left-right bias baked into our event selection, reading, or reconstruction.
+If it came out skewed (e.g. consistently positive), that would be a red flag — either a real physics effect worth investigating, or more likely a bug (e.g. accidentally always labeling the same detector-side tau as "tau" vs "antitau").
+It's also potentially useful later for more advanced techniques (e.g. some neutrino-recovery methods used for tau decays boost into the ditau rest frame using this quantity), but we're not using it that way yet — right now it's purely a validation plot.
+
+Δr — combined angular separation, role: confirms we're in the "resolved pair" regime
+
+Δr = √(Δη² + Δφ²). It tells us how far apart, in a boost-invariant angular sense, the two taus land in the detector. A large Δr (which is what we saw — peaked near π ≈ 3.14) means the two taus are well-separated, reconstructible as two distinct objects with standard techniques — exactly the assumption our whole pipeline (select_leading_tau_pair, separate pt/eta cuts on each) relies on. If Δr were small (collimated pair), that would mean the resonance is highly boosted and the taus start to merge — a completely different (harder) reconstruction problem we're not handling. So its role here: confirms the resolved-pair assumption underlying this analysis is valid for the events we kept.
