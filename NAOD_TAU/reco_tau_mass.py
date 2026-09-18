@@ -74,7 +74,7 @@ def compute_pair_kinematics(events):
 
 def build_histograms(kinematics):
     return {
-        "reco_tau_mass": make_1d_histogram("mass", kinematics["mass"], 100, 0, 2000),
+        "reco_tau_mass": make_1d_histogram("mass", kinematics["mass"], 100, 0, 500),
         "reco_tau_pz": make_1d_histogram("pz", kinematics["pz"], 100, -500, 500),
         "reco_tau_delta_r": make_1d_histogram("delta_r", kinematics["delta_r"], 64, 0, 6),
         "reco_tau_cos_delta_phi": make_1d_histogram("cos_delta_phi", kinematics["cos_delta_phi"], 100, -1, 1),
