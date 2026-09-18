@@ -14,6 +14,7 @@ from NAOD_TAU.helpers.config import load_config, get_enabled_root_files
 from NAOD_TAU.helpers.tau_collections.reader import get_tau_collection
 from NAOD_TAU.helpers.mass import compute_invariant_mass
 from NAOD_TAU.helpers.lhe.angles import compute_delta_phi
+from NAOD_TAU.helpers.kinematics import compute_pz, compute_delta_r, compute_cos_delta_phi
 from NAOD_TAU.helpers.histograms import make_1d_histogram, save_histograms
 
 OUTPUT_ROOT_FILE = Path(__file__).resolve().parent / "outputs" / "reco_tau_mass.root"
@@ -52,7 +53,7 @@ def select_kinematic_pairs(tau, antitau):
     return tau[mask], antitau[mask]
 
 
-def compute_pair_mass(events):
+def compute_pair_kinematics(events):
     taus = get_tau_collection(events)
     taus = select_events_with_two_taus(taus)
     tau, antitau = select_leading_tau_pair(taus)
@@ -60,39 +61,50 @@ def compute_pair_mass(events):
     tau, antitau = select_back_to_back_pairs(tau, antitau)
     tau, antitau = select_kinematic_pairs(tau, antitau)
 
-    return compute_invariant_mass(tau, antitau).to_numpy()
-
-
-def build_histograms(mass):
-    mass_h = make_1d_histogram("mass", mass, 100, 0, 300)
+    delta_phi = compute_delta_phi(tau, antitau)
 
     return {
-        "reco_tau_mass": mass_h,
+        "mass": compute_invariant_mass(tau, antitau).to_numpy(),
+        "pz": compute_pz(tau, antitau).to_numpy(),
+        "delta_r": compute_delta_r(tau, antitau).to_numpy(),
+        "cos_delta_phi": compute_cos_delta_phi(delta_phi).to_numpy(),
+        "tau_eta": ak.concatenate([tau.eta, antitau.eta]).to_numpy(),
     }
 
 
-def collect_mass_from_files(root_files):
-    all_mass = []
+def build_histograms(kinematics):
+    return {
+        "reco_tau_mass": make_1d_histogram("mass", kinematics["mass"], 100, 0, 300),
+        "reco_tau_pz": make_1d_histogram("pz", kinematics["pz"], 100, -500, 500),
+        "reco_tau_delta_r": make_1d_histogram("delta_r", kinematics["delta_r"], 64, 0, 6),
+        "reco_tau_cos_delta_phi": make_1d_histogram("cos_delta_phi", kinematics["cos_delta_phi"], 100, -1, 1),
+        "reco_tau_eta": make_1d_histogram("eta", kinematics["tau_eta"], 60, -TAU_ETA_MAX, TAU_ETA_MAX),
+    }
+
+
+def collect_kinematics_from_files(root_files):
+    accumulated = {}
     for root_file in root_files:
         print(f"reading: {root_file['path']}")
         events = load_events(root_file["path"], tree_name=root_file["tree"])
 
-        mass = compute_pair_mass(events)
-        print(f"{root_file['name']}: {mass.shape[0]} good pairs")
+        kinematics = compute_pair_kinematics(events)
+        print(f"{root_file['name']}: {kinematics['mass'].shape[0]} good pairs")
 
-        all_mass.append(mass)
+        for key, values in kinematics.items():
+            accumulated.setdefault(key, []).append(values)
 
-    return np.concatenate(all_mass)
+    return {key: np.concatenate(values) for key, values in accumulated.items()}
 
 
 def main():
     config = load_config()
     root_files = get_enabled_root_files(config)
 
-    mass = collect_mass_from_files(root_files)
-    print(f"total good pairs across all files: {mass.shape[0]}")
+    kinematics = collect_kinematics_from_files(root_files)
+    print(f"total good pairs across all files: {kinematics['mass'].shape[0]}")
 
-    histograms = build_histograms(mass)
+    histograms = build_histograms(kinematics)
 
     OUTPUT_ROOT_FILE.parent.mkdir(parents=True, exist_ok=True)
     save_histograms(str(OUTPUT_ROOT_FILE), histograms)
