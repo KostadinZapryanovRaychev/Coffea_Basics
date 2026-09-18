@@ -7,6 +7,7 @@ if __package__ is None or __package__ == "":
     sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 import awkward as ak
+import numpy as np
 
 from NAOD_TAU.helpers.io import load_events
 from NAOD_TAU.helpers.config import load_config, get_enabled_root_files
@@ -51,7 +52,7 @@ def select_kinematic_pairs(tau, antitau):
     return tau[mask], antitau[mask]
 
 
-def build_histograms(events):
+def compute_pair_mass(events):
     taus = get_tau_collection(events)
     taus = select_events_with_two_taus(taus)
     tau, antitau = select_leading_tau_pair(taus)
@@ -59,9 +60,10 @@ def build_histograms(events):
     tau, antitau = select_back_to_back_pairs(tau, antitau)
     tau, antitau = select_kinematic_pairs(tau, antitau)
 
-    mass = compute_invariant_mass(tau, antitau).to_numpy()
-    print(f"mass array: {mass.shape}, first values: {mass[:5]}")
+    return compute_invariant_mass(tau, antitau).to_numpy()
 
+
+def build_histograms(mass):
     mass_h = make_1d_histogram("mass", mass, 100, 0, 300)
 
     return {
@@ -69,13 +71,28 @@ def build_histograms(events):
     }
 
 
+def collect_mass_from_files(root_files):
+    all_mass = []
+    for root_file in root_files:
+        print(f"reading: {root_file['path']}")
+        events = load_events(root_file["path"], tree_name=root_file["tree"])
+
+        mass = compute_pair_mass(events)
+        print(f"{root_file['name']}: {mass.shape[0]} good pairs")
+
+        all_mass.append(mass)
+
+    return np.concatenate(all_mass)
+
+
 def main():
     config = load_config()
-    root_file = get_enabled_root_files(config)[0]
-    print(f"reading: {root_file['path']}")
+    root_files = get_enabled_root_files(config)
 
-    events = load_events(root_file["path"], tree_name=root_file["tree"])
-    histograms = build_histograms(events)
+    mass = collect_mass_from_files(root_files)
+    print(f"total good pairs across all files: {mass.shape[0]}")
+
+    histograms = build_histograms(mass)
 
     OUTPUT_ROOT_FILE.parent.mkdir(parents=True, exist_ok=True)
     save_histograms(str(OUTPUT_ROOT_FILE), histograms)

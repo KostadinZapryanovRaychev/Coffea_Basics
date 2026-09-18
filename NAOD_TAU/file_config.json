@@ -1,15 +1,14 @@
 {
   "root_files": [
     {
-      "name": "Tau_Run2024D_real_data_1",
-      "path": "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/0019cbeb-f99c-4a57-a911-5f72f5d9de28.root",
+      "name": "Tau_Run2024D_real_data",
+      "paths": [
+        "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/0019cbeb-f99c-4a57-a911-5f72f5d9de28.root"
+      ],
       "tree": "Events",
       "description": "Real Tau primary dataset, Run2024D, via CMS global xrootd redirector",
       "enabled": true
     }
   ],
-  "notes": "✓ ACTIVE CONFIG - Remote EOS files from lxplus. Absolute paths to /eos/cms/store/. Used by mc_tau_analysis.py. Set 'enabled': true/false to include/exclude files. Multiple enabled files will be processed in sequence and combined."
+  "notes": "✓ ACTIVE CONFIG - Remote xrootd files. Each entry's 'paths' is a list of ROOT files processed and combined together. Set 'enabled': true/false to include/exclude an entry."
 }
-
-
-
