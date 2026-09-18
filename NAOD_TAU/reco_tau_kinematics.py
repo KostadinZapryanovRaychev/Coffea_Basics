@@ -17,7 +17,7 @@ from NAOD_TAU.helpers.lhe.angles import compute_delta_phi
 from NAOD_TAU.helpers.kinematics import compute_pz, compute_delta_r, compute_cos_delta_phi
 from NAOD_TAU.helpers.histograms import make_1d_histogram, save_histograms
 
-OUTPUT_ROOT_FILE = Path(__file__).resolve().parent / "outputs" / "reco_tau_mass.root"
+OUTPUT_ROOT_FILE = Path(__file__).resolve().parent / "outputs" / "reco_tau_kinematics.root"
 DELTA_PHI_MIN = 2.5
 TAU_PT_MIN = 20.0
 TAU_ETA_MAX = 2.3
