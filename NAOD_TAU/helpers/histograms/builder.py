@@ -1,6 +1,13 @@
 import hist
 
 
+def compute_auto_range(values, padding=0.1):
+    low = values.min()
+    high = values.max()
+    span = high - low
+    return low - padding * span, high + padding * span
+
+
 def make_1d_histogram(name, values, bins, low, high):
     h = hist.Hist.new.Reg(bins, low, high, name=name).Weight()
     h.fill(**{name: values})
