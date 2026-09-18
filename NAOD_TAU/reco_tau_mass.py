@@ -17,6 +17,8 @@ from NAOD_TAU.helpers.histograms import make_1d_histogram, save_histograms
 
 OUTPUT_ROOT_FILE = Path(__file__).resolve().parent / "outputs" / "reco_tau_mass.root"
 DELTA_PHI_MIN = 2.5
+TAU_PT_MIN = 20.0
+TAU_ETA_MAX = 2.3
 
 
 def build_tau_pairs(taus):
@@ -36,11 +38,20 @@ def select_back_to_back_pairs(tau, antitau):
     return tau[mask], antitau[mask]
 
 
+def select_kinematic_pairs(tau, antitau):
+    mask = (
+        (tau.pt > TAU_PT_MIN) & (antitau.pt > TAU_PT_MIN)
+        & (abs(tau.eta) < TAU_ETA_MAX) & (abs(antitau.eta) < TAU_ETA_MAX)
+    )
+    return tau[mask], antitau[mask]
+
+
 def build_histograms(events):
     taus = get_tau_collection(events)
     tau, antitau = build_tau_pairs(taus)
     tau, antitau = select_opposite_sign_pairs(tau, antitau)
     tau, antitau = select_back_to_back_pairs(tau, antitau)
+    tau, antitau = select_kinematic_pairs(tau, antitau)
 
     mass = ak.flatten(compute_invariant_mass(tau, antitau)).to_numpy()
     print(f"mass array: {mass.shape}, first values: {mass[:5]}")
