@@ -93,9 +93,6 @@ simple analysis for check
 
 [kraychev@lxplus924 store]$ dasgoclient -query="file dataset=/Tau/Run2024D-MINIv6NANOv15-v1/NANOAOD" | grep '/120000/'
 
-/store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/2086bc7e-93fd-43a0-b768-206a78dc7688.root
-/store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/cb3f442a-0549-47cb-8f2a-ed8542989887.root
-/store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/d9e19696-586f-4161-84fc-b0932c35f5ae.root
 /store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/e8393d52-174a-4cde-bb15-0f98571d0b33.root
 /store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/d0e3a051-2fc4-49f1-b6e7-25fd936e0101.root
 /store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/77bd2cd8-3ea1-48b5-b280-981000b45879.root
