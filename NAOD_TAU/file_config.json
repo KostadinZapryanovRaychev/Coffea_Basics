@@ -1,10 +1,10 @@
 {
   "root_files": [
     {
-      "name": "ZprimeTo2Tau_coffea_1",
-      "path": "/eos/cms/store/data/Run2018A/Tau/NANOAOD/Nano25Oct2019-v1/230000/02785FC8-0354-A04D-8996-3AD8D18DCF7A.root",
+      "name": "Tau_Run2024D_real_data_1",
+      "path": "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/2086bc7e-93fd-43a0-b768-206a78dc7688.root",
       "tree": "Events",
-      "description": "Hipotethical Particle - File 1 from lxplus EOS",
+      "description": "Real Tau primary dataset, Run2024D, via CMS global xrootd redirector",
       "enabled": true
     }
   ],
