@@ -12,7 +12,7 @@ from NAOD_TAU.helpers.io import load_events
 from NAOD_TAU.helpers.config import load_config, get_enabled_root_files
 from NAOD_TAU.helpers.tau_collections.reader import get_tau_collection
 from NAOD_TAU.helpers.lhe.angles import compute_delta_phi
-from NAOD_TAU.helpers.histograms import make_1d_histogram, compute_auto_range, save_histograms
+from NAOD_TAU.helpers.histograms import make_1d_histogram, save_histograms
 
 OUTPUT_ROOT_FILE = Path(__file__).resolve().parent / "outputs" / "reco_tau_dphi_pt.root"
 
@@ -40,9 +40,7 @@ def build_histograms(events):
     print(f"pt array: {pt.shape}, first values: {pt[:5]}")
 
     delta_phi_h = make_1d_histogram("delta_phi", delta_phi, 64, -3.2, 3.2)
-
-    pt_low, pt_high = compute_auto_range(pt)
-    pt_h = make_1d_histogram("pt", pt, 100, pt_low, pt_high)
+    pt_h = make_1d_histogram("pt", pt, 100, 0, 300)
 
     return {
         "reco_tau_delta_phi": delta_phi_h,
