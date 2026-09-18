@@ -73,3 +73,5 @@ The Plan 17.07.26
 /Tau/Run2024D-MINIv6NANOv15-v1/NANOAOD
 
 "/eos/cms/store/data/Run2018A/Tau/NANOAOD/Nano25Oct2019-v1/230000/02785FC8-0354-A04D-8996-3AD8D18DCF7A.root"
+
+"root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/0019cbeb-f99c-4a57-a911-5f72f5d9de28.root"
