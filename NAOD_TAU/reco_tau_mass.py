@@ -12,7 +12,11 @@ import numpy as np
 from NAOD_TAU.helpers.io import load_events
 from NAOD_TAU.helpers.config import load_config, get_enabled_root_files
 from NAOD_TAU.helpers.tau_collections.reader import get_tau_collection
-from NAOD_TAU.helpers.mass import compute_invariant_mass, compute_invariant_mass_formula
+from NAOD_TAU.helpers.mass import (
+    compute_invariant_mass,
+    compute_invariant_mass_formula,
+    compute_invariant_mass_neutrino_corrected,
+)
 from NAOD_TAU.helpers.lhe.angles import compute_delta_phi
 from NAOD_TAU.helpers.kinematics import compute_pz, compute_delta_r, compute_cos_delta_phi
 from NAOD_TAU.helpers.histograms import make_1d_histogram, save_histograms
@@ -70,6 +74,7 @@ def compute_pair_kinematics(events):
     return {
         "mass": compute_invariant_mass(tau, antitau).to_numpy(),
         "mass_formula": compute_invariant_mass_formula(tau, antitau).to_numpy(),
+        "mass_formula_neutrino": compute_invariant_mass_neutrino_corrected(tau, antitau).to_numpy(),
         "pz": compute_pz(tau, antitau).to_numpy(),
         "delta_r": compute_delta_r(tau, antitau).to_numpy(),
         "cos_delta_phi": compute_cos_delta_phi(delta_phi).to_numpy(),
@@ -81,6 +86,7 @@ def build_histograms(kinematics):
     return {
         "reco_tau_mass": make_1d_histogram("mass", kinematics["mass"], 100, 0, 500),
         "reco_tau_mass_formula": make_1d_histogram("mass_formula", kinematics["mass_formula"], 100, 0, 500),
+        "reco_tau_mass_formula_neutrino": make_1d_histogram("mass_formula_neutrino", kinematics["mass_formula_neutrino"], 100, 0, 500),
         "reco_tau_pz": make_1d_histogram("pz", kinematics["pz"], 100, -500, 500),
         "reco_tau_delta_r": make_1d_histogram("delta_r", kinematics["delta_r"], 64, 0, 6),
         "reco_tau_cos_delta_phi": make_1d_histogram("cos_delta_phi", kinematics["cos_delta_phi"], 100, -1, 1),
