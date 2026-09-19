@@ -10,7 +10,7 @@ import awkward as ak
 import numpy as np
 
 from NAOD_TAU.helpers.io import load_events
-from NAOD_TAU.helpers.config import load_config, get_enabled_root_files
+from NAOD_TAU.helpers.config import load_config, get_enabled_root_files, DEFAULT_CONFIG_PATH
 from NAOD_TAU.helpers.tau_collections.reader import get_tau_collection
 from NAOD_TAU.helpers.mass import (
     compute_invariant_mass,
@@ -109,8 +109,8 @@ def collect_kinematics_from_files(root_files):
     return {key: np.concatenate(values) for key, values in accumulated.items()}
 
 
-def main():
-    config = load_config()
+def main(config_path=DEFAULT_CONFIG_PATH, output_file=OUTPUT_ROOT_FILE):
+    config = load_config(config_path)
     root_files = get_enabled_root_files(config)
 
     kinematics = collect_kinematics_from_files(root_files)
@@ -119,9 +119,9 @@ def main():
 
     histograms = build_histograms(kinematics)
 
-    OUTPUT_ROOT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    save_histograms(str(OUTPUT_ROOT_FILE), histograms)
-    print(f"wrote {OUTPUT_ROOT_FILE}")
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    save_histograms(str(output_file), histograms)
+    print(f"wrote {output_file}")
 
 
 if __name__ == "__main__":

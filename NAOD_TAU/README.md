@@ -10,7 +10,8 @@ ls -la /eos/cms/store/data/Run2024C/Tau/NANOAOD/2024CDEReprocessing-v1/140000/
 cd ..
 bash NAOD_TAU/setup_option_b_venv.sh
 source .venv_local/bin/activate
-python NAOD_TAU/mc_tau_analysis.py
+python NAOD_TAU/reco_tau_mass.py
+python NAOD_TAU/mc_reco_tau_mass.py
 ```
 
 ## Run
