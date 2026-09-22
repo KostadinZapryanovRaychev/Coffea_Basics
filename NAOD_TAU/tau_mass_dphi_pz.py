@@ -1,65 +1,62 @@
-import json
-import pathlib
+#!/usr/bin/env python3
 
-import awkward as ak
-import numpy as np
-import hist
-import uproot
+from pathlib import Path
+import sys
 
-from coffea.nanoevents import NanoEventsFactory, NanoAODSchema
+if __package__ is None or __package__ == "":
+    sys.path.append(str(Path(__file__).resolve().parents[1]))
 
-_WITHROOT = pathlib.Path(__file__).resolve().parent.parent / "WITHROOT"
-_raw = json.loads((_WITHROOT / "config.json").read_text())["inputFile"]
-fname = _raw if pathlib.Path(_raw).is_absolute() else str((_WITHROOT / _raw).resolve())
-
-factory = NanoEventsFactory.from_root({fname: "Events"}, schemaclass=NanoAODSchema, mode="eager")
-events = factory.events()
-print(f"{len(events)} events in file")
-
-events = events[ak.num(events.Tau) >= 2]
-print(f"{len(events)} events with >= 2 taus")
-
-pairs = ak.combinations(events.Tau, 2, axis=1)
-tau1, tau2 = ak.unzip(pairs)
-os_mask = (tau1.charge * tau2.charge) == -1
-tau1, tau2 = tau1[os_mask], tau2[os_mask]
-
-ditau_mass = (tau1 + tau2).mass
-
-dphi = tau1.delta_phi(tau2)
-cos_dphi = np.cos(dphi)
-
-ditau_pz = tau1.pz + tau2.pz
-
-n_pairs = ak.sum(ak.num(ditau_mass))
-print(f"{n_pairs} opposite-sign tau pairs")
-
-flat_mass = ak.flatten(ditau_mass)
-flat_cos_dphi = ak.flatten(cos_dphi)
-flat_pz = ak.flatten(ditau_pz)
-
-h_mass = hist.Hist(
-    hist.axis.Regular(100, 0.0, 300.0, name="mass", label="m(#tau#tau) [GeV]"),
+from NAOD_TAU.helpers.io import load_events
+from NAOD_TAU.helpers.config import load_config, get_enabled_root_files, DEFAULT_CONFIG_PATH
+from NAOD_TAU.helpers.tau_collections.reader import get_tau_collection
+from NAOD_TAU.helpers.mass import compute_invariant_mass
+from NAOD_TAU.helpers.lhe.angles import compute_delta_phi
+from NAOD_TAU.helpers.kinematics import compute_pz, compute_cos_delta_phi
+from NAOD_TAU.helpers.histograms import make_1d_histogram, make_2d_histogram, save_histograms
+from NAOD_TAU.reco_tau_mass import (
+    select_events_with_two_taus,
+    select_leading_tau_pair,
+    select_opposite_sign_pairs,
 )
-h_mass.fill(mass=flat_mass)
 
-h_mass_vs_cosdphi = hist.Hist(
-    hist.axis.Regular(100, 0.0, 300.0, name="mass", label="m(#tau#tau) [GeV]"),
-    hist.axis.Regular(100, -1.0, 1.0, name="cosdphi", label="cos(#Delta#phi)"),
-)
-h_mass_vs_cosdphi.fill(mass=flat_mass, cosdphi=flat_cos_dphi)
+OUTPUT_ROOT_FILE = Path(__file__).resolve().parent / "outputs" / "tau_mass_dphi_pz.root"
 
-h_pz_vs_cosdphi = hist.Hist(
-    hist.axis.Regular(100, -500.0, 500.0, name="pz", label="p_{z}(#tau#tau) [GeV]"),
-    hist.axis.Regular(100, -1.0, 1.0, name="cosdphi", label="cos(#Delta#phi)"),
-)
-h_pz_vs_cosdphi.fill(pz=flat_pz, cosdphi=flat_cos_dphi)
 
-pathlib.Path("outputs").mkdir(exist_ok=True)
-out_file = "outputs/tau_mass_dphi_pz.root"
-with uproot.recreate(out_file) as f_out:
-    f_out["h_mass_tau"] = h_mass
-    f_out["h_mass_vs_cosdphi_tau"] = h_mass_vs_cosdphi
-    f_out["h_pz_vs_cosdphi_tau"] = h_pz_vs_cosdphi
+def build_histograms(events):
+    taus = select_events_with_two_taus(get_tau_collection(events))
+    tau, antitau = select_leading_tau_pair(taus)
+    tau, antitau = select_opposite_sign_pairs(tau, antitau)
+    print(f"opposite-sign leading pairs: {len(tau)}")
 
-print(f"wrote {out_file}")
+    mass = compute_invariant_mass(tau, antitau).to_numpy()
+    pz = compute_pz(tau, antitau).to_numpy()
+    cos_delta_phi = compute_cos_delta_phi(compute_delta_phi(tau, antitau)).to_numpy()
+
+    return {
+        "reco_tau_mass": make_1d_histogram("mass", mass, 100, 0, 500),
+        "reco_tau_mass_vs_cos_delta_phi": make_2d_histogram(
+            "mass", mass, 100, 0, 500,
+            "cos_delta_phi", cos_delta_phi, 100, -1, 1,
+        ),
+        "reco_tau_pz_vs_cos_delta_phi": make_2d_histogram(
+            "pz", pz, 100, -500, 500,
+            "cos_delta_phi", cos_delta_phi, 100, -1, 1,
+        ),
+    }
+
+
+def main(config_path=DEFAULT_CONFIG_PATH, output_file=OUTPUT_ROOT_FILE):
+    config = load_config(config_path)
+    root_file = get_enabled_root_files(config)[0]
+    print(f"reading: {root_file['path']}")
+
+    events = load_events(root_file["path"], tree_name=root_file["tree"])
+    histograms = build_histograms(events)
+
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    save_histograms(str(output_file), histograms)
+    print(f"wrote {output_file}")
+
+
+if __name__ == "__main__":
+    main()

@@ -40,3 +40,52 @@ Config loadConfig(const std::string &configPath)
 
     return config;
 }
+
+std::vector<RootFileEntry> loadRootFileList(const std::string &configPath)
+{
+    std::vector<RootFileEntry> entries;
+
+    std::ifstream inFile(configPath);
+    if (!inFile.is_open())
+    {
+        std::cerr << "Error: Could not open config file: " << configPath
+                  << std::endl;
+        return entries;
+    }
+
+    nlohmann::json j;
+    try
+    {
+        inFile >> j;
+    }
+    catch (const nlohmann::json::parse_error &e)
+    {
+        std::cerr << "Error: Malformed JSON in " << configPath << ": "
+                  << e.what() << std::endl;
+        return entries;
+    }
+
+    if (!j.contains("root_files"))
+    {
+        std::cerr << "Error: " << configPath
+                  << " is missing required key \"root_files\"." << std::endl;
+        return entries;
+    }
+
+    for (const auto &item : j.at("root_files"))
+    {
+        if (!item.value("enabled", true))
+        {
+            continue;
+        }
+
+        RootFileEntry entry;
+        entry.name = item.value("name", "");
+        entry.path = item.at("path").get<std::string>();
+        entry.tree = item.value("tree", "Events");
+        entry.enabled = true;
+        entries.push_back(entry);
+    }
+
+    return entries;
+}

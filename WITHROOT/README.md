@@ -1,6 +1,43 @@
 root -l -b -q main.C
 DEBUG=1 root -l -q main.C - if we want to print
 
+## RecoTauMassKinematics: reconstructed-Tau mass + kinematics over multiple files
+
+C++ counterpart of `NAOD_TAU/reco_tau_kinematics.py` and `NAOD_TAU/reco_tau_mass.py`,
+combined into one module (`RecoTauMassKinematics.h/.C`). Run it with:
+
+```bash
+root -l -b -q RunRecoTauMassKinematics.C
+```
+
+It reads the files listed in `file_config_reco.json` (same "root_files" format as
+`NAOD_TAU/file_config_batch_all_mass_points.json`: `name`, `path`, `tree`,
+`enabled`), pools every file's surviving tau pairs into one set of histograms, and
+writes them to `outputs/reco_tau_mass_kinematics.root`. Add or disable entries in
+`file_config_reco.json` to run it over a different set of paths.
+
+Selection, per event: take the two leading-pT `Tau` objects, require opposite
+sign, `|Δφ| > 2.5`, both `pT > 20 GeV` and `|η| < 2.3`, and pair `|pz| < 300 GeV`
+— the same cuts as `reco_tau_kinematics.py`.
+
+Histograms written (all 1D, fixed ranges, no per-mass-point scaling — same as
+the python scripts):
+
+- `reco_tau_mass` — invariant mass from `TLorentzVector::M()`.
+- `reco_tau_mass_formula` — the same mass, computed by hand from
+  `E = sqrt(px^2+py^2+pz^2+m^2)`, as a cross-check that it agrees with `.M()`.
+  The macro also prints `max |m_reco - m_reco_formula|` to stdout; it should be
+  at float precision.
+- `reco_tau_mass_formula_neutrino` — the mother boson (Z/Z') mass estimate,
+  adding the missing transverse momentum of the escaping tau neutrinos via
+  Eq. (1) of arXiv:2412.04357 / PRD 111, 112004:
+  `pT_miss = -(pT1_vis + pT2_vis)`, `pz_miss = 0`,
+  `m_rec = sqrt[(E1+E2+|pT_miss|)^2 - (pz1+pz2)^2]`. This should sit closer to
+  the true resonance mass than the other two, since it partially accounts for
+  the neutrinos they both ignore.
+- `reco_tau_pz`, `reco_tau_delta_r`, `reco_tau_cos_delta_phi`, `reco_tau_eta` —
+  pair kinematics, same as the python `reco_tau_kinematics.py` output.
+
 {
 "inputFile": "../nanoaodsim_coffea_1.root"
 }

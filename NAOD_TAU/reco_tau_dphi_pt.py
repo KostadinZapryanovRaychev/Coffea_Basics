@@ -9,7 +9,7 @@ if __package__ is None or __package__ == "":
 import awkward as ak
 
 from NAOD_TAU.helpers.io import load_events
-from NAOD_TAU.helpers.config import load_config, get_enabled_root_files
+from NAOD_TAU.helpers.config import load_config, get_enabled_root_files, DEFAULT_CONFIG_PATH
 from NAOD_TAU.helpers.tau_collections.reader import get_tau_collection
 from NAOD_TAU.helpers.lhe.angles import compute_delta_phi
 from NAOD_TAU.helpers.histograms import make_1d_histogram, save_histograms
@@ -48,8 +48,8 @@ def build_histograms(events):
     }
 
 
-def main():
-    config = load_config()
+def main(config_path=DEFAULT_CONFIG_PATH, output_file=OUTPUT_ROOT_FILE):
+    config = load_config(config_path)
     root_file = get_enabled_root_files(config)[0]
     print(f"reading: {root_file['path']}")
 
@@ -58,9 +58,9 @@ def main():
 
     histograms = build_histograms(events)
 
-    OUTPUT_ROOT_FILE.parent.mkdir(parents=True, exist_ok=True)
-    save_histograms(str(OUTPUT_ROOT_FILE), histograms)
-    print(f"wrote {OUTPUT_ROOT_FILE}")
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    save_histograms(str(output_file), histograms)
+    print(f"wrote {output_file}")
 
 
 if __name__ == "__main__":
