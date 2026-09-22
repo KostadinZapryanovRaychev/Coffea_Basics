@@ -37,6 +37,32 @@ Edit **`NAOD_TAU/file_config.json`** to specify ROOT files to process:
 }
 ```
 
+## coffea ProcessorABC version (data + MC in one run)
+
+`processors/mass_processor.py` is the `reco_tau_mass.py` selection and
+histograms rewritten as a `coffea.processor.ProcessorABC`, per
+https://coffea-hep.readthedocs.io/en/latest/getting_started/index.html.
+`run_mass_processor.py` builds a `fileset` with two dataset entries,
+`"data"` (from `file_config.json`) and `"mc"` (from `file_config_mc.json`),
+and runs both through `processor.Runner` with `IterativeExecutor` in one
+call — no dask cluster, since our files are small enough for one process.
+
+```bash
+python NAOD_TAU/run_mass_processor.py
+```
+
+Each histogram carries a `dataset` axis (`"data"` / `"mc"`), so the same
+run produces both sets of histograms; the script slices each dataset out
+and writes it to `outputs/mass_processor.root` as
+`reco_tau_<name>_data` / `reco_tau_<name>_mc`, matching the histogram
+names `reco_tau_mass.root` / `mc_reco_tau_mass.root` already use.
+
+This is a second implementation of the same analysis as
+`reco_tau_mass.py` / `mc_reco_tau_mass.py`, kept side by side rather than
+replacing them, since converting the rest of the scripts
+(`reco_tau_dphi_pt.py`, `tau_mass_dphi_pz.py`, the GenPart/GenVisTau
+scripts) to processors is a separate step.
+
 ## Batch Processing Multiple Mass Points
 
 To process more mass points (250 GeV to 6000 GeV) at once with organized outputs:
