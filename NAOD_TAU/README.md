@@ -14,6 +14,14 @@ python NAOD_TAU/reco_tau_mass.py
 python NAOD_TAU/mc_reco_tau_mass.py
 ```
 
+the content in the branches
+
+https://cms-xpog.docs.cern.ch/autoDoc/
+
+particles
+
+https://pdg.lbl.gov/2019/tables/rpp2019-sum-leptons.pdf
+
 ## Run
 
 ```bash
@@ -196,3 +204,10 @@ It's also potentially useful later for more advanced techniques (e.g. some neutr
 Δr — combined angular separation, role: confirms we're in the "resolved pair" regime
 
 Δr = √(Δη² + Δφ²). It tells us how far apart, in a boost-invariant angular sense, the two taus land in the detector. A large Δr (which is what we saw — peaked near π ≈ 3.14) means the two taus are well-separated, reconstructible as two distinct objects with standard techniques — exactly the assumption our whole pipeline (select_leading_tau_pair, separate pt/eta cuts on each) relies on. If Δr were small (collimated pair), that would mean the resonance is highly boosted and the taus start to merge — a completely different (harder) reconstruction problem we're not handling. So its role here: confirms the resolved-pair assumption underlying this analysis is valid for the events we kept.
+
+Tau_mass Float_t mass (could we use this branch)
+
+1. https://cms-xpog.docs.cern.ch/autoDoc/ --- to find the matching branches based on the dataset we study
+2. Z -> tau + antitau (no neutrinos or ?) Tau_mass branch or boostedTauMass branch
+3. nTau works like that
+   nTau Int_t slimmedTaus after basic selection (pt > 18 && ((tauID('decayModeFindingNewDMs') > 0.5 && (tauID('byLooseCombinedIsolationDeltaBetaCorr3Hits') || (tauID('chargedIsoPtSumdR03')+max(0.,tauID('neutralIsoPtSumdR03')-0.072\*tauID('puCorrPtSum'))<2.5) || tauID('byVVVLooseDeepTau2017v2p1VSjet') || tauID('byVVVLooseDeepTau2018v2p5VSjet'))) || (?isTauIDAvailable('byPNetVSjetraw')?tauID('byPNetVSjetraw'):-1) > 0.05))
