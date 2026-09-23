@@ -79,12 +79,31 @@ std::vector<RootFileEntry> loadRootFileList(const std::string &configPath)
             continue;
         }
 
-        RootFileEntry entry;
-        entry.name = item.value("name", "");
-        entry.path = item.at("path").get<std::string>();
-        entry.tree = item.value("tree", "Events");
-        entry.enabled = true;
-        entries.push_back(entry);
+        // Accepts either one "path" per entry, or a "paths" list (same
+        // shape NAOD_TAU's file_config.json uses) -- one RootFileEntry
+        // per path either way.
+        std::vector<std::string> paths;
+        if (item.contains("paths"))
+        {
+            for (const auto &p : item.at("paths"))
+            {
+                paths.push_back(p.get<std::string>());
+            }
+        }
+        else
+        {
+            paths.push_back(item.at("path").get<std::string>());
+        }
+
+        for (const std::string &path : paths)
+        {
+            RootFileEntry entry;
+            entry.name = item.value("name", "");
+            entry.path = path;
+            entry.tree = item.value("tree", "Events");
+            entry.enabled = true;
+            entries.push_back(entry);
+        }
     }
 
     return entries;
