@@ -28,21 +28,25 @@ namespace
     constexpr Double_t TAU_ETA_MAX = 2.3;
     constexpr Double_t PAIR_PZ_MAX = 300.0;
 
+    // the result from the function is compared with DELTA_PHI_MIN for the back-to-back cut.
     Double_t wrappedDeltaPhi(Double_t phi1, Double_t phi2)
     {
         return TVector2::Phi_mpi_pi(phi1 - phi2);
     }
-} // namespace
+}
 
 void TauVisibleMassCheck()
 {
+    // load the list of files to process, from the JSON config file.
     std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
     std::cout << "TauVisibleMassCheck: " << rootFiles.size() << " file(s) to process."
               << std::endl;
 
-    // Same histograms, pooled across every file.
-    TH1F h_tau_mass_leading("h_tau_mass_leading", "Tau_mass(leading);Tau_mass [GeV];Events",
-                            150, 0, 150);
+    // emtpy histograms to fill, and then write to output file.
+    TH1F h_tau_mass("h_tau_mass", "Tau_mass of tau (charge -1);Tau_mass [GeV];Events",
+                    100, 0, 100);
+    TH1F h_antitau_mass("h_antitau_mass", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
+                        100, 0, 100);
     TH1F h_tau_mass_sum("h_tau_mass_sum", "Tau_mass[0]+Tau_mass[1];sum [GeV];Events",
                         150, 0, 150);
     TH1F h_vis_mass("h_vis_mass", "m_{vis}(#tau#tau);m_{vis} [GeV];Events", 150, 0, 150);
@@ -50,6 +54,7 @@ void TauVisibleMassCheck()
     Long64_t nEventsSeen = 0;
     Long64_t nPairsUsed = 0;
 
+    // so far so good till now all clear
     for (const RootFileEntry &file : rootFiles)
     {
         std::cout << "reading: " << file.path << std::endl;
@@ -84,7 +89,8 @@ void TauVisibleMassCheck()
                 order[i] = i;
             }
             std::sort(order.begin(), order.end(),
-                      [&](size_t a, size_t b) { return tauPt[a] > tauPt[b]; });
+                      [&](size_t a, size_t b)
+                      { return tauPt[a] > tauPt[b]; });
             const size_t iLead = order[0];
             const size_t iSub = order[1];
 
@@ -117,7 +123,11 @@ void TauVisibleMassCheck()
             }
 
             // Tau_mass alone: visible mass of ONE tau's decay system, not the Z.
-            h_tau_mass_leading.Fill(tauMass[iLead]);
+            // the pair is opposite sign, so exactly one is the tau (-1) and one the anti-tau (+1).
+            const size_t iTau = (tauCharge[iLead] == -1) ? iLead : iSub;
+            const size_t iAntiTau = (tauCharge[iLead] == -1) ? iSub : iLead;
+            h_tau_mass.Fill(tauMass[iTau]);
+            h_antitau_mass.Fill(tauMass[iAntiTau]);
 
             // naive/wrong: scalar sum of two masses, not a 4-vector sum.
             h_tau_mass_sum.Fill(tauMass[iLead] + tauMass[iSub]);
@@ -137,7 +147,8 @@ void TauVisibleMassCheck()
 
     const std::string outFile = "outputs/tau_visible_mass_check.root";
     TFile out(outFile.c_str(), "RECREATE");
-    h_tau_mass_leading.Write();
+    h_tau_mass.Write();
+    h_antitau_mass.Write();
     h_tau_mass_sum.Write();
     h_vis_mass.Write();
     out.Close();
