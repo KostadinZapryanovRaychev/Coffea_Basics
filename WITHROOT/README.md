@@ -687,3 +687,5 @@ https://arxiv.org/abs/2606.17569
 dasgoclient -query="file dataset=/Tau/Run2018A-Nano25Oct2019-v1/NANOAOD"
 
 /eos/cms/store/data/Run2018A/Tau/NANOAOD/Nano25Oct2019-v1/230000/02785FC8-0354-A04D-8996-3AD8D18DCF7A.root
+
+root -l -b -q TauVisibleMassCheck.C
