@@ -54,7 +54,6 @@ void TauVisibleMassCheck()
     Long64_t nEventsSeen = 0;
     Long64_t nPairsUsed = 0;
 
-    // so far so good till now all clear
     for (const RootFileEntry &file : rootFiles)
     {
         std::cout << "reading: " << file.path << std::endl;
@@ -74,8 +73,10 @@ void TauVisibleMassCheck()
 
         while (reader.Next())
         {
+            // reader.Next() moves to the next event
             ++nEventsSeen;
 
+            // gets the events with more than one tau
             const size_t nTau = tauPt.GetSize();
             if (nTau < 2)
             {
@@ -100,21 +101,21 @@ void TauVisibleMassCheck()
                 continue;
             }
 
-            // pT and eta cuts, both legs
+            // skips event if either tau fails the pT or eta cuts
             if (!(tauPt[iLead] > TAU_PT_MIN && tauPt[iSub] > TAU_PT_MIN &&
                   std::abs(tauEta[iLead]) < TAU_ETA_MAX && std::abs(tauEta[iSub]) < TAU_ETA_MAX))
             {
                 continue;
             }
 
-            // back-to-back
+            // it skips the events that are not back-to-back
             const Double_t deltaPhi = wrappedDeltaPhi(tauPhi[iLead], tauPhi[iSub]);
             if (std::abs(deltaPhi) <= DELTA_PHI_MIN)
             {
                 continue;
             }
 
-            // pair pz cut
+            // it computes the pair's longitudinal momentum, and skips if too large.
             const Double_t pairPz = tauPt[iLead] * std::sinh(tauEta[iLead]) +
                                     tauPt[iSub] * std::sinh(tauEta[iSub]);
             if (std::abs(pairPz) >= PAIR_PZ_MAX)
@@ -122,13 +123,14 @@ void TauVisibleMassCheck()
                 continue;
             }
 
-            // Tau_mass alone: visible mass of ONE tau's decay system, not the Z.
+            // Tau_mass alone: visible mass of ONE tau's decay system
             // the pair is opposite sign, so exactly one is the tau (-1) and one the anti-tau (+1).
             const size_t iTau = (tauCharge[iLead] == -1) ? iLead : iSub;
             const size_t iAntiTau = (tauCharge[iLead] == -1) ? iSub : iLead;
             h_tau_mass.Fill(tauMass[iTau]);
             h_antitau_mass.Fill(tauMass[iAntiTau]);
 
+            // so far all checked
             // naive/wrong: scalar sum of two masses, not a 4-vector sum.
             h_tau_mass_sum.Fill(tauMass[iLead] + tauMass[iSub]);
 
