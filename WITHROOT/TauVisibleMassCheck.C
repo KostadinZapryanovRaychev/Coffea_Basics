@@ -47,8 +47,6 @@ void TauVisibleMassCheck()
                     100, 0, 100);
     TH1F h_antitau_mass("h_antitau_mass", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
                         100, 0, 100);
-    TH1F h_tau_mass_sum("h_tau_mass_sum", "Tau_mass[0]+Tau_mass[1];sum [GeV];Events",
-                        150, 0, 150);
     TH1F h_vis_mass("h_vis_mass", "m_{vis}(#tau#tau);m_{vis} [GeV];Events", 150, 0, 150);
 
     Long64_t nEventsSeen = 0;
@@ -127,14 +125,15 @@ void TauVisibleMassCheck()
             // the pair is opposite sign, so exactly one is the tau (-1) and one the anti-tau (+1).
             const size_t iTau = (tauCharge[iLead] == -1) ? iLead : iSub;
             const size_t iAntiTau = (tauCharge[iLead] == -1) ? iSub : iLead;
+
+            // most probably here is the problem
             h_tau_mass.Fill(tauMass[iTau]);
             h_antitau_mass.Fill(tauMass[iAntiTau]);
 
-            // so far all checked
-            // naive/wrong: scalar sum of two masses, not a 4-vector sum.
-            h_tau_mass_sum.Fill(tauMass[iLead] + tauMass[iSub]);
-
-            // correct first step: invariant mass of the two full 4-vectors.
+            // the invariant mass of four vector by TLorentzVector
+            // https://root.cern.ch/doc/v632/classTLorentzVector.html
+            // It converts to Cartesian components: px = pT·cos φ, py = pT·sin φ, pz = pT·sinh η. SetXYZM then sets the energy as E = √(px² + py² + pz² + m²) (line 341).
+            // M() (line 502) calls Mag()
             TLorentzVector p1, p2;
             p1.SetPtEtaPhiM(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
             p2.SetPtEtaPhiM(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
@@ -151,7 +150,6 @@ void TauVisibleMassCheck()
     TFile out(outFile.c_str(), "RECREATE");
     h_tau_mass.Write();
     h_antitau_mass.Write();
-    h_tau_mass_sum.Write();
     h_vis_mass.Write();
     out.Close();
 
