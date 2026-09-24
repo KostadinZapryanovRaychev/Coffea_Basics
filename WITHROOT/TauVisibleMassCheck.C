@@ -1,6 +1,7 @@
-// Checks the hypothesis: does Tau_mass[0]+Tau_mass[1] approach the Z mass
-// (~91 GeV)? Compares it against the correct visible di-tau mass,
-// m_vis = sqrt((p_tau1+p_tau2)^2), built from full 4-vectors.
+// Checks in real data: (1) the Tau_mass branch of each tau and anti-tau is
+// ~1 GeV (the visible decay products only), not ~45 GeV (half the Z mass);
+// (2) the visible di-tau mass m_vis = sqrt((p_tau1+p_tau2)^2), built from
+// full 4-vectors, peaks below 91 GeV because the neutrinos are missing.
 // Runs over every file listed in file_config_data.json (real data).
 
 #include "Config.C"
