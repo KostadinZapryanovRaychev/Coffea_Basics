@@ -45,10 +45,13 @@ void TauVisibleMassCheck()
 
     // emtpy histograms to fill, and then write to output file.
     TH1F h_tau_mass("h_tau_mass", "Tau_mass of tau (charge -1);Tau_mass [GeV];Events",
-                    1000, 0, 10);
+                    1000, 0, 5);
     TH1F h_antitau_mass("h_antitau_mass", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
-                        10, 0, 10);
+                        1000, 0, 5);
     TH1F h_vis_mass("h_vis_mass", "m_{vis}(#tau#tau);m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F h_vis_mass_tmass_plus_antitmass("h_vis_mass", "m_{vis}(#tau#tau);m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F combined_ditau_mass("h_antitau_mass", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
+                             1000, 0, 5);
 
     Long64_t nEventsSeen = 0;
     Long64_t nPairsUsed = 0;
@@ -136,10 +139,12 @@ void TauVisibleMassCheck()
             // It converts to Cartesian components: px = pT·cos φ, py = pT·sin φ, pz = pT·sinh η. SetXYZM then sets the energy as E = √(px² + py² + pz² + m²) (line 341).
             // M() (line 502) calls Mag()
             TLorentzVector p1, p2;
-            p1.SetPtEtaPhiM(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
-            p2.SetPtEtaPhiM(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
+            p1.SetPtEtaPhiM(tauPt[iLead], tauEta[iLead], tauPhi[iLead], 1);
+            p2.SetPtEtaPhiM(tauPt[iSub], tauEta[iSub], tauPhi[iSub], 1);
             // p1.M() // returns the invariant mass of the system, which is the visible mass of the tau pair.
             h_vis_mass.Fill((p1 + p2).M());
+            h_vis_mass_tmass_plus_antitmass.Fill(p1.M() + p2.M());
+            combined_ditau_mass.Fill(tauMass[iLead] + tauMass[iSub]);
 
             ++nPairsUsed;
         }
