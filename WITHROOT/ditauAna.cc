@@ -5,7 +5,6 @@
 #include <cmath>
 #include <fstream>
 
-const int MAXGEN = 5000;
 const int MAXTAU = 200;
 void ditauAna()
 {
@@ -14,42 +13,10 @@ void ditauAna()
   std::cout << "enter your preference (cut or pre-cut): ";
   std::cin >> mode;
 
-  std::string answer;
-  bool isExperimental = false;
-
-  std::cout << "is your data experimental? [yes]/[no] only: ";
-  std::cin >> answer;
-
-  const char *mcFileNames[] = {"root://eospublic.cern.ch//eos/opendata/cms/mc/RunIISummer20UL16NanoAODv9/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_mcRun2_asymptotic_v17-v1/40000/F9F34B8E-DAA6-7A4E-B4A5-43F2D741CFE3.root"};
-  const char *mcFileLabels[] = {"drellYan"};
-
-  const char *expFileNames[] = {"root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/e8393d52-174a-4cde-bb15-0f98571d0b33.root",
-                                "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/d0e3a051-2fc4-49f1-b6e7-25fd936e0101.root"};
-  const char *expFileLabels[] = {"Run2024D_e8393d52", "Run2024D_d0e3a051"};
-
-  const char **fileNames = nullptr;
-  const char **fileLabels = nullptr;
-  int nFiles = 0;
-
-  if (answer == "yes")
-  {
-    isExperimental = true;
-    fileNames = expFileNames;
-    fileLabels = expFileLabels;
-    nFiles = 1; // only the first file of the list (set 2 for both)
-  }
-  else if (answer == "no")
-  {
-    isExperimental = false;
-    fileNames = mcFileNames;
-    fileLabels = mcFileLabels;
-    nFiles = 1;
-  }
-  else
-  {
-    std::cout << "invalid input";
-    return;
-  }
+  const char *fileNames[] = {"root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/e8393d52-174a-4cde-bb15-0f98571d0b33.root",
+                             "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/d0e3a051-2fc4-49f1-b6e7-25fd936e0101.root"};
+  const char *fileLabels[] = {"Run2024D_e8393d52", "Run2024D_d0e3a051"};
+  int nFiles = 1; // only the first file of the list (set 2 for both)
 
   double ptCut = 30.0;
   double etaCut = 2.1;
@@ -93,7 +60,7 @@ void ditauAna()
 
   std::string outputFile = "my_histograms_";
   outputFile += (applyCuts ? "cut_" : "precut_");
-  outputFile += (isExperimental ? "experimental_" : "mc_");
+  outputFile += "experimental_";
   outputFile += "Run2024D";
   outputFile += ".root";
 
@@ -109,14 +76,6 @@ void ditauAna()
 
     Float_t MET_pt;
     Float_t MET_phi;
-
-    UInt_t nGenVisTau;
-    Float_t GenVisTau_mass[MAXGEN];
-    Float_t GenVisTau_pt[MAXGEN];
-    Float_t GenVisTau_eta[MAXGEN];
-    Float_t GenVisTau_phi[MAXGEN];
-    Int_t GenVisTau_charge[MAXGEN];
-    Int_t GenVisTau_status[MAXGEN];
 
     ////////////TAU BRANCHES///////////////
     Int_t nTau; // Int_t in this NanoAOD (was UInt_t)
@@ -135,17 +94,6 @@ void ditauAna()
     t1->SetBranchAddress("PuppiMET_pt", &MET_pt);   // transverse momentum of missing energy (PuppiMET: this file has no MET_pt)
     t1->SetBranchAddress("PuppiMET_phi", &MET_phi); // azimuthal angle of MET (PuppiMET)
 
-    if (!isExperimental)
-    {
-      t1->SetBranchAddress("nGenVisTau", &nGenVisTau);
-      t1->SetBranchAddress("GenVisTau_pt", GenVisTau_pt);
-      t1->SetBranchAddress("GenVisTau_eta", GenVisTau_eta);
-      t1->SetBranchAddress("GenVisTau_phi", GenVisTau_phi);
-      t1->SetBranchAddress("GenVisTau_mass", GenVisTau_mass);
-      t1->SetBranchAddress("GenVisTau_charge", GenVisTau_charge);
-      t1->SetBranchAddress("GenVisTau_status", GenVisTau_status);
-    }
-
     t1->SetBranchAddress("nTau", &nTau);
     t1->SetBranchAddress("Tau_pt", &Tau_pt);
     t1->SetBranchAddress("Tau_eta", &Tau_eta);
@@ -161,13 +109,6 @@ void ditauAna()
     /////////MET/////////////////////////
     TH1F *hMET_pt = new TH1F("hMET_pt", "MET p_{t}", 200, 0., 100.);
     TH1F *hMET_phi = new TH1F("hMET_phi", "MET #varphi", 20, -5., 5.);
-    ////////////////////////////////////////////////////////////////////////////////////////
-    TH1F *hnGenVisTau = new TH1F("hnGenVisTau", "number of events in genVisTau collection", 200, 0., 100.);
-    TH1F *hGenVisTau_pt = new TH1F("hGenVisTau_pt", "gen particles p_{t}", 400., 0., 200.);
-    TH1F *hGenVisTau_phi = new TH1F("hGenVisTau_phi", "#varphi of gen particles", 130, -6.5, 6.5);
-    TH1F *hGenVisTau_eta = new TH1F("hGenVisTau_eta", "#eta of gen particle events", 50, -2.5, 2.5);
-    TH1F *hGenVisTau_ditauMass = new TH1F("hGenVisTau_ditauMass", "mass of di-tau event", 400, 0., 200.);
-    TH1F *hGenVisTau_status = new TH1F("hGenVisTau_status", "status of events in genVisTau collection", 15, 0., 15.);
     //////////////TAU HISTOGRAMS//////////////////
     TH1F *hnTau = new TH1F("nTau", "number of tau leptons", 10000, 0., 10000.);
     TH1F *hTau_eta = new TH1F("hTau_eta", "pseudorapidity of tau leptons", 50, -2.5, 2.5);
@@ -183,13 +124,9 @@ void ditauAna()
     hDitau_cosDeltaPhi->SetXTitle("cos(#Delta#varphi) of di-#tau events");
 
     std::vector<TH1 *> histos = {
-        hMET_pt, hMET_phi, hnGenVisTau,
-        hGenVisTau_pt, hGenVisTau_phi, hGenVisTau_eta,
-        hGenVisTau_ditauMass, hGenVisTau_status, hnTau,
+        hMET_pt, hMET_phi, hnTau,
         hTau_eta, hTau_phi, hTau_pt, hDitau_mass,
-        hDitau_cosDeltaPhi
-
-    };
+        hDitau_cosDeltaPhi};
     for (auto *h : histos)
       h->SetDirectory(0);
 
@@ -269,45 +206,10 @@ void ditauAna()
       hMET_pt->Fill(MET_pt);
       hMET_phi->Fill(MET_phi);
 
-      if (!isExperimental)
-      {
-        hnGenVisTau->Fill(nGenVisTau);
-
-        std::vector<int> genVisTauIdx;
-        for (Int_t gv = 0; gv < nGenVisTau; gv++)
-        {
-          hGenVisTau_status->Fill(GenVisTau_status[gv]);
-          hGenVisTau_phi->Fill(GenVisTau_phi[gv]);
-          hGenVisTau_eta->Fill(GenVisTau_eta[gv]);
-          hGenVisTau_pt->Fill(GenVisTau_pt[gv]);
-          genVisTauIdx.push_back(gv);
-        }
-
-        if (genVisTauIdx.size() >= 2)
-        {
-          std::sort(genVisTauIdx.begin(), genVisTauIdx.end(),
-                    [&](int a, int b)
-                    {
-                      return GenVisTau_pt[a] > GenVisTau_pt[b];
-                    });
-          int gv1 = genVisTauIdx[0];
-          int gv2 = genVisTauIdx[1];
-
-          if (GenVisTau_charge[gv1] * GenVisTau_charge[gv2] == -1)
-          {
-            TLorentzVector g1, g2;
-            g1.SetPtEtaPhiM(GenVisTau_pt[genVisTauIdx[0]], GenVisTau_eta[genVisTauIdx[0]], GenVisTau_phi[genVisTauIdx[0]], GenVisTau_mass[genVisTauIdx[0]]);
-            g2.SetPtEtaPhiM(GenVisTau_pt[genVisTauIdx[1]], GenVisTau_eta[genVisTauIdx[1]], GenVisTau_phi[genVisTauIdx[1]], GenVisTau_mass[genVisTauIdx[1]]);
-            ditauMass = (g1 + g2).M();
-            hGenVisTau_ditauMass->Fill(ditauMass);
-          }
-        }
-      }
     }
 
     fout->mkdir(label + "/METHist");
     fout->mkdir(label + "/tauHist");
-    fout->mkdir(label + "/genVisHist");
 
     fout->cd(label + "/METHist");
     hMET_pt->Write();
@@ -321,12 +223,6 @@ void ditauAna()
     hDitau_mass->Write();
     hDitau_cosDeltaPhi->Write();
 
-    fout->cd(label + "/genVisHist");
-    hnGenVisTau->Write();
-    hGenVisTau_pt->Write();
-    hGenVisTau_phi->Write();
-    hGenVisTau_eta->Write();
-    hGenVisTau_ditauMass->Write();
     fout->cd("");
     delete t1;
   }
