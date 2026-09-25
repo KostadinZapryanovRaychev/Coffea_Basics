@@ -23,8 +23,9 @@ void ditauAna()
   const char *mcFileNames[] = {"root://eospublic.cern.ch//eos/opendata/cms/mc/RunIISummer20UL16NanoAODv9/DYJetsToLL_M-50_TuneCP5_13TeV-madgraphMLM-pythia8/NANOAODSIM/106X_mcRun2_asymptotic_v17-v1/40000/F9F34B8E-DAA6-7A4E-B4A5-43F2D741CFE3.root"};
   const char *mcFileLabels[] = {"drellYan"};
 
-  const char *expFileNames[] = {"root://eospublic.cern.ch//eos/opendata/cms/Run2016G/Tau/NANOAOD/UL2016_MiniAODv2_NanoAODv9-v1/270000/06D59B66-2858-3E42-B867-8FDE59F4D206.root"};
-  const char *expFileLabels[] = {"Run2016G"};
+  const char *expFileNames[] = {"root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/e8393d52-174a-4cde-bb15-0f98571d0b33.root",
+                                "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/d0e3a051-2fc4-49f1-b6e7-25fd936e0101.root"};
+  const char *expFileLabels[] = {"Run2024D_e8393d52", "Run2024D_d0e3a051"};
 
   const char **fileNames = nullptr;
   const char **fileLabels = nullptr;
@@ -35,7 +36,7 @@ void ditauAna()
     isExperimental = true;
     fileNames = expFileNames;
     fileLabels = expFileLabels;
-    nFiles = 1;
+    nFiles = 2;
   }
   else if (answer == "no")
   {
@@ -93,7 +94,7 @@ void ditauAna()
   std::string outputFile = "my_histograms_";
   outputFile += (applyCuts ? "cut_" : "precut_");
   outputFile += (isExperimental ? "experimental_" : "mc_");
-  outputFile += "RunG";
+  outputFile += "Run2024D";
   outputFile += ".root";
 
   TFile *fout = new TFile(outputFile.c_str(), "RECREATE");
@@ -119,12 +120,12 @@ void ditauAna()
     Int_t GenVisTau_status[MAXGEN];
 
     ////////////TAU BRANCHES///////////////
-    UInt_t nTau;
+    Int_t nTau; // Int_t in this NanoAOD (was UInt_t)
     Float_t Tau_pt[MAXTAU];
     Float_t Tau_eta[MAXTAU];
     Float_t Tau_phi[MAXTAU];
     Float_t Tau_mass[MAXTAU];
-    Int_t Tau_charge[MAXTAU];
+    Short_t Tau_charge[MAXTAU]; // Short_t in this NanoAOD (was Int_t)
     UChar_t Tau_decayMode[MAXTAU];
 
     UChar_t Tau_idDeepTau2017v2p1VSjet[MAXTAU];
@@ -221,9 +222,11 @@ void ditauAna()
         hTau_phi->Fill(Tau_phi[tau]);
 
         /////
-        bool passesVSjet = Tau_idDeepTau2017v2p1VSjet[tau] & (1 << 2);
-        bool passesVSe = Tau_idDeepTau2017v2p1VSe[tau] & (1 << 0);
-        bool passesVSmu = Tau_idDeepTau2017v2p1VSmu[tau] & (1 << 0);
+        // here the ID is the working point index (1 = VVVLoose, 2 = VVLoose, 3 = VLoose ...),
+        // not a bitmask: ">= n" is the same cut as the old "bit n-1 is set".
+        bool passesVSjet = Tau_idDeepTau2017v2p1VSjet[tau] >= 3; // was & (1 << 2)
+        bool passesVSe = Tau_idDeepTau2017v2p1VSe[tau] >= 1;     // was & (1 << 0)
+        bool passesVSmu = Tau_idDeepTau2017v2p1VSmu[tau] >= 1;   // was & (1 << 0)
 
         if (!(passesVSjet && passesVSe && passesVSmu))
           continue;
