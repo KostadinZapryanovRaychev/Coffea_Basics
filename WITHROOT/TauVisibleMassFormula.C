@@ -42,14 +42,15 @@ namespace
         return v;
     }
 
-    // M = sqrt( (E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2 )
-    Double_t invariantMass(const FourVector &a, const FourVector &b)
+    // M^2 = (E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2
+    // (no square root here: the caller checks the sign first)
+    Double_t invariantMassSquared(const FourVector &a, const FourVector &b)
     {
         const Double_t e = a.e + b.e;
         const Double_t px = a.px + b.px;
         const Double_t py = a.py + b.py;
         const Double_t pz = a.pz + b.pz;
-        return std::sqrt(std::max(0.0, e * e - px * px - py * py - pz * pz));
+        return e * e - px * px - py * py - pz * pz;
     }
 }
 
@@ -69,6 +70,7 @@ void TauVisibleMassFormula()
 
     Long64_t nEventsSeen = 0;
     Long64_t nPairsUsed = 0;
+    Long64_t nNegativeMassSquared = 0;
 
     for (const RootFileEntry &file : rootFiles)
     {
@@ -124,16 +126,24 @@ void TauVisibleMassFormula()
                 continue;
             }
 
+            // each tau as (px, py, pz, E), then M^2 of the pair by the formula.
+            const FourVector tau1 = makeFourVector(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
+            const FourVector tau2 = makeFourVector(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
+            const Double_t massSquared = invariantMassSquared(tau1, tau2);
+
+            // M^2 must be positive to take the square root: skip the pair if it is negative.
+            if (massSquared < 0)
+            {
+                ++nNegativeMassSquared;
+                continue;
+            }
+
             // the pair is opposite sign: one is the tau (-1), the other the anti-tau (+1).
             const size_t iTau = (tauCharge[iLead] == -1) ? iLead : iSub;
             const size_t iAntiTau = (tauCharge[iLead] == -1) ? iSub : iLead;
             h_tau_mass.Fill(tauMass[iTau]);
             h_antitau_mass.Fill(tauMass[iAntiTau]);
-
-            // each tau as (px, py, pz, E), then the mass of the pair by the formula.
-            const FourVector tau1 = makeFourVector(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
-            const FourVector tau2 = makeFourVector(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
-            h_vis_mass.Fill(invariantMass(tau1, tau2));
+            h_vis_mass.Fill(std::sqrt(massSquared));
 
             ++nPairsUsed;
         }
@@ -141,6 +151,8 @@ void TauVisibleMassFormula()
 
     std::cout << "TauVisibleMassFormula: " << nPairsUsed << " good pairs out of "
               << nEventsSeen << " events read." << std::endl;
+    std::cout << "TauVisibleMassFormula: " << nNegativeMassSquared
+              << " pairs skipped because M^2 < 0." << std::endl;
 
     const std::string outFile = "outputs/tau_visible_mass_formula.root";
     TFile out(outFile.c_str(), "RECREATE");

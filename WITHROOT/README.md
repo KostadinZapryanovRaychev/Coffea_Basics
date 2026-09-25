@@ -692,6 +692,8 @@ most probably tau_mass is the mass of reconstructed tau by alhorithms for its re
 
 root -l -b -q TauVisibleMassCheck.C
 
+root -l -b -q TauVisibleMassFormula.C
+
         "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/5213f2f4-68ec-4738-9cf9-88b5d7474a3e.root",
         "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/e727db27-b76b-4183-8b35-a6fe52a4cd86.root",
         "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/008ca5f3-4b34-4e83-a897-fc34bb87343e.root",
