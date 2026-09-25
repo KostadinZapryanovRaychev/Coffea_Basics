@@ -5,6 +5,7 @@
 
 #include "Config.C"
 #include "Config.h"
+#include "CutFlow.h"
 #include "event.C"
 #include "event.h"
 
@@ -41,8 +42,8 @@ void TauVisibleMassPtEtaPhi()
                          "m_{vis}(#tau#tau) = #sqrt{2 p_{T1} p_{T2} (cosh#Delta#eta - cos#Delta#phi)};m_{vis} [GeV];Events",
                          250, 0, 250);
 
-    Long64_t nEventsSeen = 0;
-    Long64_t nPairsUsed = 0;
+    CutFlow cutFlow;
+    size_t nFilesDone = 0;
 
     for (const RootFileEntry &file : rootFiles)
     {
@@ -62,13 +63,18 @@ void TauVisibleMassPtEtaPhi()
 
         while (reader.Next())
         {
-            ++nEventsSeen;
+            ++cutFlow.eventsRead;
+            if (cutFlow.eventsRead % 250000 == 0)
+            {
+                printCutFlow("  progress:", cutFlow);
+            }
 
             const size_t nTau = tauPt.GetSize();
             if (nTau < 2)
             {
                 continue;
             }
+            ++cutFlow.atLeastTwoTaus;
 
             // leading pair = two highest-pT taus
             std::vector<size_t> order(nTau);
@@ -87,6 +93,7 @@ void TauVisibleMassPtEtaPhi()
             {
                 continue;
             }
+            ++cutFlow.oppositeSign;
 
             // pT and eta cuts, both taus
             if (!(tauPt[iLead] > TAU_PT_MIN && tauPt[iSub] > TAU_PT_MIN &&
@@ -94,6 +101,7 @@ void TauVisibleMassPtEtaPhi()
             {
                 continue;
             }
+            ++cutFlow.passKinematics;
 
             // the two differences that go into the formula.
             const Double_t deltaEta = tauEta[iLead] - tauEta[iSub];
@@ -102,12 +110,15 @@ void TauVisibleMassPtEtaPhi()
             const Double_t massSquared = invariantMassSquared(tauPt[iLead], tauPt[iSub], deltaEta, deltaPhi);
             h_mVis_ptEtaPhi.Fill(std::sqrt(massSquared));
 
-            ++nPairsUsed;
+            ++cutFlow.used;
         }
+
+        ++nFilesDone;
+        printCutFlow("[" + std::to_string(nFilesDone) + "/" + std::to_string(rootFiles.size()) + " files done]", cutFlow);
     }
 
-    std::cout << "TauVisibleMassPtEtaPhi: " << nPairsUsed << " good pairs out of "
-              << nEventsSeen << " events read." << std::endl;
+    std::cout << "TauVisibleMassPtEtaPhi: " << cutFlow.used << " good pairs out of "
+              << cutFlow.eventsRead << " events read." << std::endl;
 
     const std::string outFile = "outputs/tau_visible_mass_ptEtaPhi.root";
     TFile out(outFile.c_str(), "RECREATE");

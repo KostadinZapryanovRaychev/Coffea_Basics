@@ -6,6 +6,7 @@
 
 #include "Config.C"
 #include "Config.h"
+#include "CutFlow.h"
 #include "event.C"
 #include "event.h"
 
@@ -54,8 +55,8 @@ void TauVisibleMassCheck()
     TH1F combined_ditau_mass("h_tauMass_sum", "Tau_mass[leading] + Tau_mass[subleading];sum [GeV];Events",
                              1000, 0, 5);
 
-    Long64_t nEventsSeen = 0;
-    Long64_t nPairsUsed = 0;
+    CutFlow cutFlow;
+    size_t nFilesDone = 0;
 
     for (const RootFileEntry &file : rootFiles)
     {
@@ -77,7 +78,11 @@ void TauVisibleMassCheck()
         while (reader.Next())
         {
             // reader.Next() moves to the next event
-            ++nEventsSeen;
+            ++cutFlow.eventsRead;
+            if (cutFlow.eventsRead % 250000 == 0)
+            {
+                printCutFlow("  progress:", cutFlow);
+            }
 
             // gets the events with more than one tau
             const size_t nTau = tauPt.GetSize();
@@ -85,6 +90,7 @@ void TauVisibleMassCheck()
             {
                 continue;
             }
+            ++cutFlow.atLeastTwoTaus;
 
             // leading pair = two highest-pT taus
             std::vector<size_t> order(nTau);
@@ -103,6 +109,7 @@ void TauVisibleMassCheck()
             {
                 continue;
             }
+            ++cutFlow.oppositeSign;
 
             // skips event if either tau fails the pT or eta cuts
             if (!(tauPt[iLead] > TAU_PT_MIN && tauPt[iSub] > TAU_PT_MIN &&
@@ -110,6 +117,7 @@ void TauVisibleMassCheck()
             {
                 continue;
             }
+            ++cutFlow.passKinematics;
 
             // it skips the events that are not back-to-back
             // const Double_t deltaPhi = wrappedDeltaPhi(tauPhi[iLead], tauPhi[iSub]);
@@ -147,12 +155,15 @@ void TauVisibleMassCheck()
             h_vis_mass_tmass_plus_antitmass.Fill(p1.M() + p2.M());
             combined_ditau_mass.Fill(tauMass[iLead] + tauMass[iSub]);
 
-            ++nPairsUsed;
+            ++cutFlow.used;
         }
+
+        ++nFilesDone;
+        printCutFlow("[" + std::to_string(nFilesDone) + "/" + std::to_string(rootFiles.size()) + " files done]", cutFlow);
     }
 
-    std::cout << "TauVisibleMassCheck: " << nPairsUsed << " good pairs out of "
-              << nEventsSeen << " events read." << std::endl;
+    std::cout << "TauVisibleMassCheck: " << cutFlow.used << " good pairs out of "
+              << cutFlow.eventsRead << " events read." << std::endl;
 
     const std::string outFile = "outputs/tau_visible_mass_check.root";
     TFile out(outFile.c_str(), "RECREATE");

@@ -5,6 +5,7 @@
 
 #include "Config.C"
 #include "Config.h"
+#include "CutFlow.h"
 #include "event.C"
 #include "event.h"
 
@@ -68,8 +69,8 @@ void TauVisibleMassFormula()
     TH1F h_vis_mass("h_vis_mass", "m_{vis}(#tau#tau) from the formula;m_{vis} [GeV];Events",
                     250, 0, 250);
 
-    Long64_t nEventsSeen = 0;
-    Long64_t nPairsUsed = 0;
+    CutFlow cutFlow;
+    size_t nFilesDone = 0;
     Long64_t nNegativeMassSquared = 0;
 
     for (const RootFileEntry &file : rootFiles)
@@ -92,7 +93,11 @@ void TauVisibleMassFormula()
         while (reader.Next())
         {
             // reader.Next() moves to the next event
-            ++nEventsSeen;
+            ++cutFlow.eventsRead;
+            if (cutFlow.eventsRead % 250000 == 0)
+            {
+                printCutFlow("  progress:", cutFlow);
+            }
 
             // needs at least two taus
             const size_t nTau = tauPt.GetSize();
@@ -100,6 +105,7 @@ void TauVisibleMassFormula()
             {
                 continue;
             }
+            ++cutFlow.atLeastTwoTaus;
 
             // leading pair = two highest-pT taus
             std::vector<size_t> order(nTau);
@@ -118,6 +124,7 @@ void TauVisibleMassFormula()
             {
                 continue;
             }
+            ++cutFlow.oppositeSign;
 
             // pT and eta cuts, both taus
             if (!(tauPt[iLead] > TAU_PT_MIN && tauPt[iSub] > TAU_PT_MIN &&
@@ -125,6 +132,7 @@ void TauVisibleMassFormula()
             {
                 continue;
             }
+            ++cutFlow.passKinematics;
 
             // Mass of the di-tau (visible mass of the two taus):
             //   M = sqrt( (E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2 )
@@ -150,12 +158,15 @@ void TauVisibleMassFormula()
             // M = sqrt(M^2)
             h_vis_mass.Fill(std::sqrt(massSquared));
 
-            ++nPairsUsed;
+            ++cutFlow.used;
         }
+
+        ++nFilesDone;
+        printCutFlow("[" + std::to_string(nFilesDone) + "/" + std::to_string(rootFiles.size()) + " files done]", cutFlow);
     }
 
-    std::cout << "TauVisibleMassFormula: " << nPairsUsed << " good pairs out of "
-              << nEventsSeen << " events read." << std::endl;
+    std::cout << "TauVisibleMassFormula: " << cutFlow.used << " good pairs out of "
+              << cutFlow.eventsRead << " events read." << std::endl;
     std::cout << "TauVisibleMassFormula: " << nNegativeMassSquared
               << " pairs skipped because M^2 < 0." << std::endl;
 
