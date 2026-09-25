@@ -26,7 +26,7 @@ namespace
     // Same thresholds as NAOD_TAU/reco_tau_kinematics.py.
     constexpr Double_t DELTA_PHI_MIN = 2.5;
     constexpr Double_t TAU_PT_MIN = 20.0;
-    constexpr Double_t TAU_ETA_MAX = 2.3;
+    constexpr Double_t TAU_ETA_MAX = 2.3; // analysis note ?
     constexpr Double_t PAIR_PZ_MAX = 300.0;
 
     // the result from the function is compared with DELTA_PHI_MIN for the back-to-back cut.
@@ -45,9 +45,9 @@ void TauVisibleMassCheck()
 
     // emtpy histograms to fill, and then write to output file.
     TH1F h_tau_mass("h_tau_mass", "Tau_mass of tau (charge -1);Tau_mass [GeV];Events",
-                    100, 0, 100);
+                    10, 0, 10);
     TH1F h_antitau_mass("h_antitau_mass", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
-                        100, 0, 100);
+                        10, 0, 10);
     TH1F h_vis_mass("h_vis_mass", "m_{vis}(#tau#tau);m_{vis} [GeV];Events", 250, 0, 250);
 
     Long64_t nEventsSeen = 0;
@@ -138,6 +138,7 @@ void TauVisibleMassCheck()
             TLorentzVector p1, p2;
             p1.SetPtEtaPhiM(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
             p2.SetPtEtaPhiM(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
+            // p1.M() // returns the invariant mass of the system, which is the visible mass of the tau pair.
             h_vis_mass.Fill((p1 + p2).M());
 
             ++nPairsUsed;
