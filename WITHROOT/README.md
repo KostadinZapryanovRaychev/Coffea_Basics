@@ -761,3 +761,13 @@ TODO to find the json file with good lumisections
 
 TODO to be checked
 https://cms-analysis-corrections.docs.cern.ch/
+
+TODO to be checked for MC
+Mass vs GenPart
+and
+Mass vs GenVisTau
+
+TODO
+https://cds.cern.ch/record/1402013/files/MassReco_LHCWorkshop_August_2011.pdf
+
+those to be rechecked and reconstructed on my side
