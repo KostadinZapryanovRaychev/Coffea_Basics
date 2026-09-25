@@ -688,6 +688,8 @@ dasgoclient -query="file dataset=/Tau/Run2018A-Nano25Oct2019-v1/NANOAOD"
 
 /eos/cms/store/data/Run2018A/Tau/NANOAOD/Nano25Oct2019-v1/230000/02785FC8-0354-A04D-8996-3AD8D18DCF7A.root
 
+most probably tau_mass is the mass of reconstructed tau by alhorithms for its recconstruction and it varies till 1.788 GeV which the real value
+
 root -l -b -q TauVisibleMassCheck.C
 
         "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/5213f2f4-68ec-4738-9cf9-88b5d7474a3e.root",

@@ -45,7 +45,7 @@ void TauVisibleMassCheck()
 
     // emtpy histograms to fill, and then write to output file.
     TH1F h_tau_mass("h_tau_mass", "Tau_mass of tau (charge -1);Tau_mass [GeV];Events",
-                    10, 0, 10);
+                    1000, 0, 10);
     TH1F h_antitau_mass("h_antitau_mass", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
                         10, 0, 10);
     TH1F h_vis_mass("h_vis_mass", "m_{vis}(#tau#tau);m_{vis} [GeV];Events", 250, 0, 250);
