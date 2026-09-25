@@ -51,7 +51,7 @@ namespace
         const Double_t pz = a.pz + b.pz;
         return std::sqrt(std::max(0.0, e * e - px * px - py * py - pz * pz));
     }
-} // namespace
+}
 
 void TauVisibleMassFormula()
 {
