@@ -36,7 +36,7 @@ void ditauAna()
     isExperimental = true;
     fileNames = expFileNames;
     fileLabels = expFileLabels;
-    nFiles = 2;
+    nFiles = 1; // only the first file of the list (set 2 for both)
   }
   else if (answer == "no")
   {
@@ -106,7 +106,6 @@ void ditauAna()
 
     TChain *t1 = new TChain("Events");
     t1->Add(fileNames[fileIdx]);
-    t1->Print();
 
     Float_t MET_pt;
     Float_t MET_phi;
@@ -128,13 +127,13 @@ void ditauAna()
     Short_t Tau_charge[MAXTAU]; // Short_t in this NanoAOD (was Int_t)
     UChar_t Tau_decayMode[MAXTAU];
 
-    UChar_t Tau_idDeepTau2017v2p1VSjet[MAXTAU];
-    UChar_t Tau_idDeepTau2017v2p1VSe[MAXTAU];
-    UChar_t Tau_idDeepTau2017v2p1VSmu[MAXTAU];
+    UChar_t Tau_idDeepTau2018v2p5VSjet[MAXTAU];
+    UChar_t Tau_idDeepTau2018v2p5VSe[MAXTAU];
+    UChar_t Tau_idDeepTau2018v2p5VSmu[MAXTAU];
 
     /////////////BRANCH ADDRESSES///////////////
-    t1->SetBranchAddress("MET_pt", &MET_pt);   // transverse momentum of missing energy transfers
-    t1->SetBranchAddress("MET_phi", &MET_phi); // azimuthal angle of MET
+    t1->SetBranchAddress("PuppiMET_pt", &MET_pt);   // transverse momentum of missing energy (PuppiMET: this file has no MET_pt)
+    t1->SetBranchAddress("PuppiMET_phi", &MET_phi); // azimuthal angle of MET (PuppiMET)
 
     if (!isExperimental)
     {
@@ -154,9 +153,9 @@ void ditauAna()
     t1->SetBranchAddress("Tau_mass", &Tau_mass);
     t1->SetBranchAddress("Tau_charge", &Tau_charge);
     t1->SetBranchAddress("Tau_decayMode", &Tau_decayMode);
-    t1->SetBranchAddress("Tau_idDeepTau2017v2p1VSjet", &Tau_idDeepTau2017v2p1VSjet);
-    t1->SetBranchAddress("Tau_idDeepTau2017v2p1VSe", &Tau_idDeepTau2017v2p1VSe);
-    t1->SetBranchAddress("Tau_idDeepTau2017v2p1VSmu", &Tau_idDeepTau2017v2p1VSmu);
+    t1->SetBranchAddress("Tau_idDeepTau2018v2p5VSjet", &Tau_idDeepTau2018v2p5VSjet);
+    t1->SetBranchAddress("Tau_idDeepTau2018v2p5VSe", &Tau_idDeepTau2018v2p5VSe);
+    t1->SetBranchAddress("Tau_idDeepTau2018v2p5VSmu", &Tau_idDeepTau2018v2p5VSmu);
 
     //////////////HISTOGRAM ANALYSIS////////////////
     /////////MET/////////////////////////
@@ -224,9 +223,9 @@ void ditauAna()
         /////
         // here the ID is the working point index (1 = VVVLoose, 2 = VVLoose, 3 = VLoose ...),
         // not a bitmask: ">= n" is the same cut as the old "bit n-1 is set".
-        bool passesVSjet = Tau_idDeepTau2017v2p1VSjet[tau] >= 3; // was & (1 << 2)
-        bool passesVSe = Tau_idDeepTau2017v2p1VSe[tau] >= 1;     // was & (1 << 0)
-        bool passesVSmu = Tau_idDeepTau2017v2p1VSmu[tau] >= 1;   // was & (1 << 0)
+        bool passesVSjet = Tau_idDeepTau2018v2p5VSjet[tau] >= 3; // was & (1 << 2)
+        bool passesVSe = Tau_idDeepTau2018v2p5VSe[tau] >= 1;     // was & (1 << 0)
+        bool passesVSmu = Tau_idDeepTau2018v2p5VSmu[tau] >= 1;   // was & (1 << 0)
 
         if (!(passesVSjet && passesVSe && passesVSmu))
           continue;
