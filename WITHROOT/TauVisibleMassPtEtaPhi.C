@@ -29,7 +29,7 @@ namespace
     {
         return 2 * pt1 * pt2 * (std::cosh(deltaEta) - std::cos(deltaPhi));
     }
-} // namespace
+}
 
 void TauVisibleMassPtEtaPhi()
 {

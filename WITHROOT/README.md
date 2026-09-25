@@ -758,3 +758,6 @@ root -l -b -q TauVisibleMassPtEtaPhi.C
         "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/d9e19696-586f-4161-84fc-b0932c35f5ae.root"
 
 TODO to find the json file with good lumisections
+
+TODO to be checked
+https://cms-analysis-corrections.docs.cern.ch/
