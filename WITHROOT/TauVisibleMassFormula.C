@@ -126,7 +126,11 @@ void TauVisibleMassFormula()
                 continue;
             }
 
-            // each tau as (px, py, pz, E), then M^2 of the pair by the formula.
+            // Mass of the di-tau (visible mass of the two taus):
+            //   M = sqrt( (E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2 )
+            // per tau: px = pt*cos(phi), py = pt*sin(phi), pz = pt*sinh(eta),
+            //          E = sqrt(px^2 + py^2 + pz^2 + mass^2)
+            // here we compute M^2 (the part under the square root).
             const FourVector tau1 = makeFourVector(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
             const FourVector tau2 = makeFourVector(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
             const Double_t massSquared = invariantMassSquared(tau1, tau2);
@@ -143,6 +147,7 @@ void TauVisibleMassFormula()
             const size_t iAntiTau = (tauCharge[iLead] == -1) ? iSub : iLead;
             h_tau_mass.Fill(tauMass[iTau]);
             h_antitau_mass.Fill(tauMass[iAntiTau]);
+            // M = sqrt(M^2)
             h_vis_mass.Fill(std::sqrt(massSquared));
 
             ++nPairsUsed;
