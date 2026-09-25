@@ -158,6 +158,8 @@ void TauVisibleMassCheck()
     h_tau_mass.Write();
     h_antitau_mass.Write();
     h_vis_mass.Write();
+    h_vis_mass_tmass_plus_antitmass.Write();
+    combined_ditau_mass.Write();
     out.Close();
 
     std::cout << "TauVisibleMassCheck: wrote " << outFile << std::endl;
