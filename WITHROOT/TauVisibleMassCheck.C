@@ -44,13 +44,14 @@ void TauVisibleMassCheck()
               << std::endl;
 
     // emtpy histograms to fill, and then write to output file.
-    TH1F h_tau_mass("h_tau_mass", "Tau_mass of tau (charge -1);Tau_mass [GeV];Events",
+    // names in the root file: h_tauMass_* come from the Tau_mass branch, h_mVis_* are pair masses.
+    TH1F h_tau_mass("h_tauMass_tau", "Tau_mass of tau (charge -1);Tau_mass [GeV];Events",
                     1000, 0, 5);
-    TH1F h_antitau_mass("h_antitau_mass", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
+    TH1F h_antitau_mass("h_tauMass_antitau", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
                         1000, 0, 5);
-    TH1F h_vis_mass("h_vis_mass", "m_{vis}(#tau#tau);m_{vis} [GeV];Events", 250, 0, 250);
-    TH1F h_vis_mass_tmass_plus_antitmass("h_vis_mass", "m_{vis}(#tau#tau);m_{vis} [GeV];Events", 250, 0, 250);
-    TH1F combined_ditau_mass("h_antitau_mass", "Tau_mass of anti-tau (charge +1);Tau_mass [GeV];Events",
+    TH1F h_vis_mass("h_mVis_pair", "m_{vis}(#tau#tau) = (p1+p2).M();m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F h_vis_mass_tmass_plus_antitmass("h_mVis_sumOfLorentzMasses", "p1.M() + p2.M();sum of the two masses [GeV];Events", 250, 0, 250);
+    TH1F combined_ditau_mass("h_tauMass_sum", "Tau_mass[leading] + Tau_mass[subleading];sum [GeV];Events",
                              1000, 0, 5);
 
     Long64_t nEventsSeen = 0;
