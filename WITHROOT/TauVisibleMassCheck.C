@@ -108,19 +108,19 @@ void TauVisibleMassCheck()
             }
 
             // it skips the events that are not back-to-back
-            const Double_t deltaPhi = wrappedDeltaPhi(tauPhi[iLead], tauPhi[iSub]);
-            if (std::abs(deltaPhi) <= DELTA_PHI_MIN)
-            {
-                continue;
-            }
+            // const Double_t deltaPhi = wrappedDeltaPhi(tauPhi[iLead], tauPhi[iSub]);
+            // if (std::abs(deltaPhi) <= DELTA_PHI_MIN)
+            // {
+            //     continue;
+            // }
 
             // it computes the pair's longitudinal momentum, and skips if too large.
-            const Double_t pairPz = tauPt[iLead] * std::sinh(tauEta[iLead]) +
-                                    tauPt[iSub] * std::sinh(tauEta[iSub]);
-            if (std::abs(pairPz) >= PAIR_PZ_MAX)
-            {
-                continue;
-            }
+            // const Double_t pairPz = tauPt[iLead] * std::sinh(tauEta[iLead]) +
+            //                         tauPt[iSub] * std::sinh(tauEta[iSub]);
+            // if (std::abs(pairPz) >= PAIR_PZ_MAX)
+            // {
+            //     continue;
+            // }
 
             // Tau_mass alone: visible mass of ONE tau's decay system
             // the pair is opposite sign, so exactly one is the tau (-1) and one the anti-tau (+1).
