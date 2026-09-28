@@ -205,7 +205,6 @@ void ditauAna()
 
       hMET_pt->Fill(MET_pt);
       hMET_phi->Fill(MET_phi);
-
     }
 
     fout->mkdir(label + "/METHist");
@@ -229,3 +228,55 @@ void ditauAna()
 
   fout->Close();
 }
+
+// ============================================================================
+// HOW TO RUN (on lxplus)
+// ============================================================================
+//
+// 1. Log in and go to the folder that contains this file:
+//      ssh kraychev@lxplus.cern.ch
+//      cd /eos/user/k/kraychev/Coffea_Basics/WITHROOT
+//
+// 2. Set up ROOT (if the command "root" is not found), for example with an LCG view
+//    or with "cmsenv" inside a CMSSW release you already have.
+//
+// 3. Get the grid proxy (valid about 12 hours). It is needed to read the
+//    root://cms-xrd-global.cern.ch/... files:
+//      voms-proxy-init --rfc --voms cms
+//
+// 4. Run the macro. It asks its questions when it starts, so type the answers
+//    in this order:
+//      root -l -b -q ditauAna.cca
+//
+//      question 1: "enter your preference (cut or pre-cut):"
+//                  type   pre-cut   (no extra cuts, only the DeepTau ID requirements)
+//                  or     cut       (then it also asks, one by one: pt cut, eta cut,
+//                                    MET cut, lower and upper bound of the cos cut)
+//      last question: "enter desired amount of entries (use -1 for entire population)"
+//                  type   10000     for a quick first test
+//                  type   -1        for all entries of the file
+//
+//    The same with the answers typed in for you (pre-cut, first 10000 entries).
+//    This also writes the long output to a log file, so it stays readable:
+//      printf "pre-cut\n10000\n" | root -l -b -q ditauAna.cc > ditau.log 2>&1
+//      grep -i "error\|unknown branch\|entries to process\|output file" ditau.log
+//
+// 5. Check the log:
+//    - Any line with "unknown branch" means a branch name is missing in the file.
+//      The results of that run are not valid.
+//    - "entries to process: N" shows how many events were read.
+//
+// 6. Find the result. The file is written in the folder where you started ROOT,
+//    when the macro finishes:
+//      my_histograms_precut_experimental_Run2024D.root    (pre-cut)
+//      my_histograms_cut_experimental_Run2024D.root       (cut)
+//    Look inside:
+//      root -l my_histograms_precut_experimental_Run2024D.root
+//      .ls
+//      Run2024D_e8393d52->ls()
+//      Run2024D_e8393d52/tauHist/hDitau_mass->Draw()      (the di-tau mass)
+//
+// FILES: the macro reads only the first file of the list at the top of ditauAna().
+//        To read both, set nFiles = 2 there. Each file gets its own folder in the
+//        output (Run2024D_e8393d52, Run2024D_d0e3a051).
+// ============================================================================
