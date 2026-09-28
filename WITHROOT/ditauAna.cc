@@ -5,7 +5,37 @@
 #include <cmath>
 #include <fstream>
 
+#include "Config.C"
+#include "Config.h"
+
 const int MAXTAU = 200;
+
+// Turns a file path into a short, unique label for its output directory,
+// e.g. ".../120000/e8393d52-174a-...root" -> "e8393d52".
+TString labelFromPath(const std::string &path)
+{
+  std::string base = path;
+  size_t slash = base.find_last_of('/');
+  if (slash != std::string::npos)
+  {
+    base = base.substr(slash + 1);
+  }
+  size_t dash = base.find('-');
+  if (dash != std::string::npos)
+  {
+    base = base.substr(0, dash);
+  }
+  else
+  {
+    size_t dot = base.find_last_of('.');
+    if (dot != std::string::npos)
+    {
+      base = base.substr(0, dot);
+    }
+  }
+  return TString(base.c_str());
+}
+
 void ditauAna()
 {
 
@@ -13,10 +43,11 @@ void ditauAna()
   std::cout << "enter your preference (cut or pre-cut): ";
   std::cin >> mode;
 
-  const char *fileNames[] = {"root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/e8393d52-174a-4cde-bb15-0f98571d0b33.root",
-                             "root://cms-xrd-global.cern.ch//store/data/Run2024D/Tau/NANOAOD/MINIv6NANOv15-v1/120000/d0e3a051-2fc4-49f1-b6e7-25fd936e0101.root"};
-  const char *fileLabels[] = {"Run2024D_e8393d52", "Run2024D_d0e3a051"};
-  int nFiles = 1; // only the first file of the list (set 2 for both)
+  // every file listed in file_config_data.json, same config the other
+  // WITHROOT macros in this session use.
+  std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
+  std::cout << rootFiles.size() << " file(s) to process." << std::endl;
+  int nFiles = rootFiles.size();
 
   double ptCut = 30.0;
   double etaCut = 2.1;
@@ -69,10 +100,12 @@ void ditauAna()
 
   for (int fileIdx = 0; fileIdx < nFiles; fileIdx++)
   {
-    TString label = fileLabels[fileIdx];
+    TString label = labelFromPath(rootFiles[fileIdx].path);
+    std::cout << "[" << (fileIdx + 1) << "/" << nFiles << "] reading: "
+              << rootFiles[fileIdx].path << std::endl;
 
     TChain *t1 = new TChain("Events");
-    t1->Add(fileNames[fileIdx]);
+    t1->Add(rootFiles[fileIdx].path.c_str());
 
     Float_t MET_pt;
     Float_t MET_phi;
@@ -246,7 +279,7 @@ void ditauAna()
 //
 // 4. Run the macro. It asks its questions when it starts, so type the answers
 //    in this order:
-//      root -l -b -q ditauAna.cca
+//      root -l -b -q ditauAna.cc
 //
 //      question 1: "enter your preference (cut or pre-cut):"
 //                  type   pre-cut   (no extra cuts, only the DeepTau ID requirements)
@@ -276,7 +309,9 @@ void ditauAna()
 //      Run2024D_e8393d52->ls()
 //      Run2024D_e8393d52/tauHist/hDitau_mass->Draw()      (the di-tau mass)
 //
-// FILES: the macro reads only the first file of the list at the top of ditauAna().
-//        To read both, set nFiles = 2 there. Each file gets its own folder in the
-//        output (Run2024D_e8393d52, Run2024D_d0e3a051).
+// FILES: the macro reads every file listed as "enabled": true in
+//        file_config_data.json (same config the other WITHROOT macros in this
+//        session use). Each file gets its own folder in the output, named
+//        after its file name (e.g. Run2024D_e8393d52/tauHist/hDitau_mass).
+//        Add or remove files there, not in this .cc file.
 // ============================================================================
