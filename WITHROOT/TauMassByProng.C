@@ -18,6 +18,17 @@
 // delta_r is not cut on here, only shown: one h_deltaR_* histogram per
 // channel, so its distribution can be checked per prong combination.
 //
+// Next to TLorentzVector's .M(), the same pair's mass is also computed with
+// the two other formulas used elsewhere in this session, so all three can be
+// compared per channel:
+//   h_mass_*           : (p1+p2).M(), via TLorentzVector (TauVisibleMassCheck.C)
+//   h_massFormula_*     : sqrt((E1+E2)^2-(px1+px2)^2-(py1+py2)^2-(pz1+pz2)^2),
+//                         by hand from px/py/pz/E (TauVisibleMassFormula.C)
+//   h_massPtEtaPhi_*    : sqrt(2*pt1*pt2*(cosh(deltaEta)-cos(deltaPhi))),
+//                         taus treated as massless (TauVisibleMassPtEtaPhi.C)
+// All three are the same physics, so they should agree closely; the macro
+// prints the largest |M - M_formula| and |M - M_ptEtaPhi| seen, as a check.
+//
 // Prong grouping (NanoAOD Tau_decayMode):
 //   1-prong: 0 (1prong0pi0), 1 (1prong1pi0), 2 (1prong2pi0)
 //   2-prong: 5, 6 (rare / partial reconstructions)
@@ -62,6 +73,39 @@ namespace
     Double_t wrappedDeltaPhi(Double_t phi1, Double_t phi2)
     {
         return TVector2::Phi_mpi_pi(phi1 - phi2);
+    }
+
+    struct FourVector
+    {
+        Double_t px, py, pz, e;
+    };
+
+    // (pt, eta, phi, mass) -> (px, py, pz, E), same as TauVisibleMassFormula.C
+    FourVector makeFourVector(Double_t pt, Double_t eta, Double_t phi, Double_t mass)
+    {
+        FourVector v;
+        v.px = pt * std::cos(phi);
+        v.py = pt * std::sin(phi);
+        v.pz = pt * std::sinh(eta);
+        v.e = std::sqrt(v.px * v.px + v.py * v.py + v.pz * v.pz + mass * mass);
+        return v;
+    }
+
+    // M = sqrt((E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2)
+    Double_t formulaMass(const FourVector &a, const FourVector &b)
+    {
+        const Double_t e = a.e + b.e;
+        const Double_t px = a.px + b.px;
+        const Double_t py = a.py + b.py;
+        const Double_t pz = a.pz + b.pz;
+        return std::sqrt(std::max(0.0, e * e - px * px - py * py - pz * pz));
+    }
+
+    // M = sqrt(2*pt1*pt2*(cosh(deltaEta) - cos(deltaPhi))), taus treated as
+    // massless. cosh(x) >= 1 and cos(x) <= 1, so the argument is never negative.
+    Double_t ptEtaPhiMass(Double_t pt1, Double_t pt2, Double_t deltaEta, Double_t deltaPhi)
+    {
+        return std::sqrt(2 * pt1 * pt2 * (std::cosh(deltaEta) - std::cos(deltaPhi)));
     }
 
     enum class Prong
@@ -111,8 +155,22 @@ void TauMassByProng()
     TH1F h_deltaR_threeProng("h_deltaR_threeProng", "#Delta R(#tau#tau), both legs 3-prong;#Delta R;Events", 64, 0, 6);
     TH1F h_deltaR_mixedProng("h_deltaR_mixedProng", "#Delta R(#tau#tau), legs in different prong groups;#Delta R;Events", 64, 0, 6);
 
+    // same masses as h_mass_*, but from the explicit E/px/py/pz formula
+    TH1F h_massFormula_oneProng("h_massFormula_oneProng", "m_{vis} formula, both legs 1-prong;m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F h_massFormula_twoProng("h_massFormula_twoProng", "m_{vis} formula, both legs 2-prong;m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F h_massFormula_threeProng("h_massFormula_threeProng", "m_{vis} formula, both legs 3-prong;m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F h_massFormula_mixedProng("h_massFormula_mixedProng", "m_{vis} formula, legs in different prong groups;m_{vis} [GeV];Events", 250, 0, 250);
+
+    // same masses again, from the massless pt/eta/phi formula
+    TH1F h_massPtEtaPhi_oneProng("h_massPtEtaPhi_oneProng", "m_{vis} pt/eta/phi formula, both legs 1-prong;m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F h_massPtEtaPhi_twoProng("h_massPtEtaPhi_twoProng", "m_{vis} pt/eta/phi formula, both legs 2-prong;m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F h_massPtEtaPhi_threeProng("h_massPtEtaPhi_threeProng", "m_{vis} pt/eta/phi formula, both legs 3-prong;m_{vis} [GeV];Events", 250, 0, 250);
+    TH1F h_massPtEtaPhi_mixedProng("h_massPtEtaPhi_mixedProng", "m_{vis} pt/eta/phi formula, legs in different prong groups;m_{vis} [GeV];Events", 250, 0, 250);
+
     CutFlow cutFlow;
     Long64_t nOneProng = 0, nTwoProng = 0, nThreeProng = 0, nMixedProng = 0;
+    Double_t maxDiffFormula = 0.0;
+    Double_t maxDiffPtEtaPhi = 0.0;
 
     for (const RootFileEntry &file : rootFiles)
     {
@@ -191,6 +249,15 @@ void TauMassByProng()
             const Double_t mVis = (p1 + p2).M();
             const Double_t deltaR = p1.DeltaR(p2);
 
+            // the same mass, from the other two formulas
+            const FourVector v1 = makeFourVector(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
+            const FourVector v2 = makeFourVector(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
+            const Double_t mVisFormula = formulaMass(v1, v2);
+            const Double_t mVisPtEtaPhi = ptEtaPhiMass(tauPt[iLead], tauPt[iSub],
+                                                       tauEta[iLead] - tauEta[iSub], deltaPhi);
+            maxDiffFormula = std::max(maxDiffFormula, std::abs(mVis - mVisFormula));
+            maxDiffPtEtaPhi = std::max(maxDiffPtEtaPhi, std::abs(mVis - mVisPtEtaPhi));
+
             const Prong prong1 = prongOf(tauDecayMode[iLead]);
             const Prong prong2 = prongOf(tauDecayMode[iSub]);
 
@@ -204,16 +271,22 @@ void TauMassByProng()
                 {
                 case Prong::One:
                     h_mass_oneProng.Fill(mVis);
+                    h_massFormula_oneProng.Fill(mVisFormula);
+                    h_massPtEtaPhi_oneProng.Fill(mVisPtEtaPhi);
                     h_deltaR_oneProng.Fill(deltaR);
                     ++nOneProng;
                     break;
                 case Prong::Two:
                     h_mass_twoProng.Fill(mVis);
+                    h_massFormula_twoProng.Fill(mVisFormula);
+                    h_massPtEtaPhi_twoProng.Fill(mVisPtEtaPhi);
                     h_deltaR_twoProng.Fill(deltaR);
                     ++nTwoProng;
                     break;
                 case Prong::Three:
                     h_mass_threeProng.Fill(mVis);
+                    h_massFormula_threeProng.Fill(mVisFormula);
+                    h_massPtEtaPhi_threeProng.Fill(mVisPtEtaPhi);
                     h_deltaR_threeProng.Fill(deltaR);
                     ++nThreeProng;
                     break;
@@ -224,6 +297,8 @@ void TauMassByProng()
             else
             {
                 h_mass_mixedProng.Fill(mVis);
+                h_massFormula_mixedProng.Fill(mVisFormula);
+                h_massPtEtaPhi_mixedProng.Fill(mVisPtEtaPhi);
                 h_deltaR_mixedProng.Fill(deltaR);
                 ++nMixedProng;
             }
@@ -239,6 +314,8 @@ void TauMassByProng()
     std::cout << "  2-prong/2-prong:   " << nTwoProng << std::endl;
     std::cout << "  3-prong/3-prong:   " << nThreeProng << std::endl;
     std::cout << "  mixed prong:       " << nMixedProng << std::endl;
+    std::cout << "TauMassByProng: max |M - M_formula|   = " << maxDiffFormula << " GeV" << std::endl;
+    std::cout << "TauMassByProng: max |M - M_ptEtaPhi|   = " << maxDiffPtEtaPhi << " GeV" << std::endl;
 
     const std::string outFile = "outputs/tau_mass_by_prong.root";
     TFile out(outFile.c_str(), "RECREATE");
@@ -246,6 +323,14 @@ void TauMassByProng()
     h_mass_twoProng.Write();
     h_mass_threeProng.Write();
     h_mass_mixedProng.Write();
+    h_massFormula_oneProng.Write();
+    h_massFormula_twoProng.Write();
+    h_massFormula_threeProng.Write();
+    h_massFormula_mixedProng.Write();
+    h_massPtEtaPhi_oneProng.Write();
+    h_massPtEtaPhi_twoProng.Write();
+    h_massPtEtaPhi_threeProng.Write();
+    h_massPtEtaPhi_mixedProng.Write();
     h_deltaR_oneProng.Write();
     h_deltaR_twoProng.Write();
     h_deltaR_threeProng.Write();
