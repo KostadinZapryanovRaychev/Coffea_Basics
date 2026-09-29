@@ -98,9 +98,16 @@ void ditauAna()
   TFile *fout = new TFile(outputFile.c_str(), "RECREATE");
   cout << "output file name is: " << outputFile << endl;
 
+  std::vector<TString> usedLabels; // guards against two files giving the same label
+
   for (int fileIdx = 0; fileIdx < nFiles; fileIdx++)
   {
     TString label = labelFromPath(rootFiles[fileIdx].path);
+    while (std::find(usedLabels.begin(), usedLabels.end(), label) != usedLabels.end())
+    {
+      label += "_dup"; // two files gave the same label: keep both, make the second one distinct
+    }
+    usedLabels.push_back(label);
     std::cout << "[" << (fileIdx + 1) << "/" << nFiles << "] reading: "
               << rootFiles[fileIdx].path << std::endl;
 

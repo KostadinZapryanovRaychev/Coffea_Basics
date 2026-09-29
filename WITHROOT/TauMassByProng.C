@@ -11,6 +11,12 @@
 //     TauVisibleMassCheck.C's plain pT/eta selection showed a peak at 91 GeV --
 //     see the discussion in this session.
 //   - pT > 20 GeV, |eta| < 2.3 (our own selection, same as reco_tau_kinematics.py)
+//   - opposite sign (Z -> tau+ tau-, not tau+ tau+ or tau- tau-)
+//   - |delta_phi(tau, antitau)| > 2.5: back-to-back requirement, same as
+//     NAOD_TAU/reco_tau_kinematics.py's DELTA_PHI_MIN
+//
+// delta_r is not cut on here, only shown: one h_deltaR_* histogram per
+// channel, so its distribution can be checked per prong combination.
 //
 // Prong grouping (NanoAOD Tau_decayMode):
 //   1-prong: 0 (1prong0pi0), 1 (1prong1pi0), 2 (1prong2pi0)
@@ -37,17 +43,26 @@
 #include "TLorentzVector.h"
 #include "TH1F.h"
 #include "TFile.h"
+#include "TMath.h"
 
 namespace
 {
     constexpr Double_t TAU_PT_MIN = 20.0;
     constexpr Double_t TAU_ETA_MAX = 2.3;
+    constexpr Double_t DELTA_PHI_MIN = 2.5; // back-to-back requirement
 
     // DeepTau 2018v2p5 working points: 1 = VVVLoose, 2 = VVLoose, 3 = VLoose, ...
     // Same thresholds as ditauAna.cc's pre-cut selection.
     constexpr UChar_t VSJET_MIN = 3; // VLoose
     constexpr UChar_t VSE_MIN = 1;   // VVVLoose
     constexpr UChar_t VSMU_MIN = 1;  // VLoose
+
+    // Wraps a phi difference into (-pi, pi], same convention as
+    // NAOD_TAU/helpers/lhe/angles.py's compute_delta_phi.
+    Double_t wrappedDeltaPhi(Double_t phi1, Double_t phi2)
+    {
+        return TVector2::Phi_mpi_pi(phi1 - phi2);
+    }
 
     enum class Prong
     {
@@ -90,6 +105,11 @@ void TauMassByProng()
                            250, 0, 250);
     TH1F h_mass_mixedProng("h_mass_mixedProng", "m_{vis}(#tau#tau), legs in different prong groups;m_{vis} [GeV];Events",
                            250, 0, 250);
+
+    TH1F h_deltaR_oneProng("h_deltaR_oneProng", "#Delta R(#tau#tau), both legs 1-prong;#Delta R;Events", 64, 0, 6);
+    TH1F h_deltaR_twoProng("h_deltaR_twoProng", "#Delta R(#tau#tau), both legs 2-prong;#Delta R;Events", 64, 0, 6);
+    TH1F h_deltaR_threeProng("h_deltaR_threeProng", "#Delta R(#tau#tau), both legs 3-prong;#Delta R;Events", 64, 0, 6);
+    TH1F h_deltaR_mixedProng("h_deltaR_mixedProng", "#Delta R(#tau#tau), legs in different prong groups;#Delta R;Events", 64, 0, 6);
 
     CutFlow cutFlow;
     size_t nFilesDone = 0;
@@ -163,10 +183,18 @@ void TauMassByProng()
             ++cutFlow.oppositeSign;
             ++cutFlow.passKinematics; // pT/eta already required above, for symmetry with the other macros
 
+            // back-to-back requirement
+            const Double_t deltaPhi = wrappedDeltaPhi(tauPhi[iLead], tauPhi[iSub]);
+            if (std::abs(deltaPhi) <= DELTA_PHI_MIN)
+            {
+                continue;
+            }
+
             TLorentzVector p1, p2;
             p1.SetPtEtaPhiM(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
             p2.SetPtEtaPhiM(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
             const Double_t mVis = (p1 + p2).M();
+            const Double_t deltaR = p1.DeltaR(p2);
 
             const Prong prong1 = prongOf(tauDecayMode[iLead]);
             const Prong prong2 = prongOf(tauDecayMode[iSub]);
@@ -181,14 +209,17 @@ void TauMassByProng()
                 {
                 case Prong::One:
                     h_mass_oneProng.Fill(mVis);
+                    h_deltaR_oneProng.Fill(deltaR);
                     ++nOneProng;
                     break;
                 case Prong::Two:
                     h_mass_twoProng.Fill(mVis);
+                    h_deltaR_twoProng.Fill(deltaR);
                     ++nTwoProng;
                     break;
                 case Prong::Three:
                     h_mass_threeProng.Fill(mVis);
+                    h_deltaR_threeProng.Fill(deltaR);
                     ++nThreeProng;
                     break;
                 default:
@@ -198,6 +229,7 @@ void TauMassByProng()
             else
             {
                 h_mass_mixedProng.Fill(mVis);
+                h_deltaR_mixedProng.Fill(deltaR);
                 ++nMixedProng;
             }
 
@@ -221,6 +253,10 @@ void TauMassByProng()
     h_mass_twoProng.Write();
     h_mass_threeProng.Write();
     h_mass_mixedProng.Write();
+    h_deltaR_oneProng.Write();
+    h_deltaR_twoProng.Write();
+    h_deltaR_threeProng.Write();
+    h_deltaR_mixedProng.Write();
     out.Close();
 
     std::cout << "TauMassByProng: wrote " << outFile << std::endl;
