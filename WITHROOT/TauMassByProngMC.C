@@ -25,7 +25,7 @@
 // A pair is put in a channel only if BOTH legs are in that same prong group;
 // mixed-prong pairs (e.g. 1-prong with 3-prong) go into h_mass_mixedProng.
 //
-// Runs over file_config_data.json (real data).
+// Runs over file_config_reco.json (Monte Carlo, ZprimeTo2Tau samples).
 
 #include "Config.C"
 #include "Config.h"
@@ -92,10 +92,10 @@ namespace
     }
 } // namespace
 
-void TauMassByProng()
+void TauMassByProngMC()
 {
-    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
-    std::cout << "TauMassByProng: " << rootFiles.size() << " file(s) to process." << std::endl;
+    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_reco.json");
+    std::cout << "TauMassByProngMC: " << rootFiles.size() << " file(s) to process." << std::endl;
 
     TH1F h_mass_oneProng("h_mass_oneProng", "m_{vis}(#tau#tau), both legs 1-prong;m_{vis} [GeV];Events",
                          250, 0, 250);
@@ -120,7 +120,7 @@ void TauMassByProng()
         TTree *Events = getEventsTree(file.path);
         if (!Events)
         {
-            std::cerr << "TauMassByProng: skipping " << file.path << std::endl;
+            std::cerr << "TauMassByProngMC: skipping " << file.path << std::endl;
             continue;
         }
 
@@ -233,14 +233,14 @@ void TauMassByProng()
 
     }
 
-    std::cout << "TauMassByProng: " << cutFlow.used << " good pairs out of "
+    std::cout << "TauMassByProngMC: " << cutFlow.used << " good pairs out of "
               << cutFlow.eventsRead << " events read." << std::endl;
     std::cout << "  1-prong/1-prong:   " << nOneProng << std::endl;
     std::cout << "  2-prong/2-prong:   " << nTwoProng << std::endl;
     std::cout << "  3-prong/3-prong:   " << nThreeProng << std::endl;
     std::cout << "  mixed prong:       " << nMixedProng << std::endl;
 
-    const std::string outFile = "outputs/tau_mass_by_prong.root";
+    const std::string outFile = "outputs/tau_mass_by_prong_mc.root";
     TFile out(outFile.c_str(), "RECREATE");
     h_mass_oneProng.Write();
     h_mass_twoProng.Write();
@@ -252,5 +252,5 @@ void TauMassByProng()
     h_deltaR_mixedProng.Write();
     out.Close();
 
-    std::cout << "TauMassByProng: wrote " << outFile << std::endl;
+    std::cout << "TauMassByProngMC: wrote " << outFile << std::endl;
 }
