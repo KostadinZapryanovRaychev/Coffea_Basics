@@ -84,17 +84,6 @@ namespace
         Double_t px, py, pz, e;
     };
 
-    // (pt, eta, phi, mass) -> (px, py, pz, E), same as TauVisibleMassFormula.C
-    FourVector makeFourVector(Double_t pt, Double_t eta, Double_t phi, Double_t mass)
-    {
-        FourVector v;
-        v.px = pt * std::cos(phi);
-        v.py = pt * std::sin(phi);
-        v.pz = pt * std::sinh(eta);
-        v.e = std::sqrt(v.px * v.px + v.py * v.py + v.pz * v.pz + mass * mass);
-        return v;
-    }
-
     // M = sqrt((E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2)
     Double_t formulaMass(const FourVector &a, const FourVector &b)
     {
@@ -218,27 +207,40 @@ void TauMassByProngWideMET()
             // per-tau selection: DeepTau ID (rejects jet/e/mu fakes) + pT + eta,
             // BEFORE picking the leading pair -- a tau failing the ID (e.g. a
             // real muon) is not eligible to be "leading" at all.
-            std::vector<size_t> goodIdx;
+            //
+            // Only the top 2 by pT are ever used, so this tracks them in a
+            // single pass instead of collecting every good tau into a vector
+            // and sorting it -- no heap allocation per event.
+            size_t iLead = SIZE_MAX, iSub = SIZE_MAX;
+            Double_t leadPt = -1.0, subPt = -1.0;
+            size_t nGood = 0;
             for (size_t i = 0; i < nTau; ++i)
             {
                 const bool passesId = tauVsJet[i] >= VSJET_MIN && tauVsE[i] >= VSE_MIN && tauVsMu[i] >= VSMU_MIN;
                 const bool passesKinematics = tauPt[i] > TAU_PT_MIN && std::abs(tauEta[i]) < TAU_ETA_MAX;
-                if (passesId && passesKinematics)
+                if (!passesId || !passesKinematics)
                 {
-                    goodIdx.push_back(i);
+                    continue;
+                }
+                ++nGood;
+                if (tauPt[i] > leadPt)
+                {
+                    iSub = iLead;
+                    subPt = leadPt;
+                    iLead = i;
+                    leadPt = tauPt[i];
+                }
+                else if (tauPt[i] > subPt)
+                {
+                    iSub = i;
+                    subPt = tauPt[i];
                 }
             }
-            if (goodIdx.size() < 2)
+            if (nGood < 2)
             {
                 continue;
             }
             ++cutFlow.atLeastTwoTaus;
-
-            std::sort(goodIdx.begin(), goodIdx.end(),
-                      [&](size_t a, size_t b)
-                      { return tauPt[a] > tauPt[b]; });
-            const size_t iLead = goodIdx[0];
-            const size_t iSub = goodIdx[1];
 
             // opposite sign
             if (tauCharge[iLead] * tauCharge[iSub] != -1)
@@ -261,9 +263,11 @@ void TauMassByProngWideMET()
             const Double_t mVis = (p1 + p2).M();
             const Double_t deltaR = p1.DeltaR(p2);
 
-            // the same mass, from the other two formulas
-            const FourVector v1 = makeFourVector(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
-            const FourVector v2 = makeFourVector(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
+            // the same mass, from the other two formulas -- reuse p1/p2's
+            // already-computed px/py/pz/E instead of recomputing
+            // cos/sin/sinh a second time
+            const FourVector v1{p1.Px(), p1.Py(), p1.Pz(), p1.E()};
+            const FourVector v2{p2.Px(), p2.Py(), p2.Pz(), p2.E()};
             const Double_t mVisFormula = formulaMass(v1, v2);
             const Double_t mVisPtEtaPhi = ptEtaPhiMass(tauPt[iLead], tauPt[iSub],
                                                        tauEta[iLead] - tauEta[iSub], deltaPhi);
