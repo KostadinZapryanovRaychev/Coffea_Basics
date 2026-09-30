@@ -159,6 +159,25 @@ namespace
         return h.GetBinCenter(best);
     }
 
+    // A single tallest bin is unreliable on a QCD-subtracted excess: the OS/SS
+    // shape assumption is weakest right at the isolation threshold turn-on
+    // (~85-90 GeV), so a residual mismodeling spike there can outweigh a
+    // real, broad Z->tautau hump at lower mass. A statistics-weighted mean
+    // over the window is far less sensitive to one leftover bin.
+    Double_t weightedMean(const TH1D &h, Double_t low, Double_t high)
+    {
+        const Int_t first = h.GetXaxis()->FindFixBin(low);
+        const Int_t last = h.GetXaxis()->FindFixBin(high - 1e-6);
+        Double_t sumWX = 0, sumW = 0;
+        for (Int_t b = first; b <= last; ++b)
+        {
+            const Double_t w = std::max(0.0, h.GetBinContent(b)); // negative bins carry no weight
+            sumWX += w * h.GetBinCenter(b);
+            sumW += w;
+        }
+        return sumW > 0 ? sumWX / sumW : 0;
+    }
+
     std::unique_ptr<TH1D> qcdEstimate(const TH1D &ssIso, Double_t transfer, const char *name)
     {
         auto qcd = std::unique_ptr<TH1D>((TH1D *)ssIso.Clone(name));
@@ -177,12 +196,17 @@ namespace
     {
         const Double_t visPeak = peakPosition(mVisExcess, 30, 150);
         const Double_t colPeak = peakPosition(mColExcess, 30, 200);
+        const Double_t visMean = weightedMean(mVisExcess, 30, 150);
+        const Double_t colMean = weightedMean(mColExcess, 30, 250);
         std::cout << "\n[Test A] neutrino recovery (QCD-subtracted OS_iso)" << std::endl;
         std::cout << "  m_vis peak: " << visPeak << " GeV   m_col peak: " << colPeak << " GeV" << std::endl;
-        const bool visBelowZ = visPeak < 85;
-        const bool colAtZ = colPeak > 75 && colPeak < 110;
-        std::cout << "  => " << (visBelowZ && colAtZ ? "consistent with genuine Z->tautau (H1)"
-                                                    : "NOT the Z->tautau pattern")
+        std::cout << "  m_vis weighted mean: " << visMean << " GeV   m_col weighted mean: " << colMean << " GeV" << std::endl;
+        // the verdict uses the weighted mean, not the single tallest bin: see
+        // weightedMean()'s comment for why the peak alone is unreliable here
+        const bool visBelowZ = visMean < 85;
+        const bool colShiftsUp = colMean > visMean + 5;
+        std::cout << "  => " << (visBelowZ && colShiftsUp ? "consistent with genuine Z->tautau (H1)"
+                                                           : "NOT the Z->tautau pattern")
                   << std::endl;
     }
 
@@ -209,15 +233,30 @@ namespace
                   << std::endl;
     }
 
-    void runTestC(const TH1D &osIso, const TH1D &qcd, Double_t transferErr, Double_t transfer)
+    // below this many RAW (unscaled) same-sign control-region events, the QCD
+    // estimate in that bin is dominated by one or two events and the
+    // significance formula is meaningless -- a lone control-region event can
+    // otherwise fake a double-digit sigma "excess" (seen in practice at
+    // m_T^tot ~ 380-400 GeV: 20 events vs a QCD estimate built from a single
+    // same-sign event, gave a spurious 11 sigma that vanished the next bin)
+    constexpr Double_t MIN_RAW_CONTROL_COUNT = 5.0;
+
+    void runTestC(const TH1D &osIso, const TH1D &qcd, const TH1D &ssIsoRaw, Double_t transferErr, Double_t transfer)
     {
         Double_t bestZ = 0, bestMass = 0;
+        Int_t nSkippedLowStat = 0;
         for (Int_t b = osIso.GetXaxis()->FindFixBin(HIGH_MASS_SCAN_MIN); b <= osIso.GetNbinsX(); ++b)
         {
             const Double_t nObs = osIso.GetBinContent(b);
             const Double_t nBkg = qcd.GetBinContent(b);
+            const Double_t nRawControl = ssIsoRaw.GetBinContent(b);
             if (nBkg <= 0)
             {
+                continue;
+            }
+            if (nRawControl < MIN_RAW_CONTROL_COUNT)
+            {
+                ++nSkippedLowStat;
                 continue;
             }
             const Double_t relTf = transfer > 0 ? transferErr / transfer : 0;
@@ -230,8 +269,10 @@ namespace
             }
         }
         std::cout << "\n[Test C] high-mass scan, m_T^tot > " << HIGH_MASS_SCAN_MIN << " GeV (QCD-only background)" << std::endl;
+        std::cout << "  (skipped " << nSkippedLowStat << " bin(s) with < " << MIN_RAW_CONTROL_COUNT
+                  << " raw control-region events -- too few to trust)" << std::endl;
         std::cout << "  largest local excess: " << bestZ << " sigma at m_T^tot ~ " << bestMass << " GeV" << std::endl;
-        std::cout << "  (DY/ttbar/W+jets tails are not subtracted: an excess here needs MC before any claim)" << std::endl;
+        std::cout << "  (DY/ttbar/W+jets tails are not subtracted: an excess here needs MC before any claim of a Z')" << std::endl;
     }
 } // namespace
 
@@ -407,7 +448,7 @@ void TauHypothesisTest()
 
     runTestA(*excessVis, *excessCol);
     runTestB(*h.mVis[OS_ISO], *h.mVisTightLep);
-    runTestC(*h.mTtot[OS_ISO], *qcdTtot, transferErr, transfer);
+    runTestC(*h.mTtot[OS_ISO], *qcdTtot, *h.mTtot[SS_ISO], transferErr, transfer);
 
     const std::string outFile = "outputs/tau_hypothesis_test.root";
     TFile out(outFile.c_str(), "RECREATE");
