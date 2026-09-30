@@ -1,7 +1,8 @@
 // Same logic as TauMassByProng.C (real data, all /120000/ files from
 // file_config_data.json), but:
-//   - mass histograms cover 0-6000 GeV instead of 0-250 GeV, since the
-//     Z' hypothesis has a wide, unknown mass range
+//   - mass histograms cover 0-2000 GeV instead of 0-250 GeV, since the
+//     Z' hypothesis has a wide, unknown mass range (checked up to 6000 GeV,
+//     nothing above 2000 GeV, so the range was trimmed back down)
 //   - MET is added to the visible pair to make a "total" mass, on top of
 //     the plain visible mass
 // TauMassByProng.C itself is left untouched, for testing/reference.
@@ -63,8 +64,8 @@ namespace
     constexpr Double_t TAU_ETA_MAX = 2.3;
     constexpr Double_t DELTA_PHI_MIN = 2.5; // back-to-back requirement
 
-    constexpr Double_t MASS_MAX = 6000.0;
-    constexpr Int_t MASS_BINS = 600;
+    constexpr Double_t MASS_MAX = 2000.0;
+    constexpr Int_t MASS_BINS = 200;
 
     // DeepTau 2018v2p5 working points: 1 = VVVLoose, 2 = VVLoose, 3 = VLoose, ...
     constexpr UChar_t VSJET_MIN = 3; // VLoose
