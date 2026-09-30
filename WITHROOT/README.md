@@ -1,5 +1,6 @@
 root -l -b -q main.C
 DEBUG=1 root -l -q main.C - if we want to print
+root -l -b -q TauMassByProngWideMET.C
 
 ## RecoTauMassKinematics: reconstructed-Tau mass + kinematics over multiple files
 
