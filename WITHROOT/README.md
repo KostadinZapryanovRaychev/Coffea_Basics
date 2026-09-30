@@ -2,6 +2,9 @@ root -l -b -q main.C
 DEBUG=1 root -l -q main.C - if we want to print
 root -l -b -q TauMassByProngWideMET.C
 
+this use golde json and coppy new files over the file config
+root -l -b -q TauHypothesisTest.C
+
 ## RecoTauMassKinematics: reconstructed-Tau mass + kinematics over multiple files
 
 C++ counterpart of `NAOD_TAU/reco_tau_kinematics.py` and `NAOD_TAU/reco_tau_mass.py`,
@@ -718,3 +721,6 @@ all good datasets
 
 // skiping NANOAOD data
 ./das_files.sh '/Tau/Run2024D*NANOv15*/NANOAOD\*' 0 data
+
+scp kraychev@lxplus.cern.ch:/eos/user/c/cmsdqm/www/CAF/certification/Collisions24/2024D_Golden.json \
+ /Users/macbookpro/Documents/BAN-Doctor-Degree/Tools/Coffea/WITHROOT/golden_2024.json

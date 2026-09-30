@@ -1,4 +1,4 @@
-// Hypothesis test on Run2024D Tau data (file_config_data.json), tau_h tau_h channel.
+// Hypothesis test on Run2024D Tau data (file_config_data_full.json), tau_h tau_h channel.
 //
 // H1: the opposite-sign isolated di-tau sample contains genuine Z -> tau tau.
 // H0: the ~91 GeV bump in m_vis comes from Z -> ee / mumu leptons faking taus.
@@ -238,7 +238,7 @@ namespace
 void TauHypothesisTest()
 {
     TH1::AddDirectory(kFALSE);
-    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
+    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data_full.json");
     std::cout << "TauHypothesisTest: " << rootFiles.size() << " file(s) to process." << std::endl;
 
     const LumiMask lumiMask(GOLDEN_JSON);
