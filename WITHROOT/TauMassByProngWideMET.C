@@ -1,5 +1,7 @@
 // Same logic as TauMassByProng.C (real data, all /120000/ files from
-// file_config_data.json), but:
+// file_config_data.json), but now running over file_config_data_full.json
+// (every real-data file found via das_files.sh, both /120000/ and /90000/
+// blocks) with the golden-JSON lumi mask applied, and:
 //   - mass histograms cover 0-2000 GeV instead of 0-250 GeV, since the
 //     Z' hypothesis has a wide, unknown mass range (checked up to 6000 GeV,
 //     nothing above 2000 GeV, so the range was trimmed back down)
@@ -37,13 +39,16 @@
 // A pair is put in a channel only if BOTH legs are in that same prong group;
 // mixed-prong pairs (e.g. 1-prong with 3-prong) go into h_mass_mixedProng.
 //
-// Runs over file_config_data.json (real data).
+// Runs over file_config_data_full.json (real data), filtered to certified
+// good lumisections via golden_2024.json.
 
 #include "Config.C"
 #include "Config.h"
 #include "CutFlow.h"
 #include "event.C"
 #include "event.h"
+#include "LumiMask.C"
+#include "LumiMask.h"
 
 #include <algorithm>
 #include <cmath>
@@ -66,6 +71,8 @@ namespace
 
     constexpr Double_t MASS_MAX = 2000.0;
     constexpr Int_t MASS_BINS = 200;
+
+    const char *GOLDEN_JSON = "golden_2024.json";
 
     // DeepTau 2018v2p5 working points: 1 = VVVLoose, 2 = VVLoose, 3 = VLoose, ...
     constexpr UChar_t VSJET_MIN = 3; // VLoose
@@ -131,8 +138,15 @@ namespace
 
 void TauMassByProngWideMET()
 {
-    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
+    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data_full.json");
     std::cout << "TauMassByProngWideMET: " << rootFiles.size() << " file(s) to process." << std::endl;
+
+    const LumiMask lumiMask(GOLDEN_JSON);
+    if (!lumiMask.isLoaded())
+    {
+        std::cerr << "TauMassByProngWideMET: golden JSON missing, stopping" << std::endl;
+        return;
+    }
 
     TH1F h_mass_oneProng("h_mass_oneProng", "m_{vis}(#tau#tau), both legs 1-prong;m_{vis} [GeV];Events",
                          MASS_BINS, 0, MASS_MAX);
@@ -167,6 +181,7 @@ void TauMassByProngWideMET()
     TH1F h_massWithMET_mixedProng("h_massWithMET_mixedProng", "m(#tau#tau+MET), legs in different prong groups;m [GeV];Events", MASS_BINS, 0, MASS_MAX);
 
     CutFlow cutFlow;
+    Long64_t nGoodLumi = 0;
     Long64_t nOneProng = 0, nTwoProng = 0, nThreeProng = 0, nMixedProng = 0;
     Double_t maxDiffFormula = 0.0;
     Double_t maxDiffPtEtaPhi = 0.0;
@@ -182,6 +197,8 @@ void TauMassByProngWideMET()
         }
 
         TTreeReader reader(Events);
+        TTreeReaderValue<UInt_t> run(reader, "run");
+        TTreeReaderValue<UInt_t> lumiBlock(reader, "luminosityBlock");
         TTreeReaderArray<Float_t> tauPt(reader, "Tau_pt");
         TTreeReaderArray<Float_t> tauEta(reader, "Tau_eta");
         TTreeReaderArray<Float_t> tauPhi(reader, "Tau_phi");
@@ -197,6 +214,11 @@ void TauMassByProngWideMET()
         while (reader.Next())
         {
             ++cutFlow.eventsRead;
+            if (!lumiMask.isGood(*run, *lumiBlock))
+            {
+                continue;
+            }
+            ++nGoodLumi;
 
             const size_t nTau = tauPt.GetSize();
             if (nTau < 2)
@@ -333,7 +355,7 @@ void TauMassByProngWideMET()
     }
 
     std::cout << "TauMassByProngWideMET: " << cutFlow.used << " good pairs out of "
-              << cutFlow.eventsRead << " events read." << std::endl;
+              << cutFlow.eventsRead << " events read (" << nGoodLumi << " in good lumi)." << std::endl;
     std::cout << "  1-prong/1-prong:   " << nOneProng << std::endl;
     std::cout << "  2-prong/2-prong:   " << nTwoProng << std::endl;
     std::cout << "  3-prong/3-prong:   " << nThreeProng << std::endl;
