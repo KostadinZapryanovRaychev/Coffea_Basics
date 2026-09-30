@@ -5,6 +5,9 @@ root -l -b -q TauMassByProngWideMET.C
 this use golde json and coppy new files over the file config
 root -l -b -q TauHypothesisTest.C
 
+chmod u+rwx das_files.sh
+chmod +x \*.sh
+
 ## RecoTauMassKinematics: reconstructed-Tau mass + kinematics over multiple files
 
 C++ counterpart of `NAOD_TAU/reco_tau_kinematics.py` and `NAOD_TAU/reco_tau_mass.py`,
@@ -724,3 +727,7 @@ all good datasets
 
 scp kraychev@lxplus.cern.ch:/eos/user/c/cmsdqm/www/CAF/certification/Collisions24/2024D_Golden.json \
  /Users/macbookpro/Documents/BAN-Doctor-Degree/Tools/Coffea/WITHROOT/golden_2024.json
+
+Next steps
+- run: root -l -b -q TauMassByProngWideMET.C  (Run2024D + golden_2024.json)
+- send Claude the output
