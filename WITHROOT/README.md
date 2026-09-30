@@ -711,3 +711,7 @@ TODO
 https://cds.cern.ch/record/1402013/files/MassReco_LHCWorkshop_August_2011.pdf
 
 those to be rechecked and reconstructed on my side
+
+all good datasets
+
+./das_files.sh '/DYto2Tau*/*2024*NanoAODv15*/NANOAODSIM'

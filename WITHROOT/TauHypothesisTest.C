@@ -17,6 +17,8 @@
 #include "Config.h"
 #include "event.C"
 #include "event.h"
+#include "LumiMask.C"
+#include "LumiMask.h"
 
 #include <cmath>
 #include <iostream>
@@ -53,6 +55,7 @@ namespace
     constexpr Double_t HIGH_MASS_SCAN_MIN = 200.0;
 
     const char *TRIGGER = "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1";
+    const char *GOLDEN_JSON = "golden_2024.json";
 
     enum Region
     {
@@ -238,8 +241,15 @@ void TauHypothesisTest()
     std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
     std::cout << "TauHypothesisTest: " << rootFiles.size() << " file(s) to process." << std::endl;
 
+    const LumiMask lumiMask(GOLDEN_JSON);
+    if (!lumiMask.isLoaded())
+    {
+        std::cerr << "TauHypothesisTest: golden JSON missing, stopping" << std::endl;
+        return;
+    }
+
     Histos h = makeHistos();
-    Long64_t nRead = 0, nTrigger = 0, nPairs = 0;
+    Long64_t nRead = 0, nGoodLumi = 0, nTrigger = 0, nPairs = 0;
     bool warnedNoTrigger = false;
 
     for (const RootFileEntry &file : rootFiles)
@@ -252,6 +262,8 @@ void TauHypothesisTest()
         }
 
         TTreeReader reader(Events);
+        TTreeReaderValue<UInt_t> run(reader, "run");
+        TTreeReaderValue<UInt_t> lumiBlock(reader, "luminosityBlock");
         TTreeReaderArray<Float_t> tauPt(reader, "Tau_pt");
         TTreeReaderArray<Float_t> tauEta(reader, "Tau_eta");
         TTreeReaderArray<Float_t> tauPhi(reader, "Tau_phi");
@@ -286,6 +298,11 @@ void TauHypothesisTest()
         while (reader.Next())
         {
             ++nRead;
+            if (!lumiMask.isGood(*run, *lumiBlock))
+            {
+                continue;
+            }
+            ++nGoodLumi;
             if (trigger && !**trigger)
             {
                 continue;
@@ -369,7 +386,7 @@ void TauHypothesisTest()
         }
     }
 
-    std::cout << "\nevents read: " << nRead << "  passing trigger: " << nTrigger << "  di-tau pairs: " << nPairs << std::endl;
+    std::cout << "\nevents read: " << nRead << "  good lumi: " << nGoodLumi << "  passing trigger: " << nTrigger << "  di-tau pairs: " << nPairs << std::endl;
     for (int r = 0; r < N_REGIONS; ++r)
     {
         std::cout << "  " << REGION_NAMES[r] << ": " << h.mVis[r]->Integral() << std::endl;

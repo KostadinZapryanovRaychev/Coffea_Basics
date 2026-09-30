@@ -24,6 +24,8 @@
 #include "Config.h"
 #include "event.C"
 #include "event.h"
+#include "LumiMask.C"
+#include "LumiMask.h"
 
 #include <cmath>
 #include <iostream>
@@ -58,6 +60,7 @@ namespace
     constexpr Double_t LEPTON_VETO_PT = 10.0;
 
     const char *TRIGGER = "HLT_LooseDeepTauPFTauHPS180_L2NN_eta2p1";
+    const char *GOLDEN_JSON = "golden_2024.json";
 
     const Double_t PT_BINS[] = {200, 250, 300, 400, 600, 3000};
     constexpr Int_t N_PT_BINS = 5;
@@ -239,8 +242,15 @@ void TauWprimeMonoTau()
     std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
     std::cout << "TauWprimeMonoTau: " << rootFiles.size() << " file(s) to process." << std::endl;
 
+    const LumiMask lumiMask(GOLDEN_JSON);
+    if (!lumiMask.isLoaded())
+    {
+        std::cerr << "TauWprimeMonoTau: golden JSON missing, stopping" << std::endl;
+        return;
+    }
+
     Histos h = makeHistos();
-    Long64_t nRead = 0, nTrigger = 0, nSingleTau = 0, nMR = 0, nAR = 0, nSR = 0;
+    Long64_t nRead = 0, nGoodLumi = 0, nTrigger = 0, nSingleTau = 0, nMR = 0, nAR = 0, nSR = 0;
     bool warnedNoTrigger = false;
 
     for (const RootFileEntry &file : rootFiles)
@@ -253,6 +263,8 @@ void TauWprimeMonoTau()
         }
 
         TTreeReader reader(Events);
+        TTreeReaderValue<UInt_t> run(reader, "run");
+        TTreeReaderValue<UInt_t> lumiBlock(reader, "luminosityBlock");
         TTreeReaderArray<Float_t> tauPt(reader, "Tau_pt");
         TTreeReaderArray<Float_t> tauEta(reader, "Tau_eta");
         TTreeReaderArray<Float_t> tauPhi(reader, "Tau_phi");
@@ -286,6 +298,11 @@ void TauWprimeMonoTau()
         while (reader.Next())
         {
             ++nRead;
+            if (!lumiMask.isGood(*run, *lumiBlock))
+            {
+                continue;
+            }
+            ++nGoodLumi;
             if (trigger && !**trigger)
             {
                 continue;
@@ -367,7 +384,7 @@ void TauWprimeMonoTau()
         }
     }
 
-    std::cout << "\nevents read: " << nRead << "  trigger: " << nTrigger << "  single-tau: " << nSingleTau
+    std::cout << "\nevents read: " << nRead << "  good lumi: " << nGoodLumi << "  trigger: " << nTrigger << "  single-tau: " << nSingleTau
               << "  MR: " << nMR << "  AR: " << nAR << "  SR: " << nSR << std::endl;
 
     auto ff = fakeFactors(h);
