@@ -134,43 +134,23 @@ namespace
             return Prong::Other;
         }
     }
+
+    // "M-250" -> 250. Falls back to 250 if the name doesn't match.
+    Double_t massPointOf(const std::string &name)
+    {
+        const size_t dash = name.rfind('-');
+        if (dash == std::string::npos)
+        {
+            return 250.0;
+        }
+        return std::atof(name.c_str() + dash + 1);
+    }
 } // namespace
 
 void TauMassByProngMC()
 {
     std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_reco.json");
     std::cout << "TauMassByProngMC: " << rootFiles.size() << " file(s) to process." << std::endl;
-
-    TH1F h_mass_oneProng("h_mass_oneProng", "m_{vis}(#tau#tau), both legs 1-prong;m_{vis} [GeV];Events",
-                         250, 0, 250);
-    TH1F h_mass_twoProng("h_mass_twoProng", "m_{vis}(#tau#tau), both legs 2-prong;m_{vis} [GeV];Events",
-                         250, 0, 250);
-    TH1F h_mass_threeProng("h_mass_threeProng", "m_{vis}(#tau#tau), both legs 3-prong;m_{vis} [GeV];Events",
-                           250, 0, 250);
-    TH1F h_mass_mixedProng("h_mass_mixedProng", "m_{vis}(#tau#tau), legs in different prong groups;m_{vis} [GeV];Events",
-                           250, 0, 250);
-
-    TH1F h_deltaR_oneProng("h_deltaR_oneProng", "#Delta R(#tau#tau), both legs 1-prong;#Delta R;Events", 64, 0, 6);
-    TH1F h_deltaR_twoProng("h_deltaR_twoProng", "#Delta R(#tau#tau), both legs 2-prong;#Delta R;Events", 64, 0, 6);
-    TH1F h_deltaR_threeProng("h_deltaR_threeProng", "#Delta R(#tau#tau), both legs 3-prong;#Delta R;Events", 64, 0, 6);
-    TH1F h_deltaR_mixedProng("h_deltaR_mixedProng", "#Delta R(#tau#tau), legs in different prong groups;#Delta R;Events", 64, 0, 6);
-
-    // same masses as h_mass_*, but from the explicit E/px/py/pz formula
-    TH1F h_massFormula_oneProng("h_massFormula_oneProng", "m_{vis} formula, both legs 1-prong;m_{vis} [GeV];Events", 250, 0, 250);
-    TH1F h_massFormula_twoProng("h_massFormula_twoProng", "m_{vis} formula, both legs 2-prong;m_{vis} [GeV];Events", 250, 0, 250);
-    TH1F h_massFormula_threeProng("h_massFormula_threeProng", "m_{vis} formula, both legs 3-prong;m_{vis} [GeV];Events", 250, 0, 250);
-    TH1F h_massFormula_mixedProng("h_massFormula_mixedProng", "m_{vis} formula, legs in different prong groups;m_{vis} [GeV];Events", 250, 0, 250);
-
-    // same masses again, from the massless pt/eta/phi formula
-    TH1F h_massPtEtaPhi_oneProng("h_massPtEtaPhi_oneProng", "m_{vis} pt/eta/phi formula, both legs 1-prong;m_{vis} [GeV];Events", 250, 0, 250);
-    TH1F h_massPtEtaPhi_twoProng("h_massPtEtaPhi_twoProng", "m_{vis} pt/eta/phi formula, both legs 2-prong;m_{vis} [GeV];Events", 250, 0, 250);
-    TH1F h_massPtEtaPhi_threeProng("h_massPtEtaPhi_threeProng", "m_{vis} pt/eta/phi formula, both legs 3-prong;m_{vis} [GeV];Events", 250, 0, 250);
-    TH1F h_massPtEtaPhi_mixedProng("h_massPtEtaPhi_mixedProng", "m_{vis} pt/eta/phi formula, legs in different prong groups;m_{vis} [GeV];Events", 250, 0, 250);
-
-    CutFlow cutFlow;
-    Long64_t nOneProng = 0, nTwoProng = 0, nThreeProng = 0, nMixedProng = 0;
-    Double_t maxDiffFormula = 0.0;
-    Double_t maxDiffPtEtaPhi = 0.0;
 
     for (const RootFileEntry &file : rootFiles)
     {
@@ -181,6 +161,42 @@ void TauMassByProngMC()
             std::cerr << "TauMassByProngMC: skipping " << file.path << std::endl;
             continue;
         }
+
+        // each mass point gets its own histogram range: 0 up to 2x the mass
+        // point, so e.g. M-250 is binned 0-500, M-500 is binned 0-1000, etc.
+        const Double_t massPoint = massPointOf(file.name);
+        const Double_t massMax = 2.0 * massPoint;
+
+        TH1F h_mass_oneProng("h_mass_oneProng", "m_{vis}(#tau#tau), both legs 1-prong;m_{vis} [GeV];Events",
+                             250, 0, massMax);
+        TH1F h_mass_twoProng("h_mass_twoProng", "m_{vis}(#tau#tau), both legs 2-prong;m_{vis} [GeV];Events",
+                             250, 0, massMax);
+        TH1F h_mass_threeProng("h_mass_threeProng", "m_{vis}(#tau#tau), both legs 3-prong;m_{vis} [GeV];Events",
+                               250, 0, massMax);
+        TH1F h_mass_mixedProng("h_mass_mixedProng", "m_{vis}(#tau#tau), legs in different prong groups;m_{vis} [GeV];Events",
+                               250, 0, massMax);
+
+        TH1F h_deltaR_oneProng("h_deltaR_oneProng", "#Delta R(#tau#tau), both legs 1-prong;#Delta R;Events", 64, 0, 6);
+        TH1F h_deltaR_twoProng("h_deltaR_twoProng", "#Delta R(#tau#tau), both legs 2-prong;#Delta R;Events", 64, 0, 6);
+        TH1F h_deltaR_threeProng("h_deltaR_threeProng", "#Delta R(#tau#tau), both legs 3-prong;#Delta R;Events", 64, 0, 6);
+        TH1F h_deltaR_mixedProng("h_deltaR_mixedProng", "#Delta R(#tau#tau), legs in different prong groups;#Delta R;Events", 64, 0, 6);
+
+        // same masses as h_mass_*, but from the explicit E/px/py/pz formula
+        TH1F h_massFormula_oneProng("h_massFormula_oneProng", "m_{vis} formula, both legs 1-prong;m_{vis} [GeV];Events", 250, 0, massMax);
+        TH1F h_massFormula_twoProng("h_massFormula_twoProng", "m_{vis} formula, both legs 2-prong;m_{vis} [GeV];Events", 250, 0, massMax);
+        TH1F h_massFormula_threeProng("h_massFormula_threeProng", "m_{vis} formula, both legs 3-prong;m_{vis} [GeV];Events", 250, 0, massMax);
+        TH1F h_massFormula_mixedProng("h_massFormula_mixedProng", "m_{vis} formula, legs in different prong groups;m_{vis} [GeV];Events", 250, 0, massMax);
+
+        // same masses again, from the massless pt/eta/phi formula
+        TH1F h_massPtEtaPhi_oneProng("h_massPtEtaPhi_oneProng", "m_{vis} pt/eta/phi formula, both legs 1-prong;m_{vis} [GeV];Events", 250, 0, massMax);
+        TH1F h_massPtEtaPhi_twoProng("h_massPtEtaPhi_twoProng", "m_{vis} pt/eta/phi formula, both legs 2-prong;m_{vis} [GeV];Events", 250, 0, massMax);
+        TH1F h_massPtEtaPhi_threeProng("h_massPtEtaPhi_threeProng", "m_{vis} pt/eta/phi formula, both legs 3-prong;m_{vis} [GeV];Events", 250, 0, massMax);
+        TH1F h_massPtEtaPhi_mixedProng("h_massPtEtaPhi_mixedProng", "m_{vis} pt/eta/phi formula, legs in different prong groups;m_{vis} [GeV];Events", 250, 0, massMax);
+
+        CutFlow cutFlow;
+        Long64_t nOneProng = 0, nTwoProng = 0, nThreeProng = 0, nMixedProng = 0;
+        Double_t maxDiffFormula = 0.0;
+        Double_t maxDiffPtEtaPhi = 0.0;
 
         TTreeReader reader(Events);
         TTreeReaderArray<Float_t> tauPt(reader, "Tau_pt");
@@ -306,36 +322,35 @@ void TauMassByProngMC()
             ++cutFlow.used;
         }
 
+        std::cout << "TauMassByProngMC [" << file.name << "]: " << cutFlow.used
+                  << " good pairs out of " << cutFlow.eventsRead << " events read." << std::endl;
+        std::cout << "  1-prong/1-prong:   " << nOneProng << std::endl;
+        std::cout << "  2-prong/2-prong:   " << nTwoProng << std::endl;
+        std::cout << "  3-prong/3-prong:   " << nThreeProng << std::endl;
+        std::cout << "  mixed prong:       " << nMixedProng << std::endl;
+        std::cout << "TauMassByProngMC [" << file.name << "]: max |M - M_formula|   = " << maxDiffFormula << " GeV" << std::endl;
+        std::cout << "TauMassByProngMC [" << file.name << "]: max |M - M_ptEtaPhi|   = " << maxDiffPtEtaPhi << " GeV" << std::endl;
+
+        const std::string outFile = "outputs/tau_mass_by_prong_mc_" + file.name + ".root";
+        TFile out(outFile.c_str(), "RECREATE");
+        h_mass_oneProng.Write();
+        h_mass_twoProng.Write();
+        h_mass_threeProng.Write();
+        h_mass_mixedProng.Write();
+        h_massFormula_oneProng.Write();
+        h_massFormula_twoProng.Write();
+        h_massFormula_threeProng.Write();
+        h_massFormula_mixedProng.Write();
+        h_massPtEtaPhi_oneProng.Write();
+        h_massPtEtaPhi_twoProng.Write();
+        h_massPtEtaPhi_threeProng.Write();
+        h_massPtEtaPhi_mixedProng.Write();
+        h_deltaR_oneProng.Write();
+        h_deltaR_twoProng.Write();
+        h_deltaR_threeProng.Write();
+        h_deltaR_mixedProng.Write();
+        out.Close();
+
+        std::cout << "TauMassByProngMC: wrote " << outFile << std::endl;
     }
-
-    std::cout << "TauMassByProngMC: " << cutFlow.used << " good pairs out of "
-              << cutFlow.eventsRead << " events read." << std::endl;
-    std::cout << "  1-prong/1-prong:   " << nOneProng << std::endl;
-    std::cout << "  2-prong/2-prong:   " << nTwoProng << std::endl;
-    std::cout << "  3-prong/3-prong:   " << nThreeProng << std::endl;
-    std::cout << "  mixed prong:       " << nMixedProng << std::endl;
-    std::cout << "TauMassByProngMC: max |M - M_formula|   = " << maxDiffFormula << " GeV" << std::endl;
-    std::cout << "TauMassByProngMC: max |M - M_ptEtaPhi|   = " << maxDiffPtEtaPhi << " GeV" << std::endl;
-
-    const std::string outFile = "outputs/tau_mass_by_prong_mc.root";
-    TFile out(outFile.c_str(), "RECREATE");
-    h_mass_oneProng.Write();
-    h_mass_twoProng.Write();
-    h_mass_threeProng.Write();
-    h_mass_mixedProng.Write();
-    h_massFormula_oneProng.Write();
-    h_massFormula_twoProng.Write();
-    h_massFormula_threeProng.Write();
-    h_massFormula_mixedProng.Write();
-    h_massPtEtaPhi_oneProng.Write();
-    h_massPtEtaPhi_twoProng.Write();
-    h_massPtEtaPhi_threeProng.Write();
-    h_massPtEtaPhi_mixedProng.Write();
-    h_deltaR_oneProng.Write();
-    h_deltaR_twoProng.Write();
-    h_deltaR_threeProng.Write();
-    h_deltaR_mixedProng.Write();
-    out.Close();
-
-    std::cout << "TauMassByProngMC: wrote " << outFile << std::endl;
 }
