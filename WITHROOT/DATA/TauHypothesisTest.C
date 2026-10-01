@@ -1,17 +1,16 @@
-// Hypothesis test on Run2024D Tau data (file_config_data.json), tau_h tau_h channel.
+// Reco-level di-tau visible mass on real Run2024D Tau data: the two
+// reconstructed Tau objects' decay products, missing the neutrino energy
+// each tau lost. Same selection, branches and explicit mass formula as
+// MC/TauHypothesisTestMC.C, so the two are directly comparable -- the only
+// extra pieces here are the ones real data actually needs: the golden-JSON
+// lumi mask and the HLT trigger requirement (MC has neither: run == 1
+// always, and this signal MC file has no HLT branches).
 //
-// H1: the opposite-sign isolated di-tau sample contains genuine Z -> tau tau.
-// H0: the ~91 GeV bump in m_vis comes from Z -> ee / mumu leptons faking taus.
+// tau_h tau_h channel only: both legs are the Tau collection (hadronic
+// decays by construction), events with an extra muon/electron are vetoed.
 //
-// Test A (neutrino recovery): genuine Z->tautau has m_vis BELOW 91 GeV and the
-//   collinear mass (MET projected back onto the taus) moves UP to ~91 GeV.
-// Test B (lepton fakes): the fraction of events in 85 < m_vis < 100 GeV must
-//   drop when anti-e / anti-mu DeepTau is tightened, if the bump is fakes.
-// Test C (high mass): QCD is estimated from data (ABCD: charge x isolation);
-//   the OS-isolated m_T^tot spectrum minus QCD is scanned for a local excess.
-//
-// Only QCD is modelled; DY, ttbar and W+jets are not subtracted, so Test C
-// excesses are NOT evidence of new physics without MC.
+// Runs over file_config_data.json (real data), filtered to certified good
+// lumisections via golden_2024.json.
 
 #include "../Config.C"
 #include "../Config.h"
@@ -28,8 +27,7 @@
 #include "TTreeReaderArray.h"
 #include "TTreeReaderValue.h"
 #include "TLorentzVector.h"
-#include "TVector2.h"
-#include "TH1D.h"
+#include "TH1F.h"
 #include "TFile.h"
 
 namespace
@@ -40,245 +38,51 @@ namespace
     constexpr Double_t PAIR_DR_MIN = 0.5;
 
     // DeepTau 2018v2p5: vsJet/vsE 1..8 = VVVLoose..VVTight, vsMu 1..4 = VLoose..Tight
-    constexpr UChar_t VSJET_BASE = 1;
+    // VSJET_ISO = Medium: the isolated signal-region working point.
     constexpr UChar_t VSJET_ISO = 5;
     constexpr UChar_t VSE_LOOSE = 2;
     constexpr UChar_t VSMU_LOOSE = 1;
-    constexpr UChar_t VSE_TIGHT = 6;
-    constexpr UChar_t VSMU_TIGHT = 4;
 
     constexpr Double_t MUON_VETO_PT = 10.0;
     constexpr Double_t ELECTRON_VETO_PT = 10.0;
 
-    constexpr Double_t Z_WINDOW_LOW = 85.0;
-    constexpr Double_t Z_WINDOW_HIGH = 100.0;
-    constexpr Double_t HIGH_MASS_SCAN_MIN = 200.0;
-
     const char *TRIGGER = "HLT_DoubleMediumDeepTauPFTauHPS35_L2NN_eta2p1";
     const char *GOLDEN_JSON = "golden_2024.json";
-
-    enum Region
-    {
-        OS_ISO,
-        SS_ISO,
-        OS_ANTI,
-        SS_ANTI,
-        N_REGIONS
-    };
-    const char *REGION_NAMES[N_REGIONS] = {"OS_iso", "SS_iso", "OS_anti", "SS_anti"};
-
-    struct Histos
-    {
-        std::unique_ptr<TH1D> mVis[N_REGIONS];
-        std::unique_ptr<TH1D> mCol[N_REGIONS];
-        std::unique_ptr<TH1D> mTtot[N_REGIONS];
-        std::unique_ptr<TH1D> mVisTightLep;
-    };
-
-    struct Tau
-    {
-        TLorentzVector p4;
-        Short_t charge;
-        UChar_t vsJet, vsE, vsMu;
-    };
 
     bool isStandardDecayMode(UChar_t dm)
     {
         return dm == 0 || dm == 1 || dm == 10 || dm == 11;
     }
 
-    Double_t transverseMass(const TLorentzVector &a, const TLorentzVector &b)
+    struct FourVector
     {
-        return std::sqrt(std::max(0.0, 2 * a.Pt() * b.Pt() * (1 - std::cos(a.DeltaPhi(b)))));
+        Double_t px, py, pz, e;
+    };
+
+    // (pt, eta, phi, mass) -> (px, py, pz, E)
+    FourVector makeFourVector(Double_t pt, Double_t eta, Double_t phi, Double_t mass)
+    {
+        FourVector v;
+        v.px = pt * std::cos(phi);
+        v.py = pt * std::sin(phi);
+        v.pz = pt * std::sinh(eta);
+        v.e = std::sqrt(v.px * v.px + v.py * v.py + v.pz * v.pz + mass * mass);
+        return v;
     }
 
-    // CMS high-mass tautau variable: sqrt(mT(t1,MET)^2 + mT(t2,MET)^2 + mT(t1,t2)^2)
-    Double_t totalTransverseMass(const TLorentzVector &t1, const TLorentzVector &t2, const TLorentzVector &met)
+    // M^2 = (E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2
+    Double_t invariantMassSquared(const FourVector &a, const FourVector &b)
     {
-        const Double_t a = transverseMass(t1, met);
-        const Double_t b = transverseMass(t2, met);
-        const Double_t c = transverseMass(t1, t2);
-        return std::sqrt(a * a + b * b + c * c);
-    }
-
-    // Collinear approximation: MET = a1*vis1_T + a2*vis2_T, x_i = 1/(1+a_i).
-    // Returns -1 when unsolvable (back-to-back taus) or unphysical (a_i < 0).
-    Double_t collinearMass(const TLorentzVector &t1, const TLorentzVector &t2, const TLorentzVector &met)
-    {
-        const Double_t det = t1.Px() * t2.Py() - t2.Px() * t1.Py();
-        if (std::abs(det) < 0.1 * t1.Pt() * t2.Pt())
-        {
-            return -1;
-        }
-        const Double_t a1 = (met.Px() * t2.Py() - met.Py() * t2.Px()) / det;
-        const Double_t a2 = (t1.Px() * met.Py() - t1.Py() * met.Px()) / det;
-        if (a1 < 0 || a2 < 0)
-        {
-            return -1;
-        }
-        const Double_t x1 = 1.0 / (1.0 + a1);
-        const Double_t x2 = 1.0 / (1.0 + a2);
-        return (t1 + t2).M() / std::sqrt(x1 * x2);
-    }
-
-    Histos makeHistos()
-    {
-        Histos h;
-        for (int r = 0; r < N_REGIONS; ++r)
-        {
-            const TString n = REGION_NAMES[r];
-            h.mVis[r] = std::make_unique<TH1D>("h_mVis_" + n, "m_{vis} " + n + ";m_{vis} [GeV];Events", 100, 0, 500);
-            h.mCol[r] = std::make_unique<TH1D>("h_mCol_" + n, "m_{col} " + n + ";m_{col} [GeV];Events", 100, 0, 500);
-            h.mTtot[r] = std::make_unique<TH1D>("h_mTtot_" + n, "m_{T}^{tot} " + n + ";m_{T}^{tot} [GeV];Events", 100, 0, 2000);
-            h.mVis[r]->Sumw2();
-            h.mCol[r]->Sumw2();
-            h.mTtot[r]->Sumw2();
-        }
-        h.mVisTightLep = std::make_unique<TH1D>("h_mVis_OS_iso_tightLep", "m_{vis} OS_iso, tight anti-e/#mu;m_{vis} [GeV];Events", 100, 0, 500);
-        h.mVisTightLep->Sumw2();
-        return h;
-    }
-
-    Double_t integral(const TH1D &h, Double_t low, Double_t high)
-    {
-        return h.Integral(h.GetXaxis()->FindFixBin(low), h.GetXaxis()->FindFixBin(high - 1e-6));
-    }
-
-    Double_t peakPosition(const TH1D &h, Double_t low, Double_t high)
-    {
-        const Int_t first = h.GetXaxis()->FindFixBin(low);
-        const Int_t last = h.GetXaxis()->FindFixBin(high - 1e-6);
-        Int_t best = first;
-        for (Int_t b = first; b <= last; ++b)
-        {
-            if (h.GetBinContent(b) > h.GetBinContent(best))
-            {
-                best = b;
-            }
-        }
-        return h.GetBinCenter(best);
-    }
-
-    // A single tallest bin is unreliable on a QCD-subtracted excess: the OS/SS
-    // shape assumption is weakest right at the isolation threshold turn-on
-    // (~85-90 GeV), so a residual mismodeling spike there can outweigh a
-    // real, broad Z->tautau hump at lower mass. A statistics-weighted mean
-    // over the window is far less sensitive to one leftover bin.
-    Double_t weightedMean(const TH1D &h, Double_t low, Double_t high)
-    {
-        const Int_t first = h.GetXaxis()->FindFixBin(low);
-        const Int_t last = h.GetXaxis()->FindFixBin(high - 1e-6);
-        Double_t sumWX = 0, sumW = 0;
-        for (Int_t b = first; b <= last; ++b)
-        {
-            const Double_t w = std::max(0.0, h.GetBinContent(b)); // negative bins carry no weight
-            sumWX += w * h.GetBinCenter(b);
-            sumW += w;
-        }
-        return sumW > 0 ? sumWX / sumW : 0;
-    }
-
-    std::unique_ptr<TH1D> qcdEstimate(const TH1D &ssIso, Double_t transfer, const char *name)
-    {
-        auto qcd = std::unique_ptr<TH1D>((TH1D *)ssIso.Clone(name));
-        qcd->Scale(transfer);
-        return qcd;
-    }
-
-    std::unique_ptr<TH1D> subtract(const TH1D &data, const TH1D &bkg, const char *name)
-    {
-        auto out = std::unique_ptr<TH1D>((TH1D *)data.Clone(name));
-        out->Add(&bkg, -1);
-        return out;
-    }
-
-    void runTestA(const TH1D &mVisExcess, const TH1D &mColExcess)
-    {
-        const Double_t visPeak = peakPosition(mVisExcess, 30, 150);
-        const Double_t colPeak = peakPosition(mColExcess, 30, 200);
-        const Double_t visMean = weightedMean(mVisExcess, 30, 150);
-        const Double_t colMean = weightedMean(mColExcess, 30, 250);
-        std::cout << "\n[Test A] neutrino recovery (QCD-subtracted OS_iso)" << std::endl;
-        std::cout << "  m_vis peak: " << visPeak << " GeV   m_col peak: " << colPeak << " GeV" << std::endl;
-        std::cout << "  m_vis weighted mean: " << visMean << " GeV   m_col weighted mean: " << colMean << " GeV" << std::endl;
-        // the verdict uses the weighted mean, not the single tallest bin: see
-        // weightedMean()'s comment for why the peak alone is unreliable here
-        const bool visBelowZ = visMean < 85;
-        const bool colShiftsUp = colMean > visMean + 5;
-        std::cout << "  => " << (visBelowZ && colShiftsUp ? "consistent with genuine Z->tautau (H1)"
-                                                           : "NOT the Z->tautau pattern")
-                  << std::endl;
-    }
-
-    void runTestB(const TH1D &loose, const TH1D &tight)
-    {
-        const Double_t nLoose = loose.Integral();
-        const Double_t nTight = tight.Integral();
-        if (nLoose <= 0 || nTight <= 0)
-        {
-            std::cout << "\n[Test B] not enough events" << std::endl;
-            return;
-        }
-        const Double_t fLoose = integral(loose, Z_WINDOW_LOW, Z_WINDOW_HIGH) / nLoose;
-        const Double_t fTight = integral(tight, Z_WINDOW_LOW, Z_WINDOW_HIGH) / nTight;
-        const Double_t eLoose = std::sqrt(fLoose * (1 - fLoose) / nLoose);
-        const Double_t eTight = std::sqrt(fTight * (1 - fTight) / nTight);
-        const Double_t pull = (fLoose - fTight) / std::sqrt(eLoose * eLoose + eTight * eTight);
-        std::cout << "\n[Test B] fraction of OS_iso events with " << Z_WINDOW_LOW << " < m_vis < " << Z_WINDOW_HIGH << std::endl;
-        std::cout << "  loose anti-e/mu: " << fLoose << " +- " << eLoose << "  (N=" << nLoose << ")" << std::endl;
-        std::cout << "  tight anti-e/mu: " << fTight << " +- " << eTight << "  (N=" << nTight << ")" << std::endl;
-        std::cout << "  drop significance: " << pull << " sigma" << std::endl;
-        std::cout << "  => " << (pull > 3 ? "91 GeV bump contains lepton fakes (H0 component present)"
-                                          : "no significant lepton-fake contribution")
-                  << std::endl;
-    }
-
-    // below this many RAW (unscaled) same-sign control-region events, the QCD
-    // estimate in that bin is dominated by one or two events and the
-    // significance formula is meaningless -- a lone control-region event can
-    // otherwise fake a double-digit sigma "excess" (seen in practice at
-    // m_T^tot ~ 380-400 GeV: 20 events vs a QCD estimate built from a single
-    // same-sign event, gave a spurious 11 sigma that vanished the next bin)
-    constexpr Double_t MIN_RAW_CONTROL_COUNT = 5.0;
-
-    void runTestC(const TH1D &osIso, const TH1D &qcd, const TH1D &ssIsoRaw, Double_t transferErr, Double_t transfer)
-    {
-        Double_t bestZ = 0, bestMass = 0;
-        Int_t nSkippedLowStat = 0;
-        for (Int_t b = osIso.GetXaxis()->FindFixBin(HIGH_MASS_SCAN_MIN); b <= osIso.GetNbinsX(); ++b)
-        {
-            const Double_t nObs = osIso.GetBinContent(b);
-            const Double_t nBkg = qcd.GetBinContent(b);
-            const Double_t nRawControl = ssIsoRaw.GetBinContent(b);
-            if (nBkg <= 0)
-            {
-                continue;
-            }
-            if (nRawControl < MIN_RAW_CONTROL_COUNT)
-            {
-                ++nSkippedLowStat;
-                continue;
-            }
-            const Double_t relTf = transfer > 0 ? transferErr / transfer : 0;
-            const Double_t bkgErr2 = qcd.GetBinError(b) * qcd.GetBinError(b) + nBkg * nBkg * relTf * relTf;
-            const Double_t z = (nObs - nBkg) / std::sqrt(nBkg + bkgErr2);
-            if (z > bestZ)
-            {
-                bestZ = z;
-                bestMass = osIso.GetBinCenter(b);
-            }
-        }
-        std::cout << "\n[Test C] high-mass scan, m_T^tot > " << HIGH_MASS_SCAN_MIN << " GeV (QCD-only background)" << std::endl;
-        std::cout << "  (skipped " << nSkippedLowStat << " bin(s) with < " << MIN_RAW_CONTROL_COUNT
-                  << " raw control-region events -- too few to trust)" << std::endl;
-        std::cout << "  largest local excess: " << bestZ << " sigma at m_T^tot ~ " << bestMass << " GeV" << std::endl;
-        std::cout << "  (DY/ttbar/W+jets tails are not subtracted: an excess here needs MC before any claim of a Z')" << std::endl;
+        const Double_t e = a.e + b.e;
+        const Double_t px = a.px + b.px;
+        const Double_t py = a.py + b.py;
+        const Double_t pz = a.pz + b.pz;
+        return e * e - px * px - py * py - pz * pz;
     }
 } // namespace
 
 void TauHypothesisTest()
 {
-    TH1::AddDirectory(kFALSE);
     std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
     std::cout << "TauHypothesisTest: " << rootFiles.size() << " file(s) to process." << std::endl;
 
@@ -289,8 +93,9 @@ void TauHypothesisTest()
         return;
     }
 
-    Histos h = makeHistos();
-    Long64_t nRead = 0, nGoodLumi = 0, nTrigger = 0, nPairs = 0;
+    TH1F h_reco_mass("h_reco_mass", "m = #sqrt{(E_{1}+E_{2})^{2}-|#vec{p}_{1}+#vec{p}_{2}|^{2}} (no MET added);m [GeV];Events", 100, 0, 500);
+
+    Long64_t nRead = 0, nGoodLumi = 0, nTrigger = 0, nNoExtraLepton = 0, nTwoGoodTaus = 0, nOppositeSign = 0, nPairs = 0, nNegativeMassSquared = 0;
     bool warnedNoTrigger = false;
 
     for (const RootFileEntry &file : rootFiles)
@@ -322,8 +127,6 @@ void TauHypothesisTest()
         TTreeReaderArray<Float_t> elPt(reader, "Electron_pt");
         TTreeReaderArray<Float_t> elEta(reader, "Electron_eta");
         TTreeReaderArray<UChar_t> elCutBased(reader, "Electron_cutBased");
-        TTreeReaderValue<Float_t> metPt(reader, "PuppiMET_pt");
-        TTreeReaderValue<Float_t> metPhi(reader, "PuppiMET_phi");
 
         std::unique_ptr<TTreeReaderValue<Bool_t>> trigger;
         if (Events->GetBranch(TRIGGER))
@@ -363,6 +166,7 @@ void TauHypothesisTest()
             {
                 continue;
             }
+            ++nNoExtraLepton;
 
             size_t iLead = SIZE_MAX, iSub = SIZE_MAX;
             Float_t leadPt = -1, subPt = -1;
@@ -370,7 +174,7 @@ void TauHypothesisTest()
             {
                 const bool pass = tauPt[i] > TAU_PT_MIN && std::abs(tauEta[i]) < TAU_ETA_MAX &&
                                   std::abs(tauDz[i]) < TAU_DZ_MAX && isStandardDecayMode(tauDecayMode[i]) &&
-                                  tauVsJet[i] >= VSJET_BASE && tauVsE[i] >= VSE_LOOSE && tauVsMu[i] >= VSMU_LOOSE;
+                                  tauVsJet[i] >= VSJET_ISO && tauVsE[i] >= VSE_LOOSE && tauVsMu[i] >= VSMU_LOOSE;
                 if (!pass)
                 {
                     continue;
@@ -392,79 +196,69 @@ void TauHypothesisTest()
             {
                 continue;
             }
+            ++nTwoGoodTaus;
 
-            Tau t1{TLorentzVector(), tauCharge[iLead], tauVsJet[iLead], tauVsE[iLead], tauVsMu[iLead]};
-            Tau t2{TLorentzVector(), tauCharge[iSub], tauVsJet[iSub], tauVsE[iSub], tauVsMu[iSub]};
-            t1.p4.SetPtEtaPhiM(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
-            t2.p4.SetPtEtaPhiM(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
-            if (t1.p4.DeltaR(t2.p4) < PAIR_DR_MIN)
+            if (tauCharge[iLead] * tauCharge[iSub] != -1)
+            {
+                continue;
+            }
+            ++nOppositeSign;
+
+            TLorentzVector t1, t2;
+            t1.SetPtEtaPhiM(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
+            t2.SetPtEtaPhiM(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
+            if (t1.DeltaR(t2) < PAIR_DR_MIN)
             {
                 continue;
             }
             ++nPairs;
 
-            TLorentzVector met;
-            met.SetPtEtaPhiM(*metPt, 0, *metPhi, 0);
-
-            const bool os = t1.charge * t2.charge < 0;
-            const bool iso = t1.vsJet >= VSJET_ISO && t2.vsJet >= VSJET_ISO;
-            const Region region = os ? (iso ? OS_ISO : OS_ANTI) : (iso ? SS_ISO : SS_ANTI);
-
-            const Double_t mVis = (t1.p4 + t2.p4).M();
-            const Double_t mCol = collinearMass(t1.p4, t2.p4, met);
-            h.mVis[region]->Fill(mVis);
-            h.mTtot[region]->Fill(totalTransverseMass(t1.p4, t2.p4, met));
-            if (mCol > 0)
+            const FourVector v1 = makeFourVector(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
+            const FourVector v2 = makeFourVector(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
+            const Double_t massSquared = invariantMassSquared(v1, v2);
+            if (massSquared < 0)
             {
-                h.mCol[region]->Fill(mCol);
+                ++nNegativeMassSquared;
+                continue;
             }
 
-            const bool tightLep = t1.vsE >= VSE_TIGHT && t2.vsE >= VSE_TIGHT && t1.vsMu >= VSMU_TIGHT && t2.vsMu >= VSMU_TIGHT;
-            if (region == OS_ISO && tightLep)
-            {
-                h.mVisTightLep->Fill(mVis);
-            }
+            h_reco_mass.Fill(std::sqrt(massSquared));
         }
     }
 
-    std::cout << "\nevents read: " << nRead << "  good lumi: " << nGoodLumi << "  passing trigger: " << nTrigger << "  di-tau pairs: " << nPairs << std::endl;
-    for (int r = 0; r < N_REGIONS; ++r)
-    {
-        std::cout << "  " << REGION_NAMES[r] << ": " << h.mVis[r]->Integral() << std::endl;
-    }
-
-    const Double_t osAnti = h.mVis[OS_ANTI]->Integral();
-    const Double_t ssAnti = h.mVis[SS_ANTI]->Integral();
-    const Double_t transfer = ssAnti > 0 ? osAnti / ssAnti : 0;
-    const Double_t transferErr = (osAnti > 0 && ssAnti > 0) ? transfer * std::sqrt(1 / osAnti + 1 / ssAnti) : 0;
-    std::cout << "QCD OS/SS transfer factor (anti-iso): " << transfer << " +- " << transferErr << std::endl;
-
-    auto qcdVis = qcdEstimate(*h.mVis[SS_ISO], transfer, "h_mVis_QCD");
-    auto qcdCol = qcdEstimate(*h.mCol[SS_ISO], transfer, "h_mCol_QCD");
-    auto qcdTtot = qcdEstimate(*h.mTtot[SS_ISO], transfer, "h_mTtot_QCD");
-    auto excessVis = subtract(*h.mVis[OS_ISO], *qcdVis, "h_mVis_excess");
-    auto excessCol = subtract(*h.mCol[OS_ISO], *qcdCol, "h_mCol_excess");
-    auto excessTtot = subtract(*h.mTtot[OS_ISO], *qcdTtot, "h_mTtot_excess");
-
-    runTestA(*excessVis, *excessCol);
-    runTestB(*h.mVis[OS_ISO], *h.mVisTightLep);
-    runTestC(*h.mTtot[OS_ISO], *qcdTtot, *h.mTtot[SS_ISO], transferErr, transfer);
+    std::cout << "TauHypothesisTest: cutflow:" << std::endl;
+    std::cout << "  events read                          : " << nRead << std::endl;
+    std::cout << "  after golden-JSON lumi mask           : " << nGoodLumi << std::endl;
+    std::cout << "  after trigger                         : " << nTrigger << std::endl;
+    std::cout << "  after muon/electron veto              : " << nNoExtraLepton << std::endl;
+    std::cout << "  after pT/eta/dz/decayMode/DeepTau-ISO (2 taus) : " << nTwoGoodTaus << std::endl;
+    std::cout << "  after opposite sign                   : " << nOppositeSign << std::endl;
+    std::cout << "  after dR(tau1,tau2) > " << PAIR_DR_MIN << "             : " << nPairs << std::endl;
+    std::cout << "  (" << nNegativeMassSquared << " of those skipped for M^2 < 0)" << std::endl;
+    std::cout << "TauHypothesisTest: mean mass = " << h_reco_mass.GetMean() << " GeV, RMS = " << h_reco_mass.GetRMS() << " GeV" << std::endl;
 
     const std::string outFile = "outputs/tau_hypothesis_test.root";
     TFile out(outFile.c_str(), "RECREATE");
-    for (int r = 0; r < N_REGIONS; ++r)
-    {
-        h.mVis[r]->Write();
-        h.mCol[r]->Write();
-        h.mTtot[r]->Write();
-    }
-    h.mVisTightLep->Write();
-    qcdVis->Write();
-    qcdCol->Write();
-    qcdTtot->Write();
-    excessVis->Write();
-    excessCol->Write();
-    excessTtot->Write();
+    h_reco_mass.Write();
     out.Close();
-    std::cout << "\nTauHypothesisTest: wrote " << outFile << std::endl;
+    std::cout << "TauHypothesisTest: wrote " << outFile << std::endl;
 }
+
+// ============================================================================
+// OVERLEAF CAPTION (for the h_reco_mass plot)
+// ============================================================================
+//
+// {\raggedright\fontsize{6.6}{8.4}\selectfont\color{oliveInk!70}%
+//  \setlength{\parskip}{0.2em}%
+//  \srcline{Input: Run2024D Tau data,
+//  \texttt{file\_config\_data.json}, filtered to golden\_2024.json good
+//  lumisections.}
+//  \srcline{$\tau_h\tau_h$ channel only: both legs are the \texttt{Tau}
+//  collection (hadronic decays by construction), events with an extra
+//  muon/electron are vetoed.}
+//  \srcline{Cuts: HLT trigger, $p_T>40$~GeV, $|\eta|<2.1$, $|d_z|<0.2$~cm,
+//  decay mode $\in\{0,1,10,11\}$ (1- or 3-prong), DeepTau vsJet Medium
+//  (isolated), opposite sign, $\Delta R(\tau_1,\tau_2)>0.5$ -- same
+//  selection as the MC analysis.}
+//  \srcline{\textbf{Result:} the visible mass alone, no MET added -- real
+//  data's analogue of MC/TauHypothesisTestMC.C.}}
