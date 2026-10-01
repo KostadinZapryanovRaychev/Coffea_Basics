@@ -71,7 +71,7 @@ void TauLHEFormulaMass()
     std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_reco.json");
     std::cout << "TauLHEFormulaMass: " << rootFiles.size() << " file(s) to process." << std::endl;
 
-    TH1F h_lhe_mass("h_lhe_mass", "LHE m(#tau^{+}#tau^{-}) from the formula;m [GeV];Events", 100, 0, 500);
+    TH1F h_lhe_mass("h_lhe_mass", "m = #sqrt{(E_{1}+E_{2})^{2}-|#vec{p}_{1}+#vec{p}_{2}|^{2}};m [GeV];Events", 100, 0, 500);
 
     CutFlow cutFlow;
     Long64_t nNegativeMassSquared = 0;
