@@ -3,8 +3,12 @@
 // Same selection and branches as DATA/TauHypothesisTest.C's OS_iso region,
 // so the two are directly comparable once run on real data.
 //
-// Compare to MC/TauLHEFormulaMass.C: that histogram peaks at the generated
-// Z' mass (nothing lost yet); this one sits below it, by the amount the
+// Again computed with the explicit formula (not .M()), same as
+// MC/TauLHEFormulaMass.C -- and again with no MET added: this is the
+// VISIBLE mass only, so the missing neutrino momentum (what MET would
+// estimate) is simply not part of it. That is exactly why this histogram
+// sits below the LHE one: MC/TauLHEFormulaMass.C peaks at the generated
+// Z' mass (nothing lost yet), this one sits below it by the amount the
 // escaping neutrinos carried away.
 //
 // Runs over file_config_reco.json (Monte Carlo, ZprimeTo2Tau samples).
@@ -32,6 +36,10 @@ namespace
     constexpr Double_t PAIR_DR_MIN = 0.5;
 
     // DeepTau 2018v2p5: vsJet/vsE 1..8 = VVVLoose..VVTight, vsMu 1..4 = VLoose..Tight
+    // VSJET_ISO = Medium: this is the "isolated" (signal-region, H1 genuine
+    // tau pair hypothesis) working point, the same one DATA/TauHypothesisTest.C
+    // uses for its OS_iso region -- the main reason so few pairs survive
+    // (see the cutflow printed at the end).
     constexpr UChar_t VSJET_ISO = 5;
     constexpr UChar_t VSE_LOOSE = 2;
     constexpr UChar_t VSMU_LOOSE = 1;
@@ -43,6 +51,32 @@ namespace
     {
         return dm == 0 || dm == 1 || dm == 10 || dm == 11;
     }
+
+    struct FourVector
+    {
+        Double_t px, py, pz, e;
+    };
+
+    // (pt, eta, phi, mass) -> (px, py, pz, E)
+    FourVector makeFourVector(Double_t pt, Double_t eta, Double_t phi, Double_t mass)
+    {
+        FourVector v;
+        v.px = pt * std::cos(phi);
+        v.py = pt * std::sin(phi);
+        v.pz = pt * std::sinh(eta);
+        v.e = std::sqrt(v.px * v.px + v.py * v.py + v.pz * v.pz + mass * mass);
+        return v;
+    }
+
+    // M^2 = (E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2
+    Double_t invariantMassSquared(const FourVector &a, const FourVector &b)
+    {
+        const Double_t e = a.e + b.e;
+        const Double_t px = a.px + b.px;
+        const Double_t py = a.py + b.py;
+        const Double_t pz = a.pz + b.pz;
+        return e * e - px * px - py * py - pz * pz;
+    }
 } // namespace
 
 void TauHypothesisTestMC()
@@ -50,9 +84,9 @@ void TauHypothesisTestMC()
     std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_reco.json");
     std::cout << "TauHypothesisTestMC: " << rootFiles.size() << " file(s) to process." << std::endl;
 
-    TH1F h_reco_mass("h_reco_mass", "m = #sqrt{(E_{1}+E_{2})^{2}-|#vec{p}_{1}+#vec{p}_{2}|^{2}};m [GeV];Events", 100, 0, 500);
+    TH1F h_reco_mass("h_reco_mass", "m = #sqrt{(E_{1}+E_{2})^{2}-|#vec{p}_{1}+#vec{p}_{2}|^{2}} (no MET added);m [GeV];Events", 100, 0, 500);
 
-    Long64_t nRead = 0, nPairs = 0;
+    Long64_t nRead = 0, nNoExtraLepton = 0, nTwoGoodTaus = 0, nOppositeSign = 0, nPairs = 0, nNegativeMassSquared = 0;
 
     for (const RootFileEntry &file : rootFiles)
     {
@@ -99,6 +133,7 @@ void TauHypothesisTestMC()
             {
                 continue;
             }
+            ++nNoExtraLepton;
 
             size_t iLead = SIZE_MAX, iSub = SIZE_MAX;
             Float_t leadPt = -1, subPt = -1;
@@ -128,11 +163,13 @@ void TauHypothesisTestMC()
             {
                 continue;
             }
+            ++nTwoGoodTaus;
 
             if (tauCharge[iLead] * tauCharge[iSub] != -1)
             {
                 continue;
             }
+            ++nOppositeSign;
 
             TLorentzVector t1, t2;
             t1.SetPtEtaPhiM(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
@@ -143,11 +180,30 @@ void TauHypothesisTestMC()
             }
             ++nPairs;
 
-            h_reco_mass.Fill((t1 + t2).M());
+            const FourVector v1 = makeFourVector(tauPt[iLead], tauEta[iLead], tauPhi[iLead], tauMass[iLead]);
+            const FourVector v2 = makeFourVector(tauPt[iSub], tauEta[iSub], tauPhi[iSub], tauMass[iSub]);
+            const Double_t massSquared = invariantMassSquared(v1, v2);
+            if (massSquared < 0)
+            {
+                ++nNegativeMassSquared;
+                continue;
+            }
+
+            h_reco_mass.Fill(std::sqrt(massSquared));
         }
     }
 
-    std::cout << "TauHypothesisTestMC: " << nPairs << " good pairs out of " << nRead << " events read." << std::endl;
+    std::cout << "TauHypothesisTestMC: cutflow (why so few survive):" << std::endl;
+    std::cout << "  events read                          : " << nRead << std::endl;
+    std::cout << "  after muon/electron veto              : " << nNoExtraLepton << std::endl;
+    std::cout << "  after pT/eta/dz/decayMode/DeepTau-ISO (2 taus) : " << nTwoGoodTaus << std::endl;
+    std::cout << "  after opposite sign                   : " << nOppositeSign << std::endl;
+    std::cout << "  after dR(tau1,tau2) > " << PAIR_DR_MIN << "             : " << nPairs << std::endl;
+    std::cout << "  (" << nNegativeMassSquared << " of those skipped for M^2 < 0)" << std::endl;
+    std::cout << "TauHypothesisTestMC: the Medium (VSJET_ISO) DeepTau working point used for the"
+              << " \"2 taus\" step above is the tight, isolated signal-region selection"
+              << " -- the same one DATA/TauHypothesisTest.C calls OS_iso, the genuine Z->tautau (H1) hypothesis -- and is the main reason the count drops so much."
+              << std::endl;
     std::cout << "TauHypothesisTestMC: mean mass = " << h_reco_mass.GetMean() << " GeV, RMS = " << h_reco_mass.GetRMS() << " GeV" << std::endl;
 
     const std::string outFile = "outputs/tau_hypothesis_test_mc.root";
