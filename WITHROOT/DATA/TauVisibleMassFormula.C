@@ -3,11 +3,11 @@
 //   M = sqrt( (E1+E2)^2 - (px1+px2)^2 - (py1+py2)^2 - (pz1+pz2)^2 )
 // instead of TLorentzVector. Runs over file_config_data.json (real data).
 
-#include "Config.C"
-#include "Config.h"
-#include "CutFlow.h"
-#include "event.C"
-#include "event.h"
+#include "../Config.C"
+#include "../Config.h"
+#include "../CutFlow.h"
+#include "../event.C"
+#include "../event.h"
 
 #include <algorithm>
 #include <cmath>

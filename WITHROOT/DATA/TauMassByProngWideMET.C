@@ -1,7 +1,4 @@
-// Same logic as TauMassByProng.C (real data, all /120000/ files from
-// file_config_data.json), but now running over file_config_data_full.json
-// (every real-data file found via das_files.sh, both /120000/ and /90000/
-// blocks) with the golden-JSON lumi mask applied, and:
+// Real data, file_config_data.json, with the golden-JSON lumi mask applied:
 //   - mass histograms cover 0-2000 GeV instead of 0-250 GeV, since the
 //     Z' hypothesis has a wide, unknown mass range (checked up to 6000 GeV,
 //     nothing above 2000 GeV, so the range was trimmed back down)
@@ -39,16 +36,16 @@
 // A pair is put in a channel only if BOTH legs are in that same prong group;
 // mixed-prong pairs (e.g. 1-prong with 3-prong) go into h_mass_mixedProng.
 //
-// Runs over file_config_data_full.json (real data), filtered to certified
+// Runs over file_config_data.json (real data), filtered to certified
 // good lumisections via golden_2024.json.
 
-#include "Config.C"
-#include "Config.h"
-#include "CutFlow.h"
-#include "event.C"
-#include "event.h"
-#include "LumiMask.C"
-#include "LumiMask.h"
+#include "../Config.C"
+#include "../Config.h"
+#include "../CutFlow.h"
+#include "../event.C"
+#include "../event.h"
+#include "../LumiMask.C"
+#include "../LumiMask.h"
 
 #include <algorithm>
 #include <cmath>
@@ -138,7 +135,7 @@ namespace
 
 void TauMassByProngWideMET()
 {
-    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data_full.json");
+    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_data.json");
     std::cout << "TauMassByProngWideMET: " << rootFiles.size() << " file(s) to process." << std::endl;
 
     const LumiMask lumiMask(GOLDEN_JSON);
