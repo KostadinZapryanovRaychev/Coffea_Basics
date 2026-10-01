@@ -729,7 +729,8 @@ scp kraychev@lxplus.cern.ch:/eos/user/c/cmsdqm/www/CAF/certification/Collisions2
  /Users/macbookpro/Documents/BAN-Doctor-Degree/Tools/Coffea/WITHROOT/golden_2024.json
 
 Next steps
-- run: root -l -b -q TauMassByProngWideMET.C  (Run2024D + golden_2024.json)
+
+- run: root -l -b -q TauMassByProngWideMET.C (Run2024D + golden_2024.json)
 - send Claude the output
 
 How to run MC and DATA files
@@ -741,15 +742,15 @@ DATA/, so these relative paths resolve correctly.
 
 MC (reads file_config_reco.json, no golden JSON needed -- MC has no real
 lumisections):
-  cd WITHROOT
-  root -l -b -q MC/TauLHEFormulaMass.C
-  root -l -b -q MC/TauHypothesisTestMC.C
+cd WITHROOT
+root -l -b -q MC/TauLHEFormulaMass.C
+root -l -b -q MC/TauHypothesisTestMC.C
 
 DATA (reads file_config_data.json, needs golden_2024.json in WITHROOT/
 first -- see "scp ... golden_2024.json" above):
-  cd WITHROOT
-  root -l -b -q DATA/TauVisibleMassFormula.C
-  root -l -b -q DATA/TauHypothesisTest.C
-  root -l -b -q DATA/TauMassByProngWideMET.C
+cd WITHROOT
+root -l -b -q DATA/TauVisibleMassFormula.C
+root -l -b -q DATA/TauHypothesisTest.C
+root -l -b -q DATA/TauMassByProngWideMET.C
 
 Outputs are written to WITHROOT/outputs/, same for both.
