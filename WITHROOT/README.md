@@ -754,3 +754,14 @@ root -l -b -q DATA/TauHypothesisTest.C
 root -l -b -q DATA/TauMassByProngWideMET.C
 
 Outputs are written to WITHROOT/outputs/, same for both.
+
+CheckFilesReadable.C: quick sanity check when switching datasets
+
+Before running a full analysis over a new or changed file list, check the
+files actually open and have the expected branches. Uses only BranchPlotter
+(opens each file, reads nTau/Tau_pt for ~500 events, prints OK/FAIL per
+file plus a summary count).
+
+  cd WITHROOT
+  root -l -b -q CheckFilesReadable.C                              # defaults to file_config_reco.json (MC)
+  root -l -b -q 'CheckFilesReadable.C("file_config_data.json")'   # or point it at the data config
