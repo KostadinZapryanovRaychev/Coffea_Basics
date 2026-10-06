@@ -2,7 +2,7 @@
   "root_files": [
     {
       "name": "M-250",
-      "path": "/eos/cms/store/user/mileva/bsm3g/NANOAODSIM/ZprimeTo2Tau-2Jets_M-250_TuneCP5_13p6TeV_madgraphMLM-pythia8/Run3Summer23_NANOAODv12/250716_092714/0000/nanoaodsim_coffea_1.root",
+      "path": "/eos/cms/store/user/mileva/bsm3g/RunIII2024Summer24/M250S/NANOAODSIM/Zp250S_RunIII2024Summer24NanoAODv15.root",
       "tree": "Events",
       "enabled": true
     }
