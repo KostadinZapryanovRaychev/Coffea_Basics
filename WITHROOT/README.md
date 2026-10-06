@@ -17,11 +17,11 @@ combined into one module (`RecoTauMassKinematics.h/.C`). Run it with:
 root -l -b -q RunRecoTauMassKinematics.C
 ```
 
-It reads the files listed in `file_config_reco.json` (same "root_files" format as
+It reads the files listed in `file_config_mc.json` (same "root_files" format as
 `NAOD_TAU/file_config_batch_all_mass_points.json`: `name`, `path`, `tree`,
 `enabled`), pools every file's surviving tau pairs into one set of histograms, and
 writes them to `outputs/reco_tau_mass_kinematics.root`. Add or disable entries in
-`file_config_reco.json` to run it over a different set of paths.
+`file_config_mc.json` to run it over a different set of paths.
 
 Selection, per event: take the two leading-pT `Tau` objects, require opposite
 sign, `|Δφ| > 2.5`, both `pT > 20 GeV` and `|η| < 2.3`, and pair `|pz| < 300 GeV`
@@ -736,11 +736,11 @@ Next steps
 How to run MC and DATA files
 
 Common helpers (Config, event, LumiMask, CutFlow, helpers, das_files.sh,
-file_config_reco.json, file_config_data.json, golden_2024.json) live directly
+file_config_mc.json, file_config_data.json, golden_2024.json) live directly
 in WITHROOT/. Always run from WITHROOT/ itself, not from inside MC/ or
 DATA/, so these relative paths resolve correctly.
 
-MC (reads file_config_reco.json, no golden JSON needed -- MC has no real
+MC (reads file_config_mc.json, no golden JSON needed -- MC has no real
 lumisections):
 cd WITHROOT
 root -l -b -q MC/TauLHEFormulaMass.C
@@ -763,7 +763,7 @@ files actually open and have the expected branches. Uses only BranchPlotter
 file plus a summary count).
 
 cd WITHROOT
-root -l -b -q CheckFilesReadable.C # defaults to file_config_reco.json (MC)
+root -l -b -q CheckFilesReadable.C # defaults to file_config_mc.json (MC)
 root -l -b -q 'CheckFilesReadable.C("file_config_data.json")' # or point it at the data config
 
 the latest MC - 250

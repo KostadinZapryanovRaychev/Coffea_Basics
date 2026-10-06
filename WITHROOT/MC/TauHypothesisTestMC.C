@@ -11,7 +11,7 @@
 // Z' mass (nothing lost yet), this one sits below it by the amount the
 // escaping neutrinos carried away.
 //
-// Runs over file_config_reco.json (Monte Carlo, ZprimeTo2Tau samples).
+// Runs over file_config_mc.json (Monte Carlo, ZprimeTo2Tau samples).
 
 #include "../Config.C"
 #include "../Config.h"
@@ -81,7 +81,7 @@ namespace
 
 void TauHypothesisTestMC()
 {
-    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_reco.json");
+    std::vector<RootFileEntry> rootFiles = loadRootFileList("file_config_mc.json");
     std::cout << "TauHypothesisTestMC: " << rootFiles.size() << " file(s) to process." << std::endl;
 
     TH1F h_reco_mass("h_reco_mass", "m = #sqrt{(E_{1}+E_{2})^{2}-|#vec{p}_{1}+#vec{p}_{2}|^{2}} (no MET added);m [GeV];Events", 100, 0, 500);

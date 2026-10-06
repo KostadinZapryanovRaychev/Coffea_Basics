@@ -4,8 +4,8 @@
 // switching datasets (MC/data, a different config) can be sanity-checked
 // before running a full analysis over it.
 //
-// Usage: root -l -b -q 'CheckFilesReadable.C("file_config_reco.json")'
-// Defaults to file_config_reco.json (MC) if no argument is given.
+// Usage: root -l -b -q 'CheckFilesReadable.C("file_config_mc.json")'
+// Defaults to file_config_mc.json (MC) if no argument is given.
 
 #include "Config.C"
 #include "Config.h"
@@ -25,7 +25,7 @@ namespace
     constexpr Long64_t CHECK_EVENTS = 500;
 }
 
-void CheckFilesReadable(const std::string &configFile = "file_config_reco.json")
+void CheckFilesReadable(const std::string &configFile = "file_config_mc.json")
 {
     std::vector<RootFileEntry> rootFiles = loadRootFileList(configFile);
     std::cout << "CheckFilesReadable: " << rootFiles.size() << " file(s) from " << configFile << std::endl;
